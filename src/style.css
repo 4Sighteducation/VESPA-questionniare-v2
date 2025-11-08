@@ -1,0 +1,146 @@
+/* VESPA Questionnaire V2 - Global Styles */
+
+:root {
+  /* VESPA Theme Colors */
+  --vespa-vision: #ff8f00;
+  --vespa-effort: #86b4f0;
+  --vespa-systems: #72cb44;
+  --vespa-practice: #7f31a4;
+  --vespa-attitude: #f032e6;
+  
+  /* Brand Colors */
+  --vespa-primary: #079baa;
+  --vespa-secondary: #7bd8d0;
+  --vespa-accent: #62d1d2;
+  --vespa-dark: #23356f;
+  --vespa-darker: #2a3c7a;
+  
+  /* UI Colors */
+  --bg-light: #f5fafa;
+  --text-primary: #333;
+  --text-secondary: #666;
+  --border-color: #e0e0e0;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app {
+  width: 100%;
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--vespa-dark) 0%, var(--vespa-primary) 100%);
+}
+
+/* Loading states */
+.spinner {
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Fade animations */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Slide animations */
+.slide-enter-active,
+.slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-enter-from {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.slide-leave-to {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+/* Button styles */
+.btn {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--vespa-secondary) 0%, var(--vespa-primary) 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(7, 155, 170, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(7, 155, 170, 0.4);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: white;
+  color: var(--vespa-primary);
+  border: 2px solid var(--vespa-primary);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--vespa-primary);
+  color: white;
+}
+
+/* Utility classes */
+.text-center {
+  text-align: center;
+}
+
+.mb-4 { margin-bottom: 1rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+.mb-8 { margin-bottom: 2rem; }
+.mt-4 { margin-top: 1rem; }
+.mt-6 { margin-top: 1.5rem; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .btn {
+    padding: 14px 20px;
+    font-size: 15px;
+  }
+}
+
