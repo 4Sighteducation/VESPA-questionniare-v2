@@ -35,7 +35,7 @@
       
       <!-- Question + Navigation in ONE container -->
       <div class="questionnaire-content">
-        <transition name="slide" mode="out-in">
+        <transition name="fade-slide" mode="out-in">
           <div :key="currentQuestion.id" class="question-and-nav">
             <QuestionCard
               :question="currentQuestion"
@@ -333,6 +333,7 @@ export default {
   background: linear-gradient(135deg, var(--vespa-dark) 0%, var(--vespa-primary) 100%);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .questionnaire-container {
@@ -341,6 +342,7 @@ export default {
   flex: 1;
   height: 100%;
   overflow: hidden;
+  padding-top: 20px;
 }
 
 .questionnaire-content {
@@ -351,7 +353,7 @@ export default {
   border-radius: 0 0 16px 16px;
   margin: 0 20px 20px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  padding: 20px;
+  padding: 40px 30px 30px;
   overflow: hidden;
 }
 
@@ -361,13 +363,14 @@ export default {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  will-change: opacity, transform;
 }
 
 .navigation-buttons {
   display: flex;
   justify-content: center;
   gap: 20px;
-  margin-top: 25px;
+  margin-top: 40px;
   width: 100%;
   max-width: 600px;
 }
@@ -376,34 +379,38 @@ export default {
   min-width: 140px;
 }
 
-/* Slide transition for questions */
-.slide-enter-active,
-.slide-leave-active {
-  transition: all 0.3s ease;
+/* Smooth fade-slide transition for questions */
+.fade-slide-enter-active {
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.slide-enter-from {
-  opacity: 0;
-  transform: translateX(30px);
+.fade-slide-leave-active {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.6, 1);
 }
 
-.slide-leave-to {
+.fade-slide-enter-from {
   opacity: 0;
-  transform: translateX(-30px);
+  transform: translateY(15px) scale(0.98);
+}
+
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.98);
 }
 
 @media (max-width: 768px) {
+  .questionnaire-container {
+    padding-top: 0;
+  }
+
   .questionnaire-content {
     margin: 0;
     border-radius: 0;
-  }
-
-  .question-area {
-    padding: 8px 15px 5px 15px;
+    padding: 30px 20px 20px;
   }
 
   .navigation-buttons {
-    padding: 10px 15px;
+    margin-top: 30px;
     gap: 10px;
   }
 

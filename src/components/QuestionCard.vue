@@ -99,18 +99,7 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
-  animation: fadeIn 0.4s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  width: 100%;
 }
 
 .category-badge {
@@ -142,12 +131,12 @@ export default {
 }
 
 .question-text {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 600;
   color: var(--text-primary);
-  line-height: 1.2;
-  margin: 0 0 12px 0;
-  max-width: 800px;
+  line-height: 1.4;
+  margin: 0 0 35px 0;
+  max-width: 850px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -156,8 +145,8 @@ export default {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  gap: 20px;
-  max-width: 800px;
+  gap: 24px;
+  max-width: 850px;
   margin: 0 auto;
 }
 

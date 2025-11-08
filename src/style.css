@@ -28,18 +28,30 @@
   box-sizing: border-box;
 }
 
+/* Hide scrollbar but keep functionality */
+*::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   color: var(--text-primary);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
 }
 
 #app {
   width: 100%;
   min-height: 100vh;
   background: linear-gradient(135deg, var(--vespa-dark) 0%, var(--vespa-primary) 100%);
+  overflow: hidden;
 }
 
 /* Loading states */
