@@ -136,44 +136,44 @@ export default {
 }
 
 .card-body {
-  padding: 25px 30px;
+  padding: 20px 30px;
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  overflow-y: auto;
+  overflow-y: hidden;
 }
 
 .student-info {
   background: var(--bg-light);
-  padding: 10px 16px;
+  padding: 8px 16px;
   border-radius: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   text-align: center;
   color: var(--vespa-dark);
   font-size: 14px;
 }
 
 .info-compact {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .main-message {
   color: var(--text-primary);
-  font-size: 16px;
-  line-height: 1.5;
-  margin: 0 0 12px 0;
+  font-size: 15px;
+  line-height: 1.4;
+  margin: 0 0 10px 0;
   text-align: center;
 }
 
 .remember-message {
   background: linear-gradient(135deg, rgba(7, 155, 170, 0.08) 0%, rgba(123, 216, 208, 0.08) 100%);
-  padding: 12px 16px;
+  padding: 10px 14px;
   border-radius: 8px;
   border-left: 3px solid var(--vespa-primary);
   color: var(--text-secondary);
-  font-size: 14px;
-  line-height: 1.4;
+  font-size: 13px;
+  line-height: 1.3;
   margin: 0;
   display: flex;
   align-items: center;

@@ -359,7 +359,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 20px 5px 20px;
+  padding: 5px 20px 10px 20px;
   overflow-y: hidden;
   min-height: 0;
 }
@@ -368,7 +368,7 @@ export default {
   display: flex;
   justify-content: space-between;
   gap: 15px;
-  padding: 12px 20px;
+  padding: 10px 20px;
   border-top: 1px solid #e0e0e0;
   background: white;
   flex-shrink: 0;

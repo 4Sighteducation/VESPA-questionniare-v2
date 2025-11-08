@@ -54,7 +54,7 @@ export default {
 <style scoped>
 .progress-indicator {
   background: white;
-  padding: 12px 20px;
+  padding: 10px 20px;
   border-radius: 15px 15px 0 0;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   flex-shrink: 0;

@@ -95,7 +95,7 @@ export default {
 <style scoped>
 .question-card {
   text-align: center;
-  padding: 10px 20px 5px 20px;
+  padding: 5px 20px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -146,7 +146,7 @@ export default {
   font-weight: 600;
   color: var(--text-primary);
   line-height: 1.2;
-  margin: 0 0 15px 0;
+  margin: 0 0 12px 0;
   max-width: 800px;
   margin-left: auto;
   margin-right: auto;
