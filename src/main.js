@@ -33,7 +33,10 @@ window.initializeQuestionnaireV2 = function() {
   const appContainer = document.createElement('div')
   appContainer.id = 'vespa-questionnaire-v2-app'
   appContainer.style.width = '100%'
-  appContainer.style.minHeight = '100vh'
+  appContainer.style.height = '100%'
+  appContainer.style.minHeight = '600px'
+  appContainer.style.display = 'flex'
+  appContainer.style.flexDirection = 'column'
   targetElement.appendChild(appContainer)
   
   // Mount Vue app
