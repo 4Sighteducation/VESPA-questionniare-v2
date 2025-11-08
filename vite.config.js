@@ -8,12 +8,12 @@ export default defineConfig({
     assetsDir: 'assets',
     rollupOptions: {
       output: {
-        // Generate consistent filenames for CDN hosting
-        entryFileNames: 'questionnaire.js',
+        // Generate versioned filenames for CDN cache busting
+        entryFileNames: 'questionnaire1a.js',
         chunkFileNames: 'chunks/[name].js',
         assetFileNames: (assetInfo) => {
           if (assetInfo.name.endsWith('.css')) {
-            return 'questionnaire.css'
+            return 'questionnaire1a.css'
           }
           return 'assets/[name].[ext]'
         }
