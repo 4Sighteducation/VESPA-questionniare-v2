@@ -156,23 +156,36 @@ export default {
 
         console.log('[Questionnaire V2] User:', user.email)
 
-        // TEST MODE: Check URL parameter for bypass
-        const urlParams = new URLSearchParams(window.location.search)
-        const testMode = urlParams.get('test') === 'true' || user.isTestMode
-
-        if (testMode) {
-          console.log('[Questionnaire V2] TEST MODE ENABLED - Bypassing validation')
-          validationResult.value = {
-            allowed: true,
-            cycle: 1,
-            reason: 'test_mode',
-            message: 'Test mode enabled',
-            academicYear: '2025/2026',
-            userRecord: { id: 'test_user', email: user.email }
-          }
-          state.value = 'instructions'
-          return
+        // TEMPORARY: Always bypass for initial styling testing
+        // TODO: Remove this and use backend validation once endpoints are deployed
+        console.log('[Questionnaire V2] DEVELOPMENT MODE - Bypassing validation for styling test')
+        validationResult.value = {
+          allowed: true,
+          cycle: 1,
+          reason: 'dev_mode',
+          message: 'Development mode enabled',
+          academicYear: '2025/2026',
+          userRecord: { id: user.accountId || 'test_user', email: user.email }
         }
+        state.value = 'instructions'
+        return
+        
+        // COMMENTED OUT FOR NOW - Uncomment when backend is ready:
+        /*
+        // Validate questionnaire access
+        const validation = await validateQuestionnaireAccess(user.email, user.accountId)
+        validationResult.value = validation
+
+        console.log('[Questionnaire V2] Validation:', validation)
+
+        if (validation.allowed) {
+          // Show instructions
+          state.value = 'instructions'
+        } else {
+          // Show not available message
+          state.value = 'not-available'
+        }
+        */
 
         // Validate questionnaire access
         const validation = await validateQuestionnaireAccess(user.email, user.accountId)
