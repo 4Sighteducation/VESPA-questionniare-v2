@@ -25,6 +25,7 @@
 
     <!-- Questionnaire State -->
     <div v-else-if="state === 'questionnaire'" class="questionnaire-container">
+      <!-- Progress Bar -->
       <ProgressIndicator
         :current-question="currentQuestionIndex + 1"
         :total-questions="questions.length"
@@ -32,37 +33,37 @@
         :category-color="currentCategoryColor"
       />
       
+      <!-- Question + Navigation in ONE container -->
       <div class="questionnaire-content">
-        <div class="question-area">
-          <transition name="slide" mode="out-in">
+        <transition name="slide" mode="out-in">
+          <div :key="currentQuestion.id" class="question-and-nav">
             <QuestionCard
-              :key="currentQuestion.id"
               :question="currentQuestion"
               v-model="responses[currentQuestion.id]"
             />
-          </transition>
-        </div>
+            
+            <!-- Navigation Buttons INSIDE question area -->
+            <div class="navigation-buttons">
+              <button 
+                class="btn btn-secondary"
+                @click="previousQuestion"
+                :disabled="currentQuestionIndex === 0"
+              >
+                <i class="fa fa-arrow-left"></i>
+                Previous
+              </button>
 
-        <!-- Navigation Buttons - ALWAYS VISIBLE -->
-        <div class="navigation-buttons">
-          <button 
-            class="btn btn-secondary"
-            @click="previousQuestion"
-            :disabled="currentQuestionIndex === 0"
-          >
-            <i class="fa fa-arrow-left"></i>
-            Previous
-          </button>
-
-          <button 
-            class="btn btn-primary"
-            @click="nextQuestion"
-            :disabled="!responses[currentQuestion.id]"
-          >
-            {{ isLastQuestion ? 'Submit' : 'Next' }}
-            <i :class="['fa', isLastQuestion ? 'fa-check' : 'fa-arrow-right']"></i>
-          </button>
-        </div>
+              <button 
+                class="btn btn-primary"
+                @click="nextQuestion"
+                :disabled="!responses[currentQuestion.id]"
+              >
+                {{ isLastQuestion ? 'Submit' : 'Next' }}
+                <i :class="['fa', isLastQuestion ? 'fa-check' : 'fa-arrow-right']"></i>
+              </button>
+            </div>
+          </div>
+        </transition>
       </div>
     </div>
 
@@ -343,35 +344,32 @@ export default {
 }
 
 .questionnaire-content {
+  flex: 1;
   display: flex;
   flex-direction: column;
   background: white;
-  border-radius: 0 0 20px 20px;
+  border-radius: 0 0 16px 16px;
   margin: 0 20px 20px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  /* Use flex to fit available space */
-  flex: 1;
-  min-height: 0;
+  padding: 20px;
+  overflow: hidden;
 }
 
-.question-area {
-  flex: 1;
+.question-and-nav {
+  height: 100%;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
-  padding: 5px 20px 10px 20px;
-  overflow-y: hidden;
-  min-height: 0;
+  align-items: center;
 }
 
 .navigation-buttons {
   display: flex;
-  justify-content: space-between;
-  gap: 15px;
-  padding: 10px 20px;
-  border-top: 1px solid #e0e0e0;
-  background: white;
-  flex-shrink: 0;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 25px;
+  width: 100%;
+  max-width: 600px;
 }
 
 .navigation-buttons .btn {

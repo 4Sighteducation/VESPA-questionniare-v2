@@ -77,7 +77,7 @@ export default {
 
 <style scoped>
 .instructions-screen {
-  min-height: 100vh;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -89,12 +89,13 @@ export default {
   background: white;
   border-radius: 20px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  max-width: 650px;
+  max-width: 600px;
   width: 100%;
-  max-height: 90vh;
+  max-height: 100%;
   display: flex;
   flex-direction: column;
   animation: slideIn 0.5s ease-out;
+  overflow: hidden;
 }
 
 @keyframes slideIn {

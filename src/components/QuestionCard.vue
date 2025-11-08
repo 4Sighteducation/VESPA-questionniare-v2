@@ -95,10 +95,10 @@ export default {
 <style scoped>
 .question-card {
   text-align: center;
-  padding: 5px 20px;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  align-items: center;
   animation: fadeIn 0.4s ease-out;
 }
 
