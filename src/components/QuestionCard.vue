@@ -208,7 +208,7 @@ export default {
   color: #999;
   background: white;
   transition: all 0.3s ease;
-  margin: 0 auto 12px;
+  margin: 0 auto 8px;
 }
 
 .likert-option.selected .likert-circle {

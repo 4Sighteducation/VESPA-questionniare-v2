@@ -331,9 +331,10 @@ export default {
 }
 
 .questionnaire-container {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .questionnaire-content {
@@ -344,7 +345,7 @@ export default {
   border-radius: 0 0 20px 20px;
   margin: 0 20px 20px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  overflow: hidden;
+  min-height: 0;
 }
 
 .question-area {
@@ -352,8 +353,9 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 15px 20px;
+  padding: 10px 20px 5px 20px;
   overflow-y: auto;
+  min-height: 0;
 }
 
 .navigation-buttons {
@@ -387,14 +389,21 @@ export default {
 }
 
 @media (max-width: 768px) {
+  .questionnaire-container {
+    height: 100vh;
+  }
+
   .questionnaire-content {
     margin: 0;
     border-radius: 0;
-    max-height: calc(100vh - 100px);
+  }
+
+  .question-area {
+    padding: 8px 15px 5px 15px;
   }
 
   .navigation-buttons {
-    padding: 12px 15px;
+    padding: 10px 15px;
     gap: 10px;
   }
 
