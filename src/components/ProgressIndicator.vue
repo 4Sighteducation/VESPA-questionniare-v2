@@ -54,7 +54,7 @@ export default {
 <style scoped>
 .progress-indicator {
   background: white;
-  padding: 15px 20px;
+  padding: 12px 20px;
   border-radius: 15px 15px 0 0;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   flex-shrink: 0;
@@ -112,11 +112,16 @@ export default {
 
 @media (max-width: 768px) {
   .progress-indicator {
-    padding: 15px 20px;
+    padding: 10px 15px;
   }
 
   .progress-info {
-    font-size: 13px;
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+  
+  .current-category {
+    display: none;
   }
 }
 </style>

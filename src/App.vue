@@ -33,15 +33,17 @@
       />
       
       <div class="questionnaire-content">
-        <transition name="slide" mode="out-in">
-          <QuestionCard
-            :key="currentQuestion.id"
-            :question="currentQuestion"
-            v-model="responses[currentQuestion.id]"
-          />
-        </transition>
+        <div class="question-area">
+          <transition name="slide" mode="out-in">
+            <QuestionCard
+              :key="currentQuestion.id"
+              :question="currentQuestion"
+              v-model="responses[currentQuestion.id]"
+            />
+          </transition>
+        </div>
 
-        <!-- Navigation Buttons -->
+        <!-- Navigation Buttons - ALWAYS VISIBLE -->
         <div class="navigation-buttons">
           <button 
             class="btn btn-secondary"
@@ -338,22 +340,29 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   background: white;
   border-radius: 0 0 20px 20px;
-  padding: 0;
   margin: 0 20px 20px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  max-height: calc(100vh - 120px);
   overflow: hidden;
+}
+
+.question-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 15px 20px;
+  overflow-y: auto;
 }
 
 .navigation-buttons {
   display: flex;
   justify-content: space-between;
   gap: 15px;
-  padding: 15px 20px;
+  padding: 12px 20px;
   border-top: 1px solid #e0e0e0;
+  background: white;
   flex-shrink: 0;
 }
 

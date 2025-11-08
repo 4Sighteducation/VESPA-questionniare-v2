@@ -95,11 +95,10 @@ export default {
 <style scoped>
 .question-card {
   text-align: center;
-  padding: 15px 20px;
+  padding: 10px 20px 5px 20px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  flex: 1;
   animation: fadeIn 0.4s ease-out;
 }
 
@@ -143,11 +142,11 @@ export default {
 }
 
 .question-text {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 600;
   color: var(--text-primary);
-  line-height: 1.3;
-  margin: 0 0 25px 0;
+  line-height: 1.2;
+  margin: 0 0 15px 0;
   max-width: 800px;
   margin-left: auto;
   margin-right: auto;
