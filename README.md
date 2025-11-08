@@ -215,9 +215,10 @@ Copy entire KnackAppLoader(copy).js to Knack Builder → JavaScript
 ### 5. Test
 Navigate to `#vespaquestionniare/` and hard refresh (Ctrl+Shift+R)
 
-**Current Version:** 1L
+**Current Version:** 1M
 
 **Version History:**
+- 1M: Backend API integration - Connected to live Supabase + Knack dual-write endpoints
 - 1L: UI polish - fixed progress bar overlap, smooth transitions, removed scrollbar
 - 1a: Initial release with mount fix
 
