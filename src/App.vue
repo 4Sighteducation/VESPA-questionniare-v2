@@ -381,17 +381,18 @@ export default {
   .questionnaire-content {
     margin: 0;
     border-radius: 0;
+    max-height: calc(100vh - 100px);
   }
 
   .navigation-buttons {
-    padding: 15px 20px;
+    padding: 12px 15px;
     gap: 10px;
   }
 
   .navigation-buttons .btn {
-    min-width: 120px;
-    padding: 12px 20px;
-    font-size: 15px;
+    min-width: 110px;
+    padding: 12px 16px;
+    font-size: 14px;
   }
 }
 </style>

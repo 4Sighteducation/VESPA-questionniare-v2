@@ -95,11 +95,11 @@ export default {
 <style scoped>
 .question-card {
   text-align: center;
-  padding: 20px;
+  padding: 15px 20px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-height: 400px;
+  flex: 1;
   animation: fadeIn 0.4s ease-out;
 }
 
@@ -147,8 +147,8 @@ export default {
   font-weight: 600;
   color: var(--text-primary);
   line-height: 1.3;
-  margin: 0 0 30px 0;
-  max-width: 700px;
+  margin: 0 0 25px 0;
+  max-width: 800px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -157,9 +157,27 @@ export default {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  gap: 12px;
-  max-width: 600px;
+  gap: 20px;
+  max-width: 800px;
   margin: 0 auto;
+}
+
+/* Wider on larger screens */
+@media (min-width: 1200px) {
+  .likert-scale {
+    gap: 30px;
+    max-width: 900px;
+  }
+  
+  .likert-circle {
+    width: 80px;
+    height: 80px;
+    font-size: 28px;
+  }
+  
+  .likert-label {
+    font-size: 14px;
+  }
 }
 
 .likert-option {
@@ -237,8 +255,7 @@ export default {
 
 @media (max-width: 768px) {
   .question-card {
-    padding: 15px 10px;
-    min-height: 350px;
+    padding: 12px 15px;
   }
 
   .question-text {
@@ -247,25 +264,23 @@ export default {
   }
 
   .likert-scale {
-    gap: 6px;
+    gap: 8px;
   }
 
   .likert-circle {
-    width: 52px;
-    height: 52px;
-    font-size: 18px;
-    border-width: 2px;
+    width: 56px;
+    height: 56px;
+    font-size: 20px;
   }
 
   .likert-label {
-    font-size: 10px;
+    font-size: 11px;
   }
 }
 
 @media (max-width: 480px) {
   .question-card {
-    padding: 10px 8px;
-    min-height: 300px;
+    padding: 10px 12px;
   }
 
   .question-text {
@@ -274,17 +289,17 @@ export default {
   }
 
   .likert-scale {
-    gap: 4px;
+    gap: 6px;
   }
 
   .likert-circle {
-    width: 46px;
-    height: 46px;
-    font-size: 16px;
+    width: 50px;
+    height: 50px;
+    font-size: 18px;
   }
 
   .likert-label {
-    font-size: 9px;
+    font-size: 10px;
   }
 }
 </style>
