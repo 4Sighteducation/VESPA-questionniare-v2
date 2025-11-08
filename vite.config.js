@@ -9,11 +9,11 @@ export default defineConfig({
     rollupOptions: {
       output: {
         // Generate versioned filenames for CDN cache busting
-        entryFileNames: 'questionnaire1g.js',
+        entryFileNames: 'questionnaire1h.js',
         chunkFileNames: 'chunks/[name].js',
         assetFileNames: (assetInfo) => {
           if (assetInfo.name.endsWith('.css')) {
-            return 'questionnaire1g.css'
+            return 'questionnaire1h.css'
           }
           return 'assets/[name].[ext]'
         }

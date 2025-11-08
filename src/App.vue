@@ -331,21 +331,23 @@ export default {
 }
 
 .questionnaire-container {
-  height: 100vh;
   display: flex;
   flex-direction: column;
+  height: 100vh;
+  max-height: 100vh;
   overflow: hidden;
 }
 
 .questionnaire-content {
-  flex: 1;
   display: flex;
   flex-direction: column;
   background: white;
   border-radius: 0 0 20px 20px;
   margin: 0 20px 20px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  min-height: 0;
+  /* Fixed height calculation: full viewport minus margins */
+  height: calc(100vh - 40px);
+  max-height: calc(100vh - 40px);
 }
 
 .question-area {
@@ -355,7 +357,8 @@ export default {
   justify-content: center;
   padding: 10px 20px 5px 20px;
   overflow-y: auto;
-  min-height: 0;
+  /* Ensure it doesn't grow beyond available space */
+  max-height: calc(100vh - 40px - 53px - 73px);
 }
 
 .navigation-buttons {
@@ -391,15 +394,19 @@ export default {
 @media (max-width: 768px) {
   .questionnaire-container {
     height: 100vh;
+    max-height: 100vh;
   }
 
   .questionnaire-content {
     margin: 0;
     border-radius: 0;
+    height: 100vh;
+    max-height: 100vh;
   }
 
   .question-area {
     padding: 8px 15px 5px 15px;
+    max-height: calc(100vh - 53px - 73px);
   }
 
   .navigation-buttons {
