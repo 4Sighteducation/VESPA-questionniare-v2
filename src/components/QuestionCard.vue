@@ -1,6 +1,7 @@
 <template>
   <div class="question-card">
-    <!-- Category Badge -->
+    <!-- Category Badge - HIDDEN FOR NOW -->
+    <!-- 
     <div class="category-badge">
       <div 
         class="category-icon"
@@ -12,6 +13,7 @@
         {{ categoryName }}
       </span>
     </div>
+    -->
 
     <!-- Question Text -->
     <h3 class="question-text">{{ question.text }}</h3>
@@ -93,7 +95,11 @@ export default {
 <style scoped>
 .question-card {
   text-align: center;
-  padding: 40px 20px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 400px;
   animation: fadeIn 0.4s ease-out;
 }
 
@@ -137,11 +143,11 @@ export default {
 }
 
 .question-text {
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 600;
   color: var(--text-primary);
-  line-height: 1.4;
-  margin: 0 0 40px 0;
+  line-height: 1.3;
+  margin: 0 0 30px 0;
   max-width: 700px;
   margin-left: auto;
   margin-right: auto;
@@ -151,9 +157,9 @@ export default {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  gap: 16px;
-  max-width: 650px;
-  margin: 0 auto 30px;
+  gap: 12px;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 .likert-option {
@@ -231,57 +237,54 @@ export default {
 
 @media (max-width: 768px) {
   .question-card {
-    padding: 30px 15px;
-  }
-
-  .category-badge {
-    padding: 10px 16px;
-  }
-
-  .category-icon {
-    width: 35px;
-    height: 35px;
-    font-size: 18px;
-  }
-
-  .category-name {
-    font-size: 16px;
+    padding: 15px 10px;
+    min-height: 350px;
   }
 
   .question-text {
-    font-size: 20px;
-    margin-bottom: 30px;
+    font-size: 18px;
+    margin-bottom: 20px;
   }
 
-  .likert-scale {
-    gap: 8px;
-  }
-
-  .likert-circle {
-    width: 56px;
-    height: 56px;
-    font-size: 20px;
-    border-width: 2px;
-  }
-
-  .likert-label {
-    font-size: 11px;
-  }
-}
-
-@media (max-width: 480px) {
   .likert-scale {
     gap: 6px;
   }
 
   .likert-circle {
-    width: 48px;
-    height: 48px;
+    width: 52px;
+    height: 52px;
     font-size: 18px;
+    border-width: 2px;
   }
 
   .likert-label {
     font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .question-card {
+    padding: 10px 8px;
+    min-height: 300px;
+  }
+
+  .question-text {
+    font-size: 16px;
+    margin-bottom: 15px;
+  }
+
+  .likert-scale {
+    gap: 4px;
+  }
+
+  .likert-circle {
+    width: 46px;
+    height: 46px;
+    font-size: 16px;
+  }
+
+  .likert-label {
+    font-size: 9px;
   }
 }
 </style>

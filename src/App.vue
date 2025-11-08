@@ -211,6 +211,25 @@ export default {
       state.value = 'questionnaire'
       currentQuestionIndex.value = 0
       responses.value = {}
+      
+      // Shuffle questions for randomization
+      shuffleQuestions()
+    }
+    
+    function shuffleQuestions() {
+      // Fisher-Yates shuffle algorithm
+      const shuffled = [...questions]
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+      }
+      
+      // Replace questions array with shuffled version
+      // Note: We need to modify the reactive questions reference
+      questions.length = 0
+      shuffled.forEach(q => questions.push(q))
+      
+      console.log('[Questionnaire V2] Questions shuffled for randomization')
     }
 
     function nextQuestion() {
@@ -319,20 +338,23 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
   background: white;
   border-radius: 0 0 20px 20px;
-  padding: 20px;
+  padding: 0;
   margin: 0 20px 20px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  max-height: calc(100vh - 120px);
+  overflow: hidden;
 }
 
 .navigation-buttons {
   display: flex;
   justify-content: space-between;
   gap: 15px;
-  padding: 20px 30px;
+  padding: 15px 20px;
   border-top: 1px solid #e0e0e0;
+  flex-shrink: 0;
 }
 
 .navigation-buttons .btn {
