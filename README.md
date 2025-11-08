@@ -180,24 +180,45 @@ npm run build
 
 ## Deployment
 
-### 1. Build
+### IMPORTANT: CDN Cache Busting Strategy
+
+JSDelivr CDN caches files aggressively. After each code change, you MUST increment the version suffix:
+
+**Version Pattern:** `questionnaire1a.js` → `questionnaire1b.js` → `questionnaire1c.js` → etc.
+
+### 1. Build with New Version
 ```bash
+# Edit vite.config.js - change version:
+# entryFileNames: 'questionnaire1a.js'  →  'questionnaire1b.js'
+# (in assetFileNames too for CSS)
+
 npm run build
 ```
 
 ### 2. Push to GitHub
 ```bash
 git add .
-git commit -m "Build questionnaire v2"
+git commit -m "Version 1b - [describe changes]"
 git push origin main
 ```
 
-### 3. Files are auto-available via CDN
-- JS: `https://cdn.jsdelivr.net/gh/4Sighteducation/VESPA-questionniare-v2@main/dist/questionnaire.js`
-- CSS: `https://cdn.jsdelivr.net/gh/4Sighteducation/VESPA-questionniare-v2@main/dist/questionnaire.css`
+### 3. Update KnackAppLoader
+```javascript
+// Change in KnackAppLoader(copy).js:
+scriptUrl: '...questionnaire1a.js'  →  '...questionnaire1b.js'
+cssUrl: '...questionnaire1a.css'  →  '...questionnaire1b.css'
+```
 
-### 4. Add to KnackAppLoader
-See `integration_config.js` for exact configuration.
+### 4. Upload to Knack Builder
+Copy entire KnackAppLoader(copy).js to Knack Builder → JavaScript
+
+### 5. Test
+Navigate to `#vespaquestionniare/` and hard refresh (Ctrl+Shift+R)
+
+**Current Version:** 1a
+
+**Version History:**
+- 1a: Initial release with mount fix
 
 ## Database Schema
 

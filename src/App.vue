@@ -156,6 +156,24 @@ export default {
 
         console.log('[Questionnaire V2] User:', user.email)
 
+        // TEST MODE: Check URL parameter for bypass
+        const urlParams = new URLSearchParams(window.location.search)
+        const testMode = urlParams.get('test') === 'true' || user.isTestMode
+
+        if (testMode) {
+          console.log('[Questionnaire V2] TEST MODE ENABLED - Bypassing validation')
+          validationResult.value = {
+            allowed: true,
+            cycle: 1,
+            reason: 'test_mode',
+            message: 'Test mode enabled',
+            academicYear: '2025/2026',
+            userRecord: { id: 'test_user', email: user.email }
+          }
+          state.value = 'instructions'
+          return
+        }
+
         // Validate questionnaire access
         const validation = await validateQuestionnaireAccess(user.email, user.accountId)
         validationResult.value = validation
