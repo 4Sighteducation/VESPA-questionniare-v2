@@ -114,16 +114,40 @@ body {
   background: linear-gradient(135deg, var(--vespa-secondary) 0%, var(--vespa-primary) 100%);
   color: white;
   box-shadow: 0 4px 12px rgba(7, 155, 170, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary:not(:disabled) {
+  /* Make enabled state VERY obvious */
+  animation: pulse-glow 2s ease-in-out infinite;
+  box-shadow: 0 6px 24px rgba(7, 155, 170, 0.6);
+  transform: scale(1.05);
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 6px 24px rgba(7, 155, 170, 0.6);
+  }
+  50% {
+    box-shadow: 0 8px 32px rgba(7, 155, 170, 0.8);
+  }
 }
 
 .btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(7, 155, 170, 0.4);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 8px 28px rgba(7, 155, 170, 0.7);
+  animation: none; /* Stop pulse on hover */
 }
 
 .btn-primary:disabled {
-  opacity: 0.6;
+  opacity: 0.4;
   cursor: not-allowed;
+  background: #d0d0d0;
+  color: #999;
+  box-shadow: none;
+  transform: scale(1);
+  animation: none;
 }
 
 .btn-secondary {

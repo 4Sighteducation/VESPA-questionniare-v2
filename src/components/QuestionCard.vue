@@ -41,10 +41,16 @@
       </label>
     </div>
 
-    <!-- Helper text for outcome questions -->
-    <p v-if="question.category === 'OUTCOME'" class="helper-text">
+    <!-- Explainer text for all questions -->
+    <p v-if="question.explainer" class="explainer-text">
       <i class="fa fa-info-circle"></i>
-      This question helps us understand your overall confidence and doesn't affect your VESPA scores.
+      {{ question.explainer }}
+    </p>
+    
+    <!-- Additional note for outcome questions -->
+    <p v-if="question.category === 'OUTCOME'" class="outcome-note">
+      <i class="fa fa-lightbulb"></i>
+      Note: This question doesn't affect your VESPA scores.
     </p>
   </div>
 </template>
@@ -226,19 +232,38 @@ export default {
   font-weight: 600;
 }
 
-.helper-text {
+.explainer-text {
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: 13px;
   font-style: italic;
-  margin: 20px 0 0 0;
+  margin: 18px 0 0 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 8px;
+  max-width: 700px;
+  line-height: 1.5;
+}
+
+.explainer-text i {
+  color: var(--vespa-primary);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.outcome-note {
+  color: #f59e0b;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 8px 0 0 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
 }
 
-.helper-text i {
-  color: var(--vespa-primary);
+.outcome-note i {
+  color: #f59e0b;
 }
 
 @media (max-width: 768px) {
