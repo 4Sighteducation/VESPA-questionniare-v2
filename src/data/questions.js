@@ -8,7 +8,7 @@ export const questions = [
   // 29 VESPA Questions (q1-q28 + q29)
   {
     id: 'q1',
-    text: "I've worked out the next steps I need to take to reach my career goals",
+    text: "I've worked out the next steps in my life",
     explainer: "This is about whether you have a clear next action for your studies.",
     category: 'VISION',
     order: 1,
