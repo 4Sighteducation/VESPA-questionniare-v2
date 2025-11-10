@@ -86,8 +86,8 @@ export default {
       return categories[categoryKey]?.color || '#079baa'
     },
     viewReport() {
-      // Navigate to the existing report page (scene_43)
-      window.location.hash = '#vespa-results'
+      // Navigate to the V2 report page (scene_1284)
+      window.location.hash = '#vespa-coaching-report/'
     },
     goHome() {
       window.location.hash = '#landing-page/'
