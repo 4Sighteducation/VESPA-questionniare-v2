@@ -9,14 +9,16 @@ export default defineConfig({
     rollupOptions: {
       output: {
         // Generate versioned filenames for CDN cache busting
-        entryFileNames: 'questionnaire1O.js',
+        entryFileNames: 'questionnaire1P.js',
         chunkFileNames: 'chunks/[name].js',
         assetFileNames: (assetInfo) => {
           if (assetInfo.name.endsWith('.css')) {
-            return 'questionnaire1O.css'
+            return 'questionnaire1P.css'
           }
           return 'assets/[name].[ext]'
-        }
+        },
+        format: 'iife', // Wrap in IIFE to isolate variables
+        name: 'VESPAQuestionnaire' // Window global for the IIFE
       }
     }
   },
