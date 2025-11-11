@@ -3,9 +3,43 @@ import vue from '@vitejs/plugin-vue';
 import path from 'path';
 
 export default defineConfig(({ mode }) => {
-  // Load env file based on `mode` in the current working directory.
-  // Set the third parameter to '' to load all env regardless of the `VITE_` prefix.
+  // Load env file (optional - can also hardcode below)
   const env = loadEnv(mode, process.cwd(), '');
+  
+  // ============================================
+  // SUPABASE CREDENTIALS - HARDCODED HERE
+  // These values are EMBEDDED into the built JS file at build time
+  // The .env file is ONLY used during build - values are baked into the final JS
+  // 
+  // HOW IT WORKS:
+  // 1. During build, Vite replaces import.meta.env.VITE_SUPABASE_URL with the actual string
+  // 2. The built JS file contains: const SUPABASE_URL = "https://xxx.supabase.co";
+  // 3. When loaded from CDN, the values are already hardcoded in the JS file
+  // 4. No .env file is needed at runtime - everything is embedded!
+  //
+  // 🔒 SECURITY NOTE:
+  // - ANON KEY is PUBLIC and SAFE to expose (designed for frontend use)
+  // - Security comes from Row Level Security (RLS) policies in Supabase
+  // - This is STANDARD PRACTICE (Firebase, Stripe, etc. all do this)
+  // - SERVICE KEY stays on backend only (never exposed)
+  // See SECURITY_EXPLANATION.md for details
+  // ============================================
+  
+  // Option 1: Use .env file (gitignored, good for local dev)
+  // Option 2: Hardcode directly below (anon key is PUBLIC, safe to commit)
+  
+  const SUPABASE_URL = env.VITE_SUPABASE_URL || 'https://qcdcdzfanrlvdcagmwmg.supabase.co';
+  const SUPABASE_ANON_KEY = env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjZGNkemZhbnJsdmRjYWdtd21nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjU3MjY5MDAsImV4cCI6MjA0MTMwMjkwMH0.placeholder';
+  const API_URL = env.VITE_API_URL || 'https://vespa-dashboard-9a1f84ee5341.herokuapp.com';
+  
+  // Validate that credentials are set (warn but don't fail if using .env)
+  if (!SUPABASE_URL || SUPABASE_URL === 'YOUR_SUPABASE_URL_HERE' || 
+      !SUPABASE_ANON_KEY || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY_HERE' || 
+      SUPABASE_ANON_KEY.includes('placeholder')) {
+    console.warn('⚠️ WARNING: Supabase credentials may not be set!');
+    console.warn('⚠️ Check .env file or hardcode values in vite.config.js');
+    // Don't throw - let build continue if .env has values
+  }
   
   return {
     plugins: [vue()],
@@ -26,11 +60,11 @@ export default defineConfig(({ mode }) => {
           format: 'iife',
           name: 'VESPAStudentActivities',
           // Version suffix for CDN cache busting - INCREMENT FOR EACH BUILD
-          entryFileNames: 'student-activities1b.js',
-          chunkFileNames: 'student-activities1b-[hash].js',
+          entryFileNames: 'student-activities1c.js',
+          chunkFileNames: 'student-activities1c-[hash].js',
           assetFileNames: (assetInfo) => {
             if (assetInfo.name.endsWith('.css')) {
-              return 'student-activities1b.css';
+              return 'student-activities1c.css';
             }
             return 'assets/[name]-[hash][extname]';
           }
@@ -46,10 +80,11 @@ export default defineConfig(({ mode }) => {
       }
     },
     define: {
-      // Embed env variables at build time from .env file
-      'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL || ''),
-      'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY || ''),
-      'import.meta.env.VITE_API_URL': JSON.stringify(env.VITE_API_URL || 'https://vespa-dashboard-9a1f84ee5341.herokuapp.com')
+      // These values are REPLACED at build time with the actual strings above
+      // In the final built JS file, you'll see: const SUPABASE_URL = "https://xxx.supabase.co";
+      'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(SUPABASE_URL),
+      'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(SUPABASE_ANON_KEY),
+      'import.meta.env.VITE_API_URL': JSON.stringify(API_URL)
     }
   };
 });
