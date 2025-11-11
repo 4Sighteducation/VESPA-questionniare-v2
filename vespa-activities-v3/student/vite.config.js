@@ -3,8 +3,19 @@ import vue from '@vitejs/plugin-vue';
 import path from 'path';
 
 export default defineConfig(({ mode }) => {
-  // Load env file (optional - can also hardcode below)
-  const env = loadEnv(mode, process.cwd(), '');
+  // Load env file from the student directory (where vite.config.js is located)
+  // loadEnv searches for .env files starting from the rootDir (second param)
+  // The third param '' means load ALL env vars (not just VITE_ prefixed)
+  // But Vite only exposes VITE_ prefixed vars to client code anyway
+  const rootDir = path.resolve(__dirname);
+  const env = loadEnv(mode, rootDir, '');
+  
+  // Debug: Log what we loaded (only in dev mode)
+  if (mode === 'development') {
+    console.log('🔍 Loading env from:', rootDir);
+    console.log('🔍 VITE_SUPABASE_URL:', env.VITE_SUPABASE_URL ? '✅ Found' : '❌ Missing');
+    console.log('🔍 VITE_SUPABASE_ANON_KEY:', env.VITE_SUPABASE_ANON_KEY ? '✅ Found (' + env.VITE_SUPABASE_ANON_KEY.substring(0, 20) + '...)' : '❌ Missing');
+  }
   
   // ============================================
   // SUPABASE CREDENTIALS - HARDCODED HERE
@@ -25,20 +36,16 @@ export default defineConfig(({ mode }) => {
   // See SECURITY_EXPLANATION.md for details
   // ============================================
   
-  // Option 1: Use .env file (gitignored, good for local dev)
-  // Option 2: Hardcode directly below (anon key is PUBLIC, safe to commit)
-  
+  // Load from .env file, with fallback to hardcoded values
   const SUPABASE_URL = env.VITE_SUPABASE_URL || 'https://qcdcdzfanrlvdcagmwmg.supabase.co';
-  const SUPABASE_ANON_KEY = env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjZGNkemZhbnJsdmRjYWdtd21nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjU3MjY5MDAsImV4cCI6MjA0MTMwMjkwMH0.placeholder';
+  const SUPABASE_ANON_KEY = env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjZGNkemZhbnJsdmRjYWdtd21nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM5MDc4MjYsImV4cCI6MjA2OTQ4MzgyNn0.ahntO4OGSBfR2vnP_gMxfaRggP4eD5mejzq5sZegmME';
   const API_URL = env.VITE_API_URL || 'https://vespa-dashboard-9a1f84ee5341.herokuapp.com';
   
-  // Validate that credentials are set (warn but don't fail if using .env)
-  if (!SUPABASE_URL || SUPABASE_URL === 'YOUR_SUPABASE_URL_HERE' || 
-      !SUPABASE_ANON_KEY || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY_HERE' || 
-      SUPABASE_ANON_KEY.includes('placeholder')) {
-    console.warn('⚠️ WARNING: Supabase credentials may not be set!');
-    console.warn('⚠️ Check .env file or hardcode values in vite.config.js');
-    // Don't throw - let build continue if .env has values
+  // Validate that credentials are set
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes('placeholder')) {
+    console.error('❌ ERROR: Supabase ANON key not properly loaded!');
+    console.error('❌ Check .env file has VITE_SUPABASE_ANON_KEY set');
+    throw new Error('Supabase credentials must be set before building');
   }
   
   return {
@@ -60,11 +67,11 @@ export default defineConfig(({ mode }) => {
           format: 'iife',
           name: 'VESPAStudentActivities',
           // Version suffix for CDN cache busting - INCREMENT FOR EACH BUILD
-          entryFileNames: 'student-activities1c.js',
-          chunkFileNames: 'student-activities1c-[hash].js',
+          entryFileNames: 'student-activities1d.js',
+          chunkFileNames: 'student-activities1d-[hash].js',
           assetFileNames: (assetInfo) => {
             if (assetInfo.name.endsWith('.css')) {
-              return 'student-activities1c.css';
+              return 'student-activities1d.css';
             }
             return 'assets/[name]-[hash][extname]';
           }
