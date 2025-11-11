@@ -56,20 +56,30 @@ export function useAchievements(studentEmail) {
       
       achievements.value = achievementsData || [];
       
-      // Calculate total points
+      // Calculate total points from achievements
       totalPoints.value = achievements.value.reduce((sum, a) => sum + (a.points_value || 0), 0);
       
       console.log('[useAchievements] ✅ Loaded achievements:', achievements.value.length, 'Total points:', totalPoints.value);
       
-      // Also fetch from vespa_students record (cached totals)
-      const { data: studentData, error: studentError } = await supabase
-        .from('vespa_students')
-        .select('total_points, total_activities_completed, total_achievements')
-        .eq('email', studentEmail)
-        .single();
-      
-      if (studentData) {
-        totalPoints.value = studentData.total_points || totalPoints.value;
+      // Fetch from API endpoint (cached totals from vespa_students table)
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/students/stats?email=${studentEmail}`
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.total_points !== undefined) {
+            // Use API value if available (more accurate, includes all sources)
+            totalPoints.value = data.total_points || totalPoints.value;
+            console.log('[useAchievements] ✅ Updated total_points from API:', totalPoints.value);
+          }
+        } else {
+          console.warn('[useAchievements] Could not fetch student stats from API, using calculated total');
+        }
+      } catch (err) {
+        console.warn('[useAchievements] Error fetching student stats:', err);
+        // Continue with calculated totalPoints from achievements
       }
       
     } catch (err) {
