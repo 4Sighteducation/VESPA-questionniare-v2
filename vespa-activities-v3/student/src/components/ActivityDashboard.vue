@@ -1,65 +1,105 @@
 <template>
   <div class="activity-dashboard">
-    <!-- Header -->
-    <div class="dashboard-header">
-      <h1>VESPA Activities</h1>
-      <div class="header-actions">
-        <button @click="$emit('show-achievements')" class="btn btn-outline">
-          🏆 Achievements ({{ totalPoints }} pts)
-        </button>
-      </div>
-    </div>
-
-    <!-- Progress Overview -->
-    <div class="progress-overview card">
-      <h2>Your Progress</h2>
-      <div class="progress-stats">
-        <div class="stat">
-          <div class="stat-value">{{ completedCount }}</div>
-          <div class="stat-label">Completed</div>
+    <!-- Beautiful Header with Gradient -->
+    <div class="vespa-header">
+      <div class="header-content">
+        <div class="user-welcome">
+          <h1 class="animated-title">
+            <span class="wave">👋</span> Hi {{ firstName }}!
+          </h1>
+          <p class="subtitle">Ready to boost your VESPA scores today?</p>
         </div>
-        <div class="stat">
-          <div class="stat-value">{{ inProgressCount }}</div>
-          <div class="stat-label">In Progress</div>
-        </div>
-        <div class="stat">
-          <div class="stat-value">{{ assignedCount }}</div>
-          <div class="stat-label">Assigned</div>
-        </div>
-        <div class="stat">
-          <div class="stat-value">{{ totalPoints }}</div>
-          <div class="stat-label">Points</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- VESPA Scores Summary -->
-    <div v-if="vespaScores" class="scores-summary card">
-      <h3>Your VESPA Scores</h3>
-      <div class="scores-grid">
-        <div class="score-item" v-for="category in categories" :key="category">
-          <div class="score-label">{{ category }}</div>
-          <div class="score-bar">
-            <div 
-              class="score-fill" 
-              :style="{ 
-                width: `${(vespaScores[category.toLowerCase()] || 0) * 10}%`,
-                backgroundColor: categoryColors[category]
-              }"
-            ></div>
-            <span class="score-value">{{ vespaScores[category.toLowerCase()] || 0 }}/10</span>
+        <div class="header-stats">
+          <div class="stat-card">
+            <span class="stat-emoji">⭐</span>
+            <div class="stat-content">
+              <div class="stat-value">{{ totalPoints }}</div>
+              <div class="stat-label">Total Points</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-emoji">🎯</span>
+            <div class="stat-content">
+              <div class="stat-value">{{ completedCount }}</div>
+              <div class="stat-label">Completed</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-emoji">📋</span>
+            <div class="stat-content">
+              <div class="stat-value">{{ inProgressCount }}</div>
+              <div class="stat-label">In Progress</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-emoji">📚</span>
+            <div class="stat-content">
+              <div class="stat-value">{{ assignedCount }}</div>
+              <div class="stat-label">Assigned</div>
+            </div>
           </div>
         </div>
       </div>
+      
+      <!-- Achievement Button (Top Right) -->
+      <button @click="$emit('show-achievements')" class="achievements-button">
+        <span class="trophy-icon">🏆</span>
+        <span class="achievement-text">Achievements ({{ totalPoints }} pts)</span>
+      </button>
     </div>
 
-    <!-- Recommended Activities -->
-    <section class="recommended-section">
-      <h2>📊 Recommended for Your Scores</h2>
-      <div v-if="recommendedActivities.length === 0" class="empty-state">
-        <p>No activities recommended at this time. Complete the VESPA questionnaire to get personalized recommendations.</p>
+    <!-- VESPA Scores with Circular Indicators -->
+    <section class="vespa-scores-section" v-if="vespaScores">
+      <h2 class="section-title">
+        <span class="title-icon">📊</span>
+        Your VESPA Profile
+      </h2>
+      <div class="scores-grid">
+        <div 
+          v-for="category in categories" 
+          :key="category"
+          class="score-card" 
+          :data-category="category.toLowerCase()"
+          :data-score="vespaScores[category.toLowerCase()] || 0"
+        >
+          <div class="score-header" :style="{ background: categoryColors[category] }">
+            <span class="score-emoji">{{ categoryEmojis[category] }}</span>
+            <span class="score-label">{{ category }}</span>
+          </div>
+          <div class="score-body">
+            <div class="score-circle" :style="{ '--score': vespaScores[category.toLowerCase()] || 0 }">
+              <svg viewBox="0 0 36 36">
+                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <path class="circle-fill" :stroke="categoryColors[category]" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              </svg>
+              <span class="score-value">{{ vespaScores[category.toLowerCase()] || 0 }}</span>
+            </div>
+            <div class="score-dots" :style="{ color: categoryColors[category] }">
+              <span 
+                v-for="n in 10" 
+                :key="n"
+                class="score-dot" 
+                :class="{ filled: n <= (vespaScores[category.toLowerCase()] || 0) }"
+              ></span>
+            </div>
+            <div class="score-rating" :style="{ color: categoryColors[category] }">
+              {{ getScoreRating(vespaScores[category.toLowerCase()] || 0) }}
+            </div>
+            <button class="improve-btn" @click="handleImproveCategory(category.toLowerCase())">
+              Improve {{ categoryEmojis[category] }}
+            </button>
+          </div>
+        </div>
       </div>
-      <div v-else class="activity-grid">
+    </section>
+
+    <!-- Recommended Activities -->
+    <section class="recommended-section" v-if="recommendedActivities.length > 0">
+      <h2 class="section-title">
+        <span class="title-icon">📊</span>
+        Recommended for Your Scores
+      </h2>
+      <div class="activity-grid">
         <ActivityCard
           v-for="activity in recommendedActivities"
           :key="activity.id"
@@ -70,41 +110,51 @@
       </div>
     </section>
 
-    <!-- Problem-Based Selection -->
-    <section class="problem-section card">
-      <h2>🎯 Select by Problem</h2>
-      <ProblemSelector @select-activity="handleAddActivity" />
+    <!-- My Activities (Grouped by Category) -->
+    <section class="my-activities" v-if="filteredMyActivities.length > 0">
+      <h2 class="section-title">
+        <span class="title-icon">✨</span>
+        Your Activities
+        <span class="title-badge">{{ toCompleteCount }} to complete | {{ completedCount }} completed</span>
+      </h2>
+      
+      <!-- Group by Category -->
+      <div v-for="(categoryActivities, categoryName) in activitiesByCategory" :key="categoryName" 
+           class="category-group"
+           :class="`vespa-${categoryName.toLowerCase()}`"
+           :style="{ 
+             borderColor: categoryColors[categoryName], 
+             backgroundColor: `${categoryColors[categoryName]}10`
+           }">
+        <h3 class="category-group-title">
+          {{ categoryEmojis[categoryName] }} {{ categoryName.toUpperCase() }}
+        </h3>
+        <div class="activities-grid">
+          <ActivityCard
+            v-for="assignment in categoryActivities"
+            :key="assignment.activity_id || assignment.id"
+            :activity="assignment.activities || assignment"
+            :progress="assignment.progress"
+            :is-assigned="true"
+            @start-activity="handleStartActivity"
+            @remove-activity="handleRemoveActivity"
+          />
+        </div>
+      </div>
     </section>
 
-    <!-- My Activities -->
-    <section class="my-activities">
-      <div class="section-header">
-        <h2>📚 My Activities</h2>
-        <CategoryFilter v-model="filterCategory" />
-      </div>
-      <div v-if="filteredMyActivities.length === 0" class="empty-state">
-        <p>No activities assigned yet. Browse recommended activities or select by problem above.</p>
-      </div>
-      <div v-else class="activity-grid">
-        <ActivityCard
-          v-for="assignment in filteredMyActivities"
-          :key="assignment.activity_id || assignment.id"
-          :activity="assignment.activities || assignment"
-          :progress="assignment.progress"
-          :is-assigned="true"
-          @start-activity="handleStartActivity"
-          @remove-activity="handleRemoveActivity"
-        />
-      </div>
-    </section>
+    <!-- Empty State -->
+    <div v-if="filteredMyActivities.length === 0" class="empty-state-large">
+      <span class="empty-icon">🌱</span>
+      <h3>No Activities Yet</h3>
+      <p>Browse recommended activities above or select by problem to get started!</p>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue';
 import ActivityCard from './ActivityCard.vue';
-import ProblemSelector from './ProblemSelector.vue';
-import CategoryFilter from './CategoryFilter.vue';
 import { CATEGORY_COLORS, VESPA_CATEGORIES } from '../../shared/constants';
 
 const props = defineProps({
@@ -140,6 +190,24 @@ const filterCategory = ref(null);
 const categories = VESPA_CATEGORIES;
 const categoryColors = CATEGORY_COLORS;
 
+// Category Emojis
+const categoryEmojis = {
+  'Vision': '👁️',
+  'Effort': '💪',
+  'Systems': '⚙️',
+  'Practice': '🎯',
+  'Attitude': '🧠'
+};
+
+// Get student first name
+const firstName = computed(() => {
+  if (typeof Knack !== 'undefined' && Knack.getUserAttributes) {
+    const user = Knack.getUserAttributes();
+    return user?.name?.split(' ')[0] || 'Student';
+  }
+  return 'Student';
+});
+
 // Computed
 const completedCount = computed(() => {
   return props.myActivities.filter(a => a.progress?.status === 'completed').length;
@@ -153,6 +221,10 @@ const assignedCount = computed(() => {
   return props.myActivities.length;
 });
 
+const toCompleteCount = computed(() => {
+  return props.myActivities.filter(a => a.progress?.status !== 'completed').length;
+});
+
 const filteredMyActivities = computed(() => {
   if (!filterCategory.value) return props.myActivities;
   return props.myActivities.filter(assignment => {
@@ -161,12 +233,39 @@ const filteredMyActivities = computed(() => {
   });
 });
 
+// Group activities by category
+const activitiesByCategory = computed(() => {
+  const grouped = {};
+  filteredMyActivities.value.forEach(assignment => {
+    const activity = assignment.activities || assignment;
+    const category = activity.vespa_category;
+    if (category) {
+      if (!grouped[category]) {
+        grouped[category] = [];
+      }
+      grouped[category].push(assignment);
+    }
+  });
+  return grouped;
+});
+
 // Methods
 const getProgressForActivity = (activityId) => {
   const assignment = props.myActivities.find(a => 
     (a.activity_id || a.id) === activityId
   );
   return assignment?.progress || null;
+};
+
+const getScoreRating = (score) => {
+  if (score >= 9) return 'Excellent! 🌟';
+  if (score >= 8) return 'Very Good! ✨';
+  if (score >= 7) return 'Great! 🎯';
+  if (score >= 6) return 'Good Progress 👍';
+  if (score >= 5) return 'Solid Foundation 💪';
+  if (score >= 4) return 'Developing 📈';
+  if (score >= 3) return 'Building Skills 🔨';
+  return 'Getting Started 🌱';
 };
 
 const handleStartActivity = (activity) => {
@@ -180,160 +279,431 @@ const handleAddActivity = (activity) => {
 const handleRemoveActivity = (activityId) => {
   emit('remove-activity', activityId);
 };
+
+const handleImproveCategory = (category) => {
+  // Filter activities by category
+  filterCategory.value = category;
+  // Scroll to activities section
+  const section = document.querySelector('.my-activities');
+  if (section) {
+    section.scrollIntoView({ behavior: 'smooth' });
+  }
+};
 </script>
 
 <style scoped>
 .activity-dashboard {
-  padding: var(--spacing-lg);
-  max-width: 1400px;
-  margin: 0 auto;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f9fc 0%, #e8f4f8 100%);
 }
 
-.dashboard-header {
+/* ===== Beautiful Header ===== */
+.vespa-header {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  color: var(--white);
+  padding: 2rem;
+  border-radius: 0 0 30px 30px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.vespa-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+}
+
+.header-content {
+  position: relative;
+  z-index: 1;
+}
+
+.user-welcome {
+  margin-bottom: 2rem;
+}
+
+.animated-title {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0 0 0.5rem 0;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-xl);
+  gap: 0.5rem;
+  color: white;
 }
 
-.dashboard-header h1 {
+.wave {
+  display: inline-block;
+  animation-name: wave-animation;
+  animation-duration: 2.5s;
+  animation-iteration-count: infinite;
+  transform-origin: 70% 70%;
+}
+
+@keyframes wave-animation {
+  0% { transform: rotate(0deg); }
+  10% { transform: rotate(14deg); }
+  20% { transform: rotate(-8deg); }
+  30% { transform: rotate(14deg); }
+  40% { transform: rotate(-4deg); }
+  50% { transform: rotate(10deg); }
+  60% { transform: rotate(0deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  opacity: 0.9;
   margin: 0;
-  color: var(--dark-blue);
 }
 
-.header-actions {
-  display: flex;
-  gap: var(--spacing-sm);
-}
-
-.progress-overview {
-  margin-bottom: var(--spacing-lg);
-}
-
-.progress-stats {
+.header-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: var(--spacing-md);
-  margin-top: var(--spacing-md);
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
 }
 
-.stat {
-  text-align: center;
+.stat-card {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: all 0.3s;
+}
+
+.stat-card:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.stat-emoji {
+  font-size: 1.5rem;
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
 }
 
 .stat-value {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  color: var(--primary);
+  line-height: 1;
 }
 
 .stat-label {
   font-size: 0.875rem;
-  color: var(--dark-gray);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  opacity: 0.9;
 }
 
-.scores-summary {
-  margin-bottom: var(--spacing-lg);
+/* Achievement Button */
+.achievements-button {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid var(--primary-light);
+  border-radius: 20px;
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-weight: 600;
+  color: var(--primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.achievements-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  background: white;
+}
+
+.trophy-icon {
+  font-size: 1.25rem;
+}
+
+/* ===== VESPA Scores Section ===== */
+.vespa-scores-section {
+  background: var(--white);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin: 0 2rem 2rem 2rem;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--dark-blue);
+  margin: 0 0 1.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.title-icon {
+  font-size: 1.75rem;
+}
+
+.title-badge {
+  background: var(--primary-light);
+  color: var(--dark-blue);
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  margin-left: auto;
+  font-weight: 600;
 }
 
 .scores-grid {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
-  margin-top: var(--spacing-md);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
 }
 
-.score-item {
+.score-card {
+  background: var(--white);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s;
+  border: 2px solid #f1f3f5;
+}
+
+.score-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.score-header {
+  padding: 0.75rem;
+  color: var(--white);
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
+  gap: 0.5rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.score-emoji {
+  font-size: 1.25rem;
 }
 
 .score-label {
-  min-width: 100px;
-  font-weight: 500;
-  color: var(--dark-blue);
+  font-size: 0.95rem;
 }
 
-.score-bar {
-  flex: 1;
-  height: 30px;
-  background: var(--gray);
-  border-radius: var(--radius-md);
+.score-body {
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.score-circle {
+  width: 100px;
+  height: 100px;
   position: relative;
-  overflow: hidden;
 }
 
-.score-fill {
+.score-circle svg {
+  width: 100%;
   height: 100%;
-  transition: width 0.3s;
-  border-radius: var(--radius-md);
+  transform: rotate(-90deg);
+}
+
+.circle-bg {
+  fill: none;
+  stroke: #e9ecef;
+  stroke-width: 4;
+}
+
+.circle-fill {
+  fill: none;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: calc(var(--score) * 10), 100;
+  transition: stroke-dasharray 1s ease;
 }
 
 .score-value {
   position: absolute;
-  right: var(--spacing-sm);
   top: 50%;
-  transform: translateY(-50%);
-  font-weight: 600;
-  color: var(--text);
-  font-size: 0.875rem;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--dark-blue);
 }
 
+.score-dots {
+  display: flex;
+  gap: 0.25rem;
+  justify-content: center;
+}
+
+.score-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e9ecef;
+  transition: all 0.3s;
+}
+
+.score-dot.filled {
+  background: currentColor;
+  transform: scale(1.2);
+}
+
+.score-rating {
+  font-size: 0.875rem;
+  text-align: center;
+  font-weight: 500;
+  min-height: 1.5rem;
+}
+
+.improve-btn {
+  background: var(--white);
+  border: 2px solid currentColor;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  color: inherit;
+  width: 100%;
+}
+
+.improve-btn:hover {
+  background: currentColor;
+  color: var(--white);
+  transform: scale(1.05);
+}
+
+/* ===== Sections ===== */
 .recommended-section,
 .my-activities {
-  margin-bottom: var(--spacing-xl);
+  padding: 0 2rem;
+  margin-bottom: 2rem;
 }
 
-.section-header {
+/* Category Groups */
+.category-group {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 2px solid;
+  transition: all 0.3s;
+  background: white;
+}
+
+.category-group:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+}
+
+.category-group-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--dark-blue);
+  margin: 0 0 1.25rem 0;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-md);
+  gap: 0.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.activities-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
 }
 
 .activity-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: var(--spacing-md);
+  gap: 1.5rem;
 }
 
-.empty-state {
-  padding: var(--spacing-xl);
+.empty-state-large {
   text-align: center;
-  color: var(--dark-gray);
+  padding: 4rem 2rem;
   background: white;
-  border-radius: var(--radius-lg);
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin: 2rem;
 }
 
-.problem-section {
-  margin-bottom: var(--spacing-xl);
+.empty-icon {
+  font-size: 4rem;
+  display: block;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty-state-large h3 {
+  font-size: 1.5rem;
+  color: var(--dark-blue);
+  margin-bottom: 0.5rem;
+}
+
+.empty-state-large p {
+  color: var(--dark-gray);
 }
 
 @media (max-width: 768px) {
-  .activity-dashboard {
-    padding: var(--spacing-md);
+  .vespa-header {
+    padding: 1.5rem 1rem;
+    border-radius: 0 0 20px 20px;
   }
   
-  .dashboard-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--spacing-md);
+  .animated-title {
+    font-size: 1.5rem;
   }
   
-  .section-header {
-    flex-direction: column;
-    align-items: flex-start;
+  .header-stats {
+    grid-template-columns: repeat(2, 1fr);
   }
   
-  .activity-grid {
+  .achievements-button {
+    position: static;
+    width: 100%;
+    margin-top: 1rem;
+    justify-content: center;
+  }
+  
+  .vespa-scores-section,
+  .recommended-section,
+  .my-activities {
+    padding: 0 1rem;
+    margin: 0 1rem 1.5rem 1rem;
+  }
+  
+  .scores-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .activity-grid,
+  .activities-grid {
     grid-template-columns: 1fr;
   }
   
-  .progress-stats {
-    grid-template-columns: repeat(2, 1fr);
+  .category-group {
+    padding: 1rem;
   }
 }
 </style>
