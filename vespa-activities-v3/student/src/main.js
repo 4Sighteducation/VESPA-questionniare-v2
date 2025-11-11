@@ -8,7 +8,7 @@ import App from './App.vue';
 import './style.css';
 
 // Global initializer function for KnackAppLoader
-// This will be exposed on window by the IIFE wrapper
+// Exposed on window - will be available after script loads
 window.initializeStudentActivitiesV3 = function() {
   console.log('[VESPA Activities Student V3] Initializer called by KnackAppLoader');
   
@@ -53,9 +53,9 @@ window.initializeStudentActivitiesV3 = function() {
     return true;
   } catch (error) {
     console.error('[VESPA Activities Student V3] Mount error:', error);
+    appContainer.innerHTML = '<div style="padding: 20px; color: red;">Error loading application: ' + error.message + '</div>';
     return false;
   }
 };
 
-console.log('[VESPA Activities Student V3] Script loaded, waiting for KnackAppLoader to call initializer');
-
+console.log('[VESPA Activities Student V3] Script loaded, initializer function available');
