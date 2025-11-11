@@ -1,0 +1,20 @@
+{
+  "name": "vespa-activities-student-v3",
+  "version": "1.0.0",
+  "description": "VESPA Activities Student Experience - Supabase Edition",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.7",
+    "vue": "^3.4.21"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "terser": "^5.44.1",
+    "vite": "^5.1.6"
+  }
+}
