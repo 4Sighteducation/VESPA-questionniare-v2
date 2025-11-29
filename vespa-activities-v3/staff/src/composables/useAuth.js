@@ -9,6 +9,8 @@ import { ref } from 'vue';
 const isAuthenticated = ref(true); // Always true - if you're on the page, you're authenticated!
 const staffContext = ref(null);
 const currentUser = ref(null);
+const isLoading = ref(false);
+const error = ref(null);
 
 export function useAuth() {
 
