@@ -15,7 +15,7 @@ const error = ref(null);
 export function useAuth() {
 
   /**
-   * Get user info from Knack session
+   * Get user info from Knack session and school context from API
    */
   const checkAuth = async () => {
     try {
@@ -34,27 +34,47 @@ export function useAuth() {
       if (profileKeys.includes('profile_78')) roles.push('subject_teacher');
       const isSuperUser = profileKeys.includes('profile_21') || userEmail === 'tony@vespa.academy';
 
+      // CRITICAL: Get proper school context from auth check endpoint
+      console.log('🔐 Calling auth check endpoint...');
+      const authResponse = await fetch(
+        `https://vespa-upload-api-07e11c285370.herokuapp.com/api/v3/accounts/auth/check?` +
+        `userEmail=${encodeURIComponent(userEmail)}&userId=${user.id}`
+      );
+      
+      if (!authResponse.ok) {
+        throw new Error(`Auth check failed: ${authResponse.status}`);
+      }
+      
+      const authData = await authResponse.json();
+      
+      if (!authData.success) {
+        throw new Error('Auth check returned unsuccessful');
+      }
+      
+      console.log('✅ Auth check response:', authData);
+
       // Store user data
       currentUser.value = {
         email: userEmail,
         userId: user.id,
         profiles: roles,
-        isSuperUser: isSuperUser
+        isSuperUser: authData.isSuperUser || isSuperUser
       };
 
-      // Simple school context - will load all schools' students for testing
+      // Get school context from API (has the Supabase UUID!)
       staffContext.value = {
-        schoolId: null, // null = load all schools for now
-        schoolName: 'All Schools',
-        isSuperUser: isSuperUser,
+        schoolId: authData.schoolContext?.schoolId || null,  // Supabase UUID!
+        customerId: authData.schoolContext?.customerId || null,  // Knack ID
+        schoolName: authData.schoolContext?.customerName || 'Unknown School',
+        isSuperUser: authData.isSuperUser || isSuperUser,
         roles: roles
       };
 
       isAuthenticated.value = true;
-      console.log('✅ Ready to load data for:', userEmail);
+      console.log('✅ Ready to load data for:', userEmail, 'School:', staffContext.value.schoolName);
 
     } catch (err) {
-      console.error('❌ Error getting Knack session:', err);
+      console.error('❌ Error getting auth context:', err);
       isAuthenticated.value = false;
       throw err;
     }
