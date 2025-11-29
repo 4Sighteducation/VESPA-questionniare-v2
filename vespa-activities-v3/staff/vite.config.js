@@ -32,11 +32,11 @@ export default defineConfig(({ mode }) => {
         output: {
           format: 'iife',  // IIFE format for Knack compatibility!
           name: 'VESPAStaffActivities',
-          entryFileNames: 'activity-dashboard-1d.js',  // Version 1d
-          chunkFileNames: 'activity-dashboard-1d-[hash].js',
+          entryFileNames: 'activity-dashboard-1e.js',  // Version 1e - Debug enabled
+          chunkFileNames: 'activity-dashboard-1e-[hash].js',
           assetFileNames: (assetInfo) => {
             if (assetInfo.name.endsWith('.css')) {
-              return 'activity-dashboard-1d.css';
+              return 'activity-dashboard-1e.css';
             }
             return 'assets/[name]-[hash][extname]';
           }
@@ -46,7 +46,7 @@ export default defineConfig(({ mode }) => {
       minify: 'terser',
       terserOptions: {
         compress: {
-          drop_console: true,
+          drop_console: false,  // Keep console logs for debugging
           drop_debugger: true
         }
       }
