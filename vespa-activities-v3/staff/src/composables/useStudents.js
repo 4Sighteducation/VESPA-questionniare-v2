@@ -78,9 +78,13 @@ export function useStudents() {
               )
             )
           `)
-          .eq('school_id', staffContext.value.schoolId)
           .eq('is_active', true)
           .order('last_name');
+        
+        // Only filter by school if schoolId is provided
+        if (staffContext.value.schoolId) {
+          query = query.eq('school_id', staffContext.value.schoolId);
+        }
 
       } else if (staffData) {
         // For tutors/HOY/subject teachers: get connected students
