@@ -59,9 +59,17 @@ export function useStudents() {
 
       if (error) throw error;
 
-      // RPC returns basic student data without nested responses
-      // Store as-is, we'll load detailed data when viewing individual students
-      students.value = data || [];
+      // RPC returns basic student data - add default progress fields for UI
+      students.value = (data || []).map(student => ({
+        ...student,
+        prescribedCount: 0,  // TODO: Load from activity_responses
+        completedCount: 0,
+        totalCompletedCount: 0,
+        progress: 0,
+        categoryBreakdown: {},
+        unreadFeedbackCount: 0
+      }));
+      
       console.log(`✅ Loaded ${students.value.length} students via RPC`);
 
     } catch (err) {
@@ -78,75 +86,17 @@ export function useStudents() {
    */
   const getStudent = async (studentId) => {
     try {
-      // First try from loaded students
-      const cachedStudent = students.value.find(s => s.id === studentId);
+      console.log('🔍 Getting student:', studentId);
       
-      if (cachedStudent) {
-        // Reload with fresh data for workspace view
-        const { data, error } = await supabase
-          .from('vespa_students')
-          .select(`
-            *,
-            activity_responses (
-              id,
-              activity_id,
-              status,
-              selected_via,
-              completed_at,
-              started_at,
-              responses,
-              responses_text,
-              staff_feedback,
-              staff_feedback_by,
-              staff_feedback_at,
-              feedback_read_by_student,
-              feedback_read_at,
-              time_spent_minutes,
-              word_count,
-              cycle_number,
-              academic_year,
-              year_group,
-              student_group,
-              created_at,
-              updated_at,
-              activities (
-                id,
-                name,
-                vespa_category,
-                level,
-                difficulty,
-                time_minutes,
-                do_section_html,
-                think_section_html,
-                learn_section_html,
-                reflect_section_html,
-                problem_mappings,
-                curriculum_tags
-              )
-            )
-          `)
-          .eq('id', studentId)
-          .single();
-
-        if (error) throw error;
-
-        // Process like in loadStudents
-        const responses = data.activity_responses || [];
-        const prescribed = responses.filter(r => 
-          r.selected_via === 'questionnaire' || 
-          r.selected_via === 'staff_assigned'
-        );
-        const completed = prescribed.filter(r => r.completed_at);
-        
-        return {
-          ...data,
-          prescribedCount: prescribed.length,
-          completedCount: completed.length,
-          progress: prescribed.length > 0 ? 
-            Math.round((completed.length / prescribed.length) * 100) : 0
-        };
+      // Return from loaded students
+      const student = students.value.find(s => s.id === studentId);
+      
+      if (student) {
+        console.log('✅ Found student in cache:', student.full_name);
+        return student;
       }
-
+      
+      console.warn('⚠️ Student not found in cache');
       return null;
     } catch (err) {
       console.error('Failed to get student:', err);

@@ -32,11 +32,11 @@ export default defineConfig(({ mode }) => {
         output: {
           format: 'iife',  // IIFE format for Knack compatibility!
           name: 'VESPAStaffActivities',
-          entryFileNames: 'activity-dashboard-1j.js',  // Version 1j - Use RPC functions
-          chunkFileNames: 'activity-dashboard-1j-[hash].js',
+          entryFileNames: 'activity-dashboard-1k.js',  // Version 1k - Add default progress fields
+          chunkFileNames: 'activity-dashboard-1k-[hash].js',
           assetFileNames: (assetInfo) => {
             if (assetInfo.name.endsWith('.css')) {
-              return 'activity-dashboard-1j.css';
+              return 'activity-dashboard-1k.css';
             }
             return 'assets/[name]-[hash][extname]';
           }
