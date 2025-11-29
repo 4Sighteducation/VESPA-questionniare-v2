@@ -1,0 +1,26 @@
+row_number,reason,activity_id,Activity,Question Title,Order,Type,Active,Text Above Question,Dropdown/Checkbox options,Answer Required?,Show in Final Questions Section
+295,Not found in migrated questions,49f3cd85-80f6-492b-8bff-142a74c7eb3e,Chunking Steps,Step 7:,15,Short Text,True,<hr />,,No,No
+487,Not found in migrated questions,57b5b06a-1e7f-4f42-a1fc-6415b7aa2226,What's Stopping You,What options haven't I considered,28,Paragraph Text,True,,,No,No
+536,Not found in migrated questions,d9f15631-a28d-47a8-a958-a34c5505176b,Roadmap,Third Steps:,9,Paragraph Text,True,,,No,No
+833,Not found in migrated questions,8a9bbba7-fce5-4191-ba74-f16daded5278,Breakfast Club,"What are your habits and rituals, your repeated behaviours?",3,Paragraph Text,True,,,No,No
+997,Not found in migrated questions,7d27666e-71b7-4493-b17d-b925174edf6e,20 Questions,7. What job would you do for free?,7,Short Text,True,,,No,
+998,Not found in migrated questions,7d27666e-71b7-4493-b17d-b925174edf6e,20 Questions,8. When does time seem to drag or stop? What are you doing?,8,Short Text,True,,,No,
+999,Not found in migrated questions,7d27666e-71b7-4493-b17d-b925174edf6e,20 Questions,6. When does time fly? What are you doing?,6,Short Text,True,,,No,
+1000,Not found in migrated questions,7d27666e-71b7-4493-b17d-b925174edf6e,20 Questions,"5. What jobs do you avoid doing, and why?",5,Short Text,True,,,No,
+1001,Not found in migrated questions,7d27666e-71b7-4493-b17d-b925174edf6e,20 Questions,4. Describe an interesting lesson you had recently. Why was it interesting?,4,Short Text,True,,,No,
+1002,Not found in migrated questions,7d27666e-71b7-4493-b17d-b925174edf6e,20 Questions,3. What do you do with your spare time?,3,Short Text,True,,,No,
+1003,Not found in migrated questions,7d27666e-71b7-4493-b17d-b925174edf6e,20 Questions,2. What lessons or elements of study do you find easy?,2,Short Text,True,,,No,
+1004,Not found in migrated questions,7d27666e-71b7-4493-b17d-b925174edf6e,20 Questions,"1. If you could only take one subject what would it be, and why?",1,Short Text,True,<hr /><p><br /></p>,,No,
+1005,No activity name,,,,6,Paragraph Text,True,"<h3>Final Thoughts</h3><p>One way to fully understand Bull’s model is to watch other people responding to feedback. Watch for</p><p>feedback after a sporting fixture, and see how players react. Watch out for how your parents describe taking</p><p>feedback, or even your teachers. Most of all, watch for how your friends talk about feedback. If you’re</p><p>surrounded by people who can’t take feedback, it makes it harder to learn how to handle it well.</p><p>Austin Kleon (2014), a writer and artist, warns us to make sure we have positive friends. He calls negative friends</p><p>‘vampires’. Kleon advises that, “if, after hanging out with someone you feel worn out and depleted, that person is</p><p>a vampire. If, after hanging out with someone you still feel full of energy, that person is not a vampire.”</p><p>It’s worth thinking about the fve people you spend most time with, and asking yourself fve questions</p><p>about them ...</p><p>1. Are they positive people?</p><p>2. Do they enjoy their lives?</p><p>3. Are they a good influence?</p><p>4. Have they helped you through problems?</p><p>5. Do they make you feel good about yourself, and about life?<b></b><br /></p>",,No,
+1006,No activity name,,,Your favorite color,3,Dropdown,True,,"yellow, blue, green",No,
+1007,No activity name,,,Your birthday,2,Date,True,,,No,
+1008,No activity name,,,Your thought the blue zone,1,Short Text,True,,,No,
+1009,No activity name,,,Your Thougths,0,Short Text,True,,,No,
+1010,No activity name,,,Pick your favorite color,1,Dropdown,False,,"green, yellow, blue, orange, red",No,
+1011,No activity name,,,A reassessment of certain priorities that might have happened because of the experience.,0,Paragraph Text,True,,,No,
+1012,No activity name,,,Inactive Question,5,Date,False,,,No,
+1013,No activity name,,,Dropdown Field ----------------,0,Dropdown,True,<p><strong>THIS IS ABOVE THE TEXT<br /><br />MULTIPLE LINES SOMETIMES<br /><br />BOLD <br /><br /><br />AND COOL!!!!<br /><br /><br /></strong></p>,"a, b, c, d",No,
+1014,No activity name,,,Paragraph Text Field,1,Paragraph Text,True,,,No,
+1015,No activity name,,,Short Text Field,2,Short Text,True,,,No,
+1016,No activity name,,,Date Field,3,Date,True,,,No,
+1017,No activity name,,,A personal quality that has strengthened because of the experience.,4,Single Checkbox,True,,,No,
