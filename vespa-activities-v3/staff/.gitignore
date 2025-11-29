@@ -3,7 +3,7 @@ node_modules/
 package-lock.json
 
 # Build output
-dist/
+# dist/ commented out - we need to commit dist files for CDN serving
 dist-ssr/
 *.local
 
