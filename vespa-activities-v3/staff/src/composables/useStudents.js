@@ -86,26 +86,11 @@ export function useStudents() {
           query = query.eq('school_id', staffContext.value.schoolId);
         }
 
-      } else if (staffData) {
-        // For tutors/HOY/subject teachers: get connected students
-        console.log('Loading connected students for:', staffData.email);
-
-        // Get student account IDs from user_connections
-        const { data: connections, error: connError } = await supabase
-          .from('user_connections')
-          .select('student_account_id')
-          .eq('staff_account_id', staffData.account_id);
-
-        if (connError) throw connError;
-
-        const studentAccountIds = connections.map(c => c.student_account_id);
+      } else {
+        // For regular staff: show all students in their school
+        // RLS will control what they can actually edit/assign
+        console.log('Loading all students in school (regular staff)');
         
-        if (studentAccountIds.length === 0) {
-          console.warn('No connected students found');
-          students.value = [];
-          return;
-        }
-
         query = supabase
           .from('vespa_students')
           .select(`
@@ -114,7 +99,6 @@ export function useStudents() {
             first_name,
             last_name,
             full_name,
-            account_id,
             current_year_group,
             student_group,
             school_id,
@@ -143,11 +127,13 @@ export function useStudents() {
               )
             )
           `)
-          .in('account_id', studentAccountIds)
           .eq('is_active', true)
           .order('last_name');
-      } else {
-        throw new Error('Staff record not found and not super user');
+        
+        // Filter by school if we have schoolId
+        if (staffContext.value.schoolId) {
+          query = query.eq('school_id', staffContext.value.schoolId);
+        }
       }
 
       const { data, error } = await query;
