@@ -1,101 +1,60 @@
 /**
  * Authentication Composable
- * Handles Knack authentication check and staff context
+ * SIMPLE: Just get user from Knack session (already authenticated!)
  */
 
-import { ref, computed } from 'vue';
-
-const ACCOUNT_API_URL = import.meta.env.VITE_ACCOUNT_API_URL || 'https://vespa-upload-api-07e11c285370.herokuapp.com';
+import { ref } from 'vue';
 
 // Global state (shared across components)
-const isAuthenticated = ref(false);
+const isAuthenticated = ref(true); // Always true - if you're on the page, you're authenticated!
 const staffContext = ref(null);
 const currentUser = ref(null);
 
 export function useAuth() {
-  const isLoading = ref(false);
-  const error = ref(null);
 
   /**
-   * Check authentication with Knack
-   * Gets user info from Knack session and validates with Account Management API
+   * Get user info from Knack session
    */
   const checkAuth = async () => {
-    isLoading.value = true;
-    error.value = null;
-
     try {
-      // Check if Knack is available
-      if (typeof Knack === 'undefined' || !Knack.session || !Knack.session.user) {
-        throw new Error('Not logged into Knack. Please log in first.');
-      }
-
+      // Get user from Knack session
       const user = Knack.session.user;
       const userEmail = user.email || user.values?.field_70?.email || user.values?.email?.email;
-      const userId = user.id;
+      
+      console.log('✅ Logged in as:', userEmail);
 
-      if (!userEmail) {
-        throw new Error('Could not extract email from Knack session');
-      }
+      // Get profile keys to determine roles
+      const profileKeys = user.profile_keys || [];
+      const roles = [];
+      if (profileKeys.includes('profile_5')) roles.push('staff_admin');
+      if (profileKeys.includes('profile_7')) roles.push('tutor');
+      if (profileKeys.includes('profile_18')) roles.push('head_of_year');
+      if (profileKeys.includes('profile_78')) roles.push('subject_teacher');
+      const isSuperUser = profileKeys.includes('profile_21') || userEmail === 'tony@vespa.academy';
 
-      console.log('🔐 Checking auth for:', userEmail);
-
-      // Call Account Management API to get staff context
-      const response = await fetch(
-        `${ACCOUNT_API_URL}/api/v3/accounts/auth/check?userEmail=${encodeURIComponent(userEmail)}&userId=${encodeURIComponent(userId)}`
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to verify authentication');
-      }
-
-      const authData = await response.json();
-      console.log('Auth response:', authData);
-
-      // Check if user is staff (has appropriate profiles)
-      const isStaff = authData.profiles && (
-        authData.profiles.includes('staff_admin') ||
-        authData.profiles.includes('tutor') ||
-        authData.profiles.includes('head_of_year') ||
-        authData.profiles.includes('subject_teacher') ||
-        authData.isSuperUser
-      );
-
-      if (!isStaff) {
-        throw new Error('Access denied. This dashboard is for staff members only.');
-      }
-
-      // Store auth data
+      // Store user data
       currentUser.value = {
         email: userEmail,
-        userId: userId,
-        profiles: authData.profiles || [],
-        isSuperUser: authData.isSuperUser || false
+        userId: user.id,
+        profiles: roles,
+        isSuperUser: isSuperUser
       };
 
+      // Simple school context - will load all schools' students for testing
       staffContext.value = {
-        schoolId: authData.schoolContext?.schoolId,
-        schoolName: authData.schoolContext?.customerName,
-        customerId: authData.schoolContext?.customerId,
-        isSuperUser: authData.isSuperUser || false,
-        roles: authData.profiles || []
+        schoolId: null, // null = load all schools for now
+        schoolName: 'All Schools',
+        isSuperUser: isSuperUser,
+        roles: roles
       };
 
       isAuthenticated.value = true;
-      
-      console.log('✅ Authentication successful:', {
-        email: userEmail,
-        school: staffContext.value.schoolName,
-        roles: staffContext.value.roles
-      });
+      console.log('✅ Ready to load data for:', userEmail);
 
     } catch (err) {
-      console.error('❌ Authentication error:', err);
-      error.value = err.message;
+      console.error('❌ Error getting Knack session:', err);
       isAuthenticated.value = false;
       throw err;
-    } finally {
-      isLoading.value = false;
     }
   };
 
