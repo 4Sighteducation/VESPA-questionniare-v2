@@ -210,6 +210,7 @@ const getCategoryActivities = (category, assigned = true) => {
 };
 
 const viewActivityDetail = (activity) => {
+  console.log('🖱️ Activity card clicked:', activity.activities?.name);
   selectedActivity.value = activity;
 };
 

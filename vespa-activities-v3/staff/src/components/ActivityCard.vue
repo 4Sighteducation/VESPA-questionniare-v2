@@ -13,21 +13,21 @@
         class="source-indicator questionnaire"
         title="Added via questionnaire"
       >
-        <i class="fas fa-file-alt"></i>
+        📋
       </span>
       <span
         v-else-if="activity.selected_via === 'staff_assigned'"
         class="source-indicator staff"
         title="Staff assigned"
       >
-        <i class="fas fa-user-tie"></i>
+        👨‍🏫
       </span>
       <span
         v-else
         class="source-indicator student"
         title="Student choice"
       >
-        <i class="fas fa-user"></i>
+        🙋
       </span>
 
       <span
@@ -35,7 +35,7 @@
         class="feedback-indicator"
         title="Unread feedback"
       >
-        <i class="fas fa-comment-dots"></i>
+        💬
       </span>
 
       <span
@@ -43,7 +43,7 @@
         class="completion-indicator"
         title="Completed"
       >
-        <i class="fas fa-check"></i>
+        ✓
       </span>
     </div>
 
@@ -56,18 +56,16 @@
           {{ activity.activities?.level }}
         </span>
         <span v-if="activity.activities?.time_minutes" class="time-badge">
-          <i class="fas fa-clock"></i> {{ activity.activities.time_minutes }}m
+          ⏱️ {{ activity.activities.time_minutes }}m
         </span>
       </div>
 
       <div v-if="isCompleted && activity.completed_at" class="completion-info">
-        <i class="fas fa-check-circle"></i>
-        Completed {{ formatDate(activity.completed_at) }}
+        ✅ Completed {{ formatDate(activity.completed_at) }}
       </div>
 
       <div v-if="activity.staff_feedback" class="feedback-preview">
-        <i class="fas fa-comment"></i>
-        <span class="feedback-text">{{ feedbackPreview }}</span>
+        💬 <span class="feedback-text">{{ feedbackPreview }}</span>
       </div>
     </div>
 
@@ -79,7 +77,7 @@
         @click="$emit('remove')"
         title="Remove activity"
       >
-        <i class="fas fa-times"></i>
+        ✕
       </button>
     </div>
   </div>
@@ -143,11 +141,17 @@ const formatDate = (dateString) => {
   position: relative;
   font-size: 12px;
   min-height: 80px;
+  user-select: none;
 }
 
 .activity-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+  border-color: #cbd5e1;
+}
+
+.activity-card:active {
+  transform: translateY(0);
 }
 
 .activity-card.completed {
@@ -190,35 +194,37 @@ const formatDate = (dateString) => {
 .source-indicator,
 .feedback-indicator,
 .completion-indicator {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 9px;
-  color: white;
+  font-size: 12px;
+  line-height: 1;
 }
 
 .source-indicator.questionnaire {
-  background: #1e7e34;
+  background: transparent;
 }
 
 .source-indicator.staff {
-  background: #6f42c1;
+  background: transparent;
 }
 
 .source-indicator.student {
-  background: #007bff;
+  background: transparent;
 }
 
 .feedback-indicator {
-  background: #dc3545;
+  background: transparent;
   animation: pulse 2s infinite;
 }
 
 .completion-indicator {
-  background: #22c55e;
+  background: transparent;
+  color: #22c55e;
+  font-weight: bold;
 }
 
 @keyframes pulse {
@@ -316,11 +322,15 @@ const formatDate = (dateString) => {
 .btn-remove {
   background: #fee;
   color: #dc3545;
+  font-size: 14px;
+  font-weight: bold;
+  line-height: 1;
 }
 
 .btn-remove:hover {
   background: #dc3545;
   color: white;
+  transform: scale(1.1);
 }
 </style>
 
