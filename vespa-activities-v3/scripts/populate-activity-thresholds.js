@@ -20,7 +20,7 @@ async function populateThresholds() {
   
   try {
     // Read the JSON file
-    const jsonPath = path.join(__dirname, '../../../vespa-activities-v2/shared/utils/structured_activities_with_thresholds.json');
+    const jsonPath = path.join(__dirname, '../../../vespa-activities-v2/shared/utils/activitiesjsonwithfields1c.json');
     console.log('📖 Reading JSON from:', jsonPath);
     
     const jsonData = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
@@ -32,19 +32,26 @@ async function populateThresholds() {
     
     for (const activity of jsonData) {
       try {
-        const { name, thresholds } = activity;
+        const name = activity.activity_name?.value;
+        const minScore = activity.thresholds?.show_if_score_more_than?.value;
+        const maxScore = activity.thresholds?.show_if_score_less_or_equal?.value;
         
-        if (!thresholds || !thresholds.lower || !thresholds.upper) {
-          console.log(`⚠️  Skipping "${name}" - no thresholds defined`);
+        if (!name) {
+          console.log(`⚠️  Skipping - no activity_name`);
+          continue;
+        }
+        
+        // Skip if no thresholds defined (null is ok for some activities)
+        if (minScore === undefined && maxScore === undefined) {
           continue;
         }
         
         // Update in Supabase by name match
-        const { data, error, count } = await supabase
+        const { data, error } = await supabase
           .from('activities')
           .update({
-            score_threshold_min: thresholds.lower,
-            score_threshold_max: thresholds.upper
+            score_threshold_min: minScore,
+            score_threshold_max: maxScore
           })
           .eq('name', name)
           .select('id, name');
@@ -56,7 +63,7 @@ async function populateThresholds() {
           console.log(`⚠️  Activity not found in Supabase: "${name}"`);
           notFound++;
         } else {
-          console.log(`✅ Updated "${name}" → min: ${thresholds.lower}, max: ${thresholds.upper}`);
+          console.log(`✅ Updated "${name}" → min: ${minScore}, max: ${maxScore}`);
           updated++;
         }
         

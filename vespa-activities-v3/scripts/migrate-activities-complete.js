@@ -146,17 +146,21 @@ async function migrate() {
   try {
     // Step 1: Load activity threshold mappings
     console.log('\n📖 Step 1: Loading activity thresholds from JSON...');
-    const thresholdsPath = path.join(__dirname, '../../../vespa-activities-v2/shared/utils/structured_activities_with_thresholds.json');
+    const thresholdsPath = path.join(__dirname, '../../../vespa-activities-v2/shared/utils/activitiesjsonwithfields1c.json');
     const thresholdActivities = JSON.parse(fs.readFileSync(thresholdsPath, 'utf8'));
     
     // Create lookup map: activity name → thresholds
     const thresholdMap = {};
     thresholdActivities.forEach(act => {
-      if (act.name && act.thresholds) {
-        thresholdMap[act.name] = {
-          min: act.thresholds.lower,
-          max: act.thresholds.upper,
-          category: act.category
+      const name = act.activity_name?.value;
+      const minScore = act.thresholds?.show_if_score_more_than?.value;
+      const maxScore = act.thresholds?.show_if_score_less_or_equal?.value;
+      
+      if (name && (minScore !== undefined || maxScore !== undefined)) {
+        thresholdMap[name] = {
+          min: minScore,
+          max: maxScore,
+          category: act.category?.name
         };
       }
     });
