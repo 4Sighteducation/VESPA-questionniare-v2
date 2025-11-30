@@ -136,12 +136,13 @@ const formatDate = (dateString) => {
 .activity-card {
   background: white;
   border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 10px;
+  border-radius: 6px;
+  padding: 8px;
   cursor: pointer;
   transition: all 0.2s;
   position: relative;
-  font-size: 13px;
+  font-size: 12px;
+  min-height: 80px;
 }
 
 .activity-card:hover {
@@ -181,21 +182,21 @@ const formatDate = (dateString) => {
 
 .card-indicators {
   display: flex;
-  gap: 6px;
-  margin-bottom: 8px;
+  gap: 4px;
+  margin-bottom: 6px;
   flex-wrap: wrap;
 }
 
 .source-indicator,
 .feedback-indicator,
 .completion-indicator {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: 9px;
   color: white;
 }
 
@@ -230,11 +231,11 @@ const formatDate = (dateString) => {
 }
 
 .activity-name {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: #212529;
-  margin: 0 0 6px 0;
-  line-height: 1.3;
+  margin: 0 0 4px 0;
+  line-height: 1.2;
 }
 
 .activity-meta {
@@ -246,9 +247,9 @@ const formatDate = (dateString) => {
 
 .level-badge,
 .time-badge {
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 10px;
   font-weight: 500;
 }
 
@@ -266,12 +267,12 @@ const formatDate = (dateString) => {
 }
 
 .completion-info {
-  font-size: 12px;
+  font-size: 10px;
   color: #15803d;
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-top: 8px;
+  gap: 3px;
+  margin-top: 4px;
 }
 
 .feedback-preview {

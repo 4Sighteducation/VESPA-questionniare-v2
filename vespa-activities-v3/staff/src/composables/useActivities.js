@@ -126,22 +126,27 @@ export function useActivities() {
    */
   const assignActivity = async (studentEmail, activityId, staffEmail, cycleNumber = 1, schoolId) => {
     try {
+      console.log('📝 Assigning activity:', { studentEmail, activityId, staffEmail, schoolId, cycleNumber });
+      
       // Use RPC function to assign (bypasses RLS)
       const { data, error } = await supabase.rpc('assign_activity_to_student', {
-        student_email_param: studentEmail,
-        activity_id_param: activityId,
-        staff_email_param: staffEmail,
-        school_id_param: schoolId,
-        cycle_number_param: cycleNumber
+        p_student_email: studentEmail,
+        p_activity_id: activityId,
+        p_staff_email: staffEmail,
+        p_school_id: schoolId,
+        p_cycle_number: cycleNumber
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ RPC Error:', error);
+        throw error;
+      }
 
-      console.log('✅ Activity assigned:', { studentEmail, activityId });
+      console.log('✅ Activity assigned successfully:', data);
       return data;
 
     } catch (err) {
-      console.error('Failed to assign activity:', err);
+      console.error('❌ Failed to assign activity:', err);
       throw err;
     }
   };
@@ -151,21 +156,26 @@ export function useActivities() {
    */
   const bulkAssignActivities = async (studentEmails, activityIds, staffEmail, schoolId, cycleNumber = 1) => {
     try {
+      console.log('📝 Bulk assigning:', { studentEmails, activityIds, staffEmail, schoolId });
+      
       const { data, error } = await supabase.rpc('bulk_assign_activities', {
-        student_emails_param: studentEmails,
-        activity_ids_param: activityIds,
-        staff_email_param: staffEmail,
-        school_id_param: schoolId,
-        cycle_number_param: cycleNumber
+        p_student_emails: studentEmails,
+        p_activity_ids: activityIds,
+        p_staff_email: staffEmail,
+        p_school_id: schoolId,
+        p_cycle_number: cycleNumber
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Bulk RPC Error:', error);
+        throw error;
+      }
 
       console.log(`✅ Bulk assigned ${activityIds.length} activities to ${studentEmails.length} students (${data} total assignments)`);
       return data;
 
     } catch (err) {
-      console.error('Failed to bulk assign:', err);
+      console.error('❌ Failed to bulk assign:', err);
       throw err;
     }
   };

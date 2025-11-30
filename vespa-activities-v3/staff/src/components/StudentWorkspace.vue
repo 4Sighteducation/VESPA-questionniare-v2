@@ -75,7 +75,7 @@
           class="category-column"
         >
           <div class="category-header" :class="cat.toLowerCase()">
-            <span class="category-icon">{{ cat[0] }}</span>
+            <span class="category-icon">{{ getCategoryIcon(cat) }}</span>
             <span class="category-name">{{ cat }}</span>
             <span class="activity-count">
               {{ getCategoryActivities(cat, true).filter(a => a.completed_at).length }}/{{ getCategoryActivities(cat, true).length }}
@@ -193,6 +193,17 @@ const filteredAssignedActivities = computed(() => {
 });
 
 // Methods
+const getCategoryIcon = (category) => {
+  const icons = {
+    'Vision': '👁️',
+    'Effort': '💪',
+    'Systems': '⚙️',
+    'Practice': '🎯',
+    'Attitude': '❤️'
+  };
+  return icons[category] || category[0];
+};
+
 const getCategoryActivities = (category, assigned = true) => {
   const activities = assigned ? filteredAssignedActivities.value : [];
   return activities.filter(a => a.activities?.vespa_category === category);
@@ -415,16 +426,14 @@ const handleStatusChanged = () => {
 }
 
 .category-icon {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   background: white;
-  color: inherit;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .activity-count {
