@@ -203,6 +203,7 @@
       v-if="showBulkAssignModal"
       :selected-students="Array.from(selectedStudents)"
       :students="students"
+      :staff-context="staffContext"
       @close="showBulkAssignModal = false"
       @assigned="handleBulkAssigned"
     />

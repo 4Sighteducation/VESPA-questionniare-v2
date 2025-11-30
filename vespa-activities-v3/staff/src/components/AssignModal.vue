@@ -240,7 +240,8 @@ const confirmAssignment = async () => {
         props.student.email,
         activityId,
         staffEmail,
-        props.student.current_cycle || 1
+        props.student.current_cycle || 1,
+        props.staffContext.schoolId
       );
     }
 

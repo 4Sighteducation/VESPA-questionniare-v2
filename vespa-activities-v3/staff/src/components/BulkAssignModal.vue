@@ -131,6 +131,10 @@ const props = defineProps({
   students: {
     type: Array,
     required: true
+  },
+  staffContext: {
+    type: Object,
+    required: true
   }
 });
 
@@ -212,7 +216,7 @@ const confirmBulkAssignment = async () => {
       return student?.email;
     }).filter(Boolean);
 
-    await bulkAssignActivities(studentEmails, activityIds, staffEmail);
+    await bulkAssignActivities(studentEmails, activityIds, staffEmail, props.staffContext.schoolId);
 
     alert(`Successfully assigned ${activityIds.length} activities to ${studentEmails.length} students!`);
     emit('assigned');

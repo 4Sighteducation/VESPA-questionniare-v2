@@ -122,47 +122,20 @@ export function useActivities() {
   };
 
   /**
-   * Assign activity to student
+   * Assign activity to student (uses RPC to bypass RLS)
    */
-  const assignActivity = async (studentEmail, activityId, staffEmail, cycleNumber = 1) => {
+  const assignActivity = async (studentEmail, activityId, staffEmail, cycleNumber = 1, schoolId) => {
     try {
-      // Get current academic year (you might want to make this dynamic)
-      const academicYear = '2025/2026';
-
-      // Insert or update activity_responses
-      const { data, error } = await supabase
-        .from('activity_responses')
-        .upsert({
-          student_email: studentEmail,
-          activity_id: activityId,
-          cycle_number: cycleNumber,
-          academic_year: academicYear,
-          status: 'in_progress', // Changed from 'assigned' - constraint only allows 'in_progress' or 'completed'
-          selected_via: 'staff_assigned',
-          responses: {},
-          started_at: new Date().toISOString()
-        }, {
-          onConflict: 'student_email,activity_id,cycle_number',
-          ignoreDuplicates: false
-        })
-        .select()
-        .single();
+      // Use RPC function to assign (bypasses RLS)
+      const { data, error } = await supabase.rpc('assign_activity_to_student', {
+        student_email_param: studentEmail,
+        activity_id_param: activityId,
+        staff_email_param: staffEmail,
+        school_id_param: schoolId,
+        cycle_number_param: cycleNumber
+      });
 
       if (error) throw error;
-
-      // Log to activity_history
-      await supabase
-        .from('activity_history')
-        .insert({
-          student_email: studentEmail,
-          activity_id: activityId,
-          action: 'assigned',
-          triggered_by: 'staff',
-          triggered_by_email: staffEmail,
-          cycle_number: cycleNumber,
-          academic_year: academicYear,
-          metadata: { assigned_via: 'staff_dashboard' }
-        });
 
       console.log('✅ Activity assigned:', { studentEmail, activityId });
       return data;
@@ -174,58 +147,22 @@ export function useActivities() {
   };
 
   /**
-   * Bulk assign activities to multiple students
+   * Bulk assign activities to multiple students (uses RPC to bypass RLS)
    */
-  const bulkAssignActivities = async (studentEmails, activityIds, staffEmail, cycleNumber = 1) => {
+  const bulkAssignActivities = async (studentEmails, activityIds, staffEmail, schoolId, cycleNumber = 1) => {
     try {
-      const academicYear = '2025/2026';
-      const assignments = [];
-      const historyEntries = [];
+      const { data, error } = await supabase.rpc('bulk_assign_activities', {
+        student_emails_param: studentEmails,
+        activity_ids_param: activityIds,
+        staff_email_param: staffEmail,
+        school_id_param: schoolId,
+        cycle_number_param: cycleNumber
+      });
 
-      // Build all assignment records
-      for (const studentEmail of studentEmails) {
-        for (const activityId of activityIds) {
-          assignments.push({
-            student_email: studentEmail,
-            activity_id: activityId,
-            cycle_number: cycleNumber,
-            academic_year: academicYear,
-            status: 'in_progress', // Changed from 'assigned'
-            selected_via: 'staff_assigned',
-            responses: {},
-            started_at: new Date().toISOString()
-          });
+      if (error) throw error;
 
-          historyEntries.push({
-            student_email: studentEmail,
-            activity_id: activityId,
-            action: 'assigned',
-            triggered_by: 'staff',
-            triggered_by_email: staffEmail,
-            cycle_number: cycleNumber,
-            academic_year: academicYear
-          });
-        }
-      }
-
-      // Bulk insert (upsert to handle conflicts)
-      const { error: assignError } = await supabase
-        .from('activity_responses')
-        .upsert(assignments, {
-          onConflict: 'student_email,activity_id,cycle_number',
-          ignoreDuplicates: true
-        });
-
-      if (assignError) throw assignError;
-
-      // Log history
-      const { error: historyError } = await supabase
-        .from('activity_history')
-        .insert(historyEntries);
-
-      if (historyError) console.warn('Failed to log history:', historyError);
-
-      console.log(`✅ Bulk assigned ${activityIds.length} activities to ${studentEmails.length} students`);
+      console.log(`✅ Bulk assigned ${activityIds.length} activities to ${studentEmails.length} students (${data} total assignments)`);
+      return data;
 
     } catch (err) {
       console.error('Failed to bulk assign:', err);
