@@ -152,27 +152,36 @@ export function useActivities() {
   };
 
   /**
-   * Bulk assign activities to multiple students (uses RPC to bypass RLS)
+   * Bulk assign activities to multiple students
+   * Uses single assignment RPC in loop (more reliable than bulk RPC)
    */
   const bulkAssignActivities = async (studentEmails, activityIds, staffEmail, schoolId, cycleNumber = 1) => {
     try {
       console.log('📝 Bulk assigning:', { studentEmails, activityIds, staffEmail, schoolId });
       
-      const { data, error } = await supabase.rpc('bulk_assign_activities', {
-        p_student_emails: studentEmails,
-        p_activity_ids: activityIds,
-        p_staff_email: staffEmail,
-        p_school_id: schoolId,
-        p_cycle_number: cycleNumber
-      });
-
-      if (error) {
-        console.error('❌ Bulk RPC Error:', error);
-        throw error;
+      let successCount = 0;
+      let errorCount = 0;
+      
+      // Use single assignment RPC for each combination
+      for (const studentEmail of studentEmails) {
+        for (const activityId of activityIds) {
+          try {
+            await assignActivity(studentEmail, activityId, staffEmail, cycleNumber, schoolId);
+            successCount++;
+          } catch (err) {
+            console.warn(`Failed to assign ${activityId} to ${studentEmail}:`, err.message);
+            errorCount++;
+          }
+        }
       }
 
-      console.log(`✅ Bulk assigned ${activityIds.length} activities to ${studentEmails.length} students (${data} total assignments)`);
-      return data;
+      console.log(`✅ Bulk assignment complete: ${successCount} successful, ${errorCount} failed`);
+      
+      if (errorCount > 0 && successCount === 0) {
+        throw new Error(`All ${errorCount} assignments failed`);
+      }
+      
+      return successCount;
 
     } catch (err) {
       console.error('❌ Failed to bulk assign:', err);
