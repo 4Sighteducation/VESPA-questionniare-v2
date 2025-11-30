@@ -100,39 +100,41 @@ export function useStudents() {
       console.log('✅ Found student in cache:', student.full_name);
       console.log('📚 Fetching activity_responses for:', student.email);
       
-      // Fetch activity_responses with activity details
-      const { data: activityResponses, error } = await supabase
-        .from('activity_responses')
-        .select(`
-          *,
-          activities (
-            id,
-            name,
-            vespa_category,
-            level,
-            time_minutes,
-            difficulty,
-            do_section_html,
-            think_section_html,
-            learn_section_html,
-            reflect_section_html
-          )
-        `)
-        .eq('student_email', student.email)
-        .neq('status', 'removed')
-        .order('created_at', { ascending: false });
+      // Use RPC function to fetch activity_responses (bypasses RLS)
+      const { data: activityResponses, error } = await supabase.rpc('get_student_activity_responses', {
+        student_email_param: student.email,
+        staff_email_param: currentUser.value.email,
+        school_id_param: staffContext.value.schoolId
+      });
       
       if (error) {
         console.error('Failed to fetch activity_responses:', error);
         throw error;
       }
       
-      console.log(`✅ Loaded ${activityResponses?.length || 0} activity responses for ${student.full_name}`);
+      // Transform RPC response to match expected format (flatten activity data)
+      const formattedResponses = (activityResponses || []).map(ar => ({
+        ...ar,
+        activities: {
+          id: ar.activity_id,
+          name: ar.activity_name,
+          vespa_category: ar.activity_category,
+          level: ar.activity_level,
+          time_minutes: ar.activity_time_minutes,
+          difficulty: ar.activity_difficulty,
+          do_section_html: ar.activity_do_section,
+          think_section_html: ar.activity_think_section,
+          learn_section_html: ar.activity_learn_section,
+          reflect_section_html: ar.activity_reflect_section
+        }
+      }));
+      
+      console.log(`✅ Loaded ${formattedResponses?.length || 0} activity responses for ${student.full_name}`);
       
       // Return student with populated activity_responses
       return {
         ...student,
-        activity_responses: activityResponses || []
+        activity_responses: formattedResponses || []
       };
       
     } catch (err) {
