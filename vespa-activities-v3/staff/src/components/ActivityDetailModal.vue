@@ -401,11 +401,11 @@ const formatDate = (dateString) => {
   font-weight: 600;
 }
 
-.category-badge.vision { background: #f97316; }
-.category-badge.effort { background: #3b82f6; }
-.category-badge.systems { background: #10b981; }
-.category-badge.practice { background: #8b5cf6; }
-.category-badge.attitude { background: #ec4899; }
+.category-badge.vision { background: #ff8f00; }
+.category-badge.effort { background: #86b4f0; }
+.category-badge.systems { background: #84cc16; }
+.category-badge.practice { background: #7f31a4; }
+.category-badge.attitude { background: #f032e6; }
 
 .level-badge {
   padding: 4px 10px;

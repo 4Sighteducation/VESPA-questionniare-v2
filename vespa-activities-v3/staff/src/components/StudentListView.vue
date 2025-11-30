@@ -744,25 +744,25 @@ watch([searchTerm, filterYearGroup, filterProgress], () => {
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
-/* Category Colors - Professional Gradients */
+/* Category Colors - VESPA Brand Theme */
 .vision {
-  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  background: linear-gradient(135deg, #ff8f00 0%, #f57c00 100%);
 }
 
 .effort {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #86b4f0 0%, #5e9de8 100%);
 }
 
 .systems {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%);
 }
 
 .practice {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, #7f31a4 0%, #6b2589 100%);
 }
 
 .attitude {
-  background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+  background: linear-gradient(135deg, #f032e6 0%, #d91ad9 100%);
 }
 
 .vespa-column-header {
@@ -785,23 +785,23 @@ watch([searchTerm, filterYearGroup, filterProgress], () => {
 }
 
 .vespa-column.vision .category-letter {
-  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  background: linear-gradient(135deg, #ff8f00 0%, #f57c00 100%);
 }
 
 .vespa-column.effort .category-letter {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #86b4f0 0%, #5e9de8 100%);
 }
 
 .vespa-column.systems .category-letter {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%);
 }
 
 .vespa-column.practice .category-letter {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, #7f31a4 0%, #6b2589 100%);
 }
 
 .vespa-column.attitude .category-letter {
-  background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+  background: linear-gradient(135deg, #f032e6 0%, #d91ad9 100%);
 }
 
 .pagination {

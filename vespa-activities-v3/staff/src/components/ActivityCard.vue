@@ -136,11 +136,12 @@ const formatDate = (dateString) => {
 .activity-card {
   background: white;
   border: 2px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 12px;
+  border-radius: 8px;
+  padding: 10px;
   cursor: pointer;
   transition: all 0.2s;
   position: relative;
+  font-size: 13px;
 }
 
 .activity-card:hover {
@@ -159,23 +160,23 @@ const formatDate = (dateString) => {
 }
 
 .activity-card.vision {
-  border-top-color: #f97316;
+  border-top-color: #ff8f00;
 }
 
 .activity-card.effort {
-  border-top-color: #3b82f6;
+  border-top-color: #86b4f0;
 }
 
 .activity-card.systems {
-  border-top-color: #10b981;
+  border-top-color: #84cc16;
 }
 
 .activity-card.practice {
-  border-top-color: #8b5cf6;
+  border-top-color: #7f31a4;
 }
 
 .activity-card.attitude {
-  border-top-color: #ec4899;
+  border-top-color: #f032e6;
 }
 
 .card-indicators {
@@ -229,17 +230,17 @@ const formatDate = (dateString) => {
 }
 
 .activity-name {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: #212529;
-  margin: 0 0 8px 0;
+  margin: 0 0 6px 0;
   line-height: 1.3;
 }
 
 .activity-meta {
   display: flex;
-  gap: 6px;
-  margin-bottom: 8px;
+  gap: 4px;
+  margin-bottom: 6px;
   flex-wrap: wrap;
 }
 

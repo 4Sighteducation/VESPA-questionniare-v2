@@ -395,23 +395,23 @@ const handleStatusChanged = () => {
 }
 
 .category-header.vision {
-  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  background: linear-gradient(135deg, #ff8f00 0%, #f57c00 100%);
 }
 
 .category-header.effort {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #86b4f0 0%, #5e9de8 100%);
 }
 
 .category-header.systems {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%);
 }
 
 .category-header.practice {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, #7f31a4 0%, #6b2589 100%);
 }
 
 .category-header.attitude {
-  background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+  background: linear-gradient(135deg, #f032e6 0%, #d91ad9 100%);
 }
 
 .category-icon {

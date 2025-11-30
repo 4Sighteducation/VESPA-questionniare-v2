@@ -56,7 +56,7 @@ const markActivityIncomplete = async (responseId, studentEmail, activityId, staf
     const { data, error } = await supabase
       .from('activity_responses')
       .update({
-        status: 'assigned',
+        status: 'in_progress', // Changed from 'assigned'
         completed_at: null,
         updated_at: new Date().toISOString()
       })
@@ -137,9 +137,10 @@ export function useActivities() {
           activity_id: activityId,
           cycle_number: cycleNumber,
           academic_year: academicYear,
-          status: 'assigned',
+          status: 'in_progress', // Changed from 'assigned' - constraint only allows 'in_progress' or 'completed'
           selected_via: 'staff_assigned',
-          responses: {}
+          responses: {},
+          started_at: new Date().toISOString()
         }, {
           onConflict: 'student_email,activity_id,cycle_number',
           ignoreDuplicates: false
@@ -189,9 +190,10 @@ export function useActivities() {
             activity_id: activityId,
             cycle_number: cycleNumber,
             academic_year: academicYear,
-            status: 'assigned',
+            status: 'in_progress', // Changed from 'assigned'
             selected_via: 'staff_assigned',
-            responses: {}
+            responses: {},
+            started_at: new Date().toISOString()
           });
 
           historyEntries.push({
