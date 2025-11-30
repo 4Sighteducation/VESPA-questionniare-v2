@@ -1,0 +1,16 @@
+{
+  "name": "vespa-activities-v3-migration-scripts",
+  "version": "1.0.0",
+  "description": "Migration and setup scripts for VESPA Activities V3",
+  "scripts": {
+    "migrate:activities": "node migrate-activities-complete.js",
+    "populate:thresholds": "node populate-activity-thresholds.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
+
