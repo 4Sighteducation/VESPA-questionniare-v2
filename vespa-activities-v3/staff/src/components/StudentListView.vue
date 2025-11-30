@@ -383,11 +383,16 @@ const getVESPAScore = (student, category) => {
 };
 
 const getCategoryTotal = (student, category) => {
-  return student.categoryBreakdown?.[category.toLowerCase()]?.prescribed?.length || 0;
+  // Temporary: Show total activities divided by 5 categories as estimate
+  // TODO: Calculate actual per-category breakdown
+  return student.categoryBreakdown?.[category.toLowerCase()]?.prescribed?.length || 
+         Math.round(student.total_activities / 5) || 0;
 };
 
 const getCategoryCompleted = (student, category) => {
-  return student.categoryBreakdown?.[category.toLowerCase()]?.completed?.length || 0;
+  // Temporary: Show completed activities divided by 5 categories as estimate
+  return student.categoryBreakdown?.[category.toLowerCase()]?.completed?.length || 
+         Math.round(student.completed_activities / 5) || 0;
 };
 
 const exportReport = () => {

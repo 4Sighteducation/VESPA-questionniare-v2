@@ -32,11 +32,11 @@ export default defineConfig(({ mode }) => {
         output: {
           format: 'iife',  // IIFE format for Knack compatibility!
           name: 'VESPAStaffActivities',
-          entryFileNames: 'activity-dashboard-1m.js',  // Version 1m - Use RPC to bypass RLS
-          chunkFileNames: 'activity-dashboard-1m-[hash].js',
+          entryFileNames: 'activity-dashboard-1n.js',  // Version 1n - Show progress estimates in list
+          chunkFileNames: 'activity-dashboard-1n-[hash].js',
           assetFileNames: (assetInfo) => {
             if (assetInfo.name.endsWith('.css')) {
-              return 'activity-dashboard-1m.css';
+              return 'activity-dashboard-1n.css';
             }
             return 'assets/[name]-[hash][extname]';
           }
