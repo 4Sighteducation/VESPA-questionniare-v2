@@ -251,21 +251,43 @@ async function migrate() {
         // FIXED: field_3536 contains STUDENT EMAIL directly!
         const studentEmail = extractEmail(progressRecord.field_3536);
         if (!studentEmail) {
-          stats.skipped.push({ reason: 'No student email', record: progressRecord.id });
+          stats.skipped.push({ 
+            reason: 'No student email', 
+            record: progressRecord.id,
+            field: progressRecord.field_3536 
+          });
+          if (stats.skipped.length <= 3) {
+            console.log('SKIP #' + stats.skipped.length + ':', progressRecord);
+          }
           continue;
         }
         
         // FIXED: field_3537 contains ACTIVITY NAME directly!
         const activityName = progressRecord.field_3537;
         if (!activityName) {
-          stats.skipped.push({ reason: 'No activity name', record: progressRecord.id });
+          stats.skipped.push({ 
+            reason: 'No activity name', 
+            record: progressRecord.id,
+            field: progressRecord.field_3537 
+          });
+          if (stats.skipped.length <= 3) {
+            console.log('SKIP #' + stats.skipped.length + ':', progressRecord);
+          }
           continue;
         }
         
         // Resolve activity name to Supabase UUID
         const activityUuid = activityNameMap[activityName];
         if (!activityUuid) {
-          stats.skipped.push({ reason: 'Activity not in Supabase', activityName });
+          stats.skipped.push({ 
+            reason: 'Activity not in Supabase', 
+            activityName,
+            availableActivities: Object.keys(activityNameMap).slice(0, 5) 
+          });
+          if (stats.skipped.length <= 3) {
+            console.log('SKIP #' + stats.skipped.length + ': Activity "' + activityName + '" not found');
+            console.log('Available activities sample:', Object.keys(activityNameMap).slice(0, 5));
+          }
           continue;
         }
         
@@ -379,6 +401,25 @@ async function migrate() {
     console.log(`✅ Successfully migrated: ${stats.object126Migrated}`);
     console.log(`⚠️  Skipped: ${stats.skipped.length}`);
     console.log(`❌ Errors: ${stats.errors.length}`);
+    
+    // Show skip reasons breakdown
+    if (stats.skipped.length > 0) {
+      console.log('\n📋 Skip Reasons:');
+      const reasons = {};
+      stats.skipped.forEach(s => {
+        reasons[s.reason] = (reasons[s.reason] || 0) + 1;
+      });
+      Object.entries(reasons).forEach(([reason, count]) => {
+        console.log(`  ${reason}: ${count}`);
+      });
+      
+      console.log('\nFirst 5 skipped records:');
+      stats.skipped.slice(0, 5).forEach((s, i) => {
+        console.log(`  ${i+1}. ${s.reason}`);
+        if (s.activityName) console.log(`     Activity: "${s.activityName}"`);
+        if (s.field) console.log(`     Field value: "${s.field}"`);
+      });
+    }
     
     if (stats.errors.length > 0 && stats.errors.length <= 10) {
       console.log('\nFirst 10 errors:');
