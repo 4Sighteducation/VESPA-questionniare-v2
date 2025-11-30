@@ -83,21 +83,58 @@ export function useStudents() {
 
   /**
    * Get single student with full activity details
+   * Fetches activity_responses from Supabase
    */
   const getStudent = async (studentId) => {
     try {
       console.log('🔍 Getting student:', studentId);
       
-      // Return from loaded students
+      // Get student from cache
       const student = students.value.find(s => s.id === studentId);
       
-      if (student) {
-        console.log('✅ Found student in cache:', student.full_name);
-        return student;
+      if (!student) {
+        console.warn('⚠️ Student not found in cache');
+        return null;
       }
       
-      console.warn('⚠️ Student not found in cache');
-      return null;
+      console.log('✅ Found student in cache:', student.full_name);
+      console.log('📚 Fetching activity_responses for:', student.email);
+      
+      // Fetch activity_responses with activity details
+      const { data: activityResponses, error } = await supabase
+        .from('activity_responses')
+        .select(`
+          *,
+          activities (
+            id,
+            name,
+            vespa_category,
+            level,
+            time_minutes,
+            difficulty,
+            do_section_html,
+            think_section_html,
+            learn_section_html,
+            reflect_section_html
+          )
+        `)
+        .eq('student_email', student.email)
+        .neq('status', 'removed')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Failed to fetch activity_responses:', error);
+        throw error;
+      }
+      
+      console.log(`✅ Loaded ${activityResponses?.length || 0} activity responses for ${student.full_name}`);
+      
+      // Return student with populated activity_responses
+      return {
+        ...student,
+        activity_responses: activityResponses || []
+      };
+      
     } catch (err) {
       console.error('Failed to get student:', err);
       throw err;

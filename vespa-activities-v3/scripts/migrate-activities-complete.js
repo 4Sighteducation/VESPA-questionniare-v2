@@ -39,7 +39,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 // ==========================================
 
 async function knackAPI(endpoint, page = 1) {
-  const url = `https://api.knack.com/v1/${endpoint}${endpoint.includes('?') ? '&' : '?'}page=${page}&rows_per_page=1000`;
+  const url = `https://api.knack.com/v1/${endpoint}${endpoint.includes('?') ? '&' : '?'}page=${page}&rows_per_page=1000&format=raw`;
   
   const response = await fetch(url, {
     headers: {
@@ -84,16 +84,35 @@ async function getAllRecords(objectId, maxPages = 20) {
 
 function extractEmail(emailField) {
   if (!emailField) return null;
+  
+  // Helper to clean HTML tags from any email string
+  const cleanEmail = (str) => {
+    if (!str || typeof str !== 'string') return null;
+    return str.replace(/<[^>]*>/g, '').trim() || null;
+  };
+  
+  // String format (already an email)
   if (typeof emailField === 'string') {
-    // Remove HTML tags if present
-    const cleaned = emailField.replace(/<[^>]*>/g, '').trim();
-    return cleaned || null;
+    return cleanEmail(emailField);
   }
+  
+  // Array format (connection field or multi-value)
   if (Array.isArray(emailField) && emailField.length > 0) {
-    if (emailField[0].email) return emailField[0].email;
-    return emailField[0];
+    const first = emailField[0];
+    // Connection with identifier (may have HTML)
+    if (first.identifier) return cleanEmail(first.identifier);
+    // Email object
+    if (first.email) return cleanEmail(first.email);
+    // Direct string
+    if (typeof first === 'string') return cleanEmail(first);
   }
-  if (emailField.email) return emailField.email;
+  
+  // Object format (raw email field or connection)
+  if (typeof emailField === 'object') {
+    if (emailField.identifier) return cleanEmail(emailField.identifier);
+    if (emailField.email) return cleanEmail(emailField.email);
+  }
+  
   return null;
 }
 
@@ -245,7 +264,7 @@ async function migrate() {
     answers46.forEach(answer => {
       const studentEmail = extractEmail(answer.field_1301);
       const activityName = answer.field_1302; // Activity name directly
-      if (studentEmail && activityName) {
+      if (studentEmail && typeof studentEmail === 'string' && activityName) {
         const key = `${studentEmail.toLowerCase()}_${activityName}`;
         answersMap[key] = answer;
       }
@@ -283,29 +302,26 @@ async function migrate() {
       stats.object126Processed++;
       
       try {
-        // TRY BOTH field_3536 and field_3536_raw for student
+        // With format=raw, field_3536 contains the raw array directly
         let studentEmail = extractEmail(progressRecord.field_3536);
         
-        // If empty, try the _raw field which might have connection data
-        if (!studentEmail && progressRecord.field_3536_raw) {
-          if (Array.isArray(progressRecord.field_3536_raw) && progressRecord.field_3536_raw.length > 0) {
-            // Extract email from connection object
-            const conn = progressRecord.field_3536_raw[0];
-            studentEmail = conn.email || conn.identifier || null;
-          }
+        // Debug first 3 records to see actual structure
+        if (stats.object126Processed <= 3) {
+          console.log(`\n📝 Record #${stats.object126Processed} (${progressRecord.id}):`);
+          console.log('  field_3536 type:', typeof progressRecord.field_3536);
+          console.log('  field_3536 value:', JSON.stringify(progressRecord.field_3536));
+          console.log('  Extracted email:', studentEmail);
         }
         
         if (!studentEmail) {
           stats.skipped.push({ 
             reason: 'No student email', 
             record: progressRecord.id,
-            field_3536: progressRecord.field_3536,
-            field_3536_raw: progressRecord.field_3536_raw 
+            field_3536: progressRecord.field_3536
           });
           if (stats.skipped.length <= 3) {
             console.log('SKIP #' + stats.skipped.length + ': No student connection');
             console.log('  field_3536:', progressRecord.field_3536);
-            console.log('  field_3536_raw:', progressRecord.field_3536_raw);
           }
           continue;
         }
@@ -318,8 +334,8 @@ async function migrate() {
             record: progressRecord.id,
             field: progressRecord.field_3537 
           });
-          if (stats.skipped.length <= 3) {
-            console.log('SKIP #' + stats.skipped.length + ':', progressRecord);
+          if (stats.skipped.length <= 10) {
+            console.log('SKIP: No activity name - Record:', progressRecord.id);
           }
           continue;
         }
@@ -330,11 +346,10 @@ async function migrate() {
           stats.skipped.push({ 
             reason: 'Activity not in Supabase', 
             activityName,
-            availableActivities: Object.keys(activityNameMap).slice(0, 5) 
+            record: progressRecord.id
           });
-          if (stats.skipped.length <= 3) {
-            console.log('SKIP #' + stats.skipped.length + ': Activity "' + activityName + '" not found');
-            console.log('Available activities sample:', Object.keys(activityNameMap).slice(0, 5));
+          if (stats.skipped.length <= 10) {
+            console.log(`SKIP: Activity "${activityName}" not found in Supabase - Record: ${progressRecord.id}`);
           }
           continue;
         }
@@ -351,22 +366,30 @@ async function migrate() {
         const answerKey = `${studentEmail.toLowerCase()}_${activityName}`;
         const answerRecord = answersMap[answerKey];
         
-        // Determine if prescribed using threshold logic
-        let selectedVia = 'student_choice'; // Default
+        // Use selected_via from Object_126 if available (field_3546)
+        // Otherwise use student_choice (default)
+        let selectedVia = progressRecord.field_3546 || 'student_choice';
         
-        // Activity name already extracted above, use it for threshold lookup
-        if (activityName && thresholdMap[activityName] && vespaData.scores) {
-          const threshold = thresholdMap[activityName];
-          const category = (threshold.category || '').toLowerCase();
-          const studentScore = vespaData.scores[category] || 0;
-          
-          // Check if student's score falls within threshold
-          if (studentScore >= threshold.min && studentScore <= threshold.max) {
-            selectedVia = 'questionnaire'; // Was prescribed!
-          }
+        // Map Knack values to Supabase check constraint allowed values
+        // Constraint ONLY allows: 'student_choice', 'staff_assigned'
+        // Map any other values to 'student_choice'
+        if (selectedVia !== 'staff_assigned' && selectedVia !== 'student_choice') {
+          selectedVia = 'student_choice';
+        }
+        
+        // Debug: Show successful matches for first few records
+        if (stats.object126Processed <= 5 && studentEmail && activityUuid) {
+          console.log(`✅ Match found: ${studentEmail} → ${activityName}`);
+          console.log(`   selected_via from field_3546: "${progressRecord.field_3546}" → mapped to: "${selectedVia}"`);
         }
         
         // Build activity_responses record
+        // Map Knack status to Supabase valid values
+        // Constraint ONLY allows: 'in_progress', 'completed'
+        let status = progressRecord.field_3543 || 'in_progress';
+        if (status === 'assigned') status = 'in_progress';
+        if (status === 'removed') status = 'in_progress'; // Could skip these, but keeping for history
+        
         const responseData = {
           student_email: studentEmail,
           activity_id: activityUuid,
@@ -374,7 +397,7 @@ async function migrate() {
           academic_year: '2025/2026', // TODO: Determine from dates
           
           // From Object_126
-          status: progressRecord.field_3543 || 'in_progress',
+          status: status,
           started_at: parseKnackDate(progressRecord.field_3539),
           completed_at: parseKnackDate(progressRecord.field_3541),
           time_spent_minutes: parseInt(progressRecord.field_3542) || 0,
@@ -408,12 +431,18 @@ async function migrate() {
           stats.errors.push({ 
             student: studentEmail, 
             activity: activityName, 
-            error: error.message 
+            error: error.message,
+            record: progressRecord.id
           });
+          // Log first 10 errors
+          if (stats.errors.length <= 10) {
+            console.log(`❌ ERROR #${stats.errors.length}: ${studentEmail} → ${activityName}`);
+            console.log(`   ${error.message}`);
+          }
         } else {
           stats.object126Migrated++;
           
-          if (stats.object126Migrated % 50 === 0) {
+          if (stats.object126Migrated % 50 === 0 || stats.object126Migrated <= 5) {
             console.log(`   ✅ Migrated ${stats.object126Migrated}/${progress126.length} records...`);
           }
         }
