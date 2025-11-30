@@ -205,13 +205,13 @@ async function migrate() {
     console.log('📖 Step 5: Fetching Object_46 (Activity Answers) from Knack...');
     const answers46 = await getAllRecords('object_46', 20); // ~16,186 records
     
-    // Create lookup: studentId + activityId → Object_46 record
+    // Create lookup: student email + activity name → Object_46 record
     const answersMap = {};
     answers46.forEach(answer => {
-      const studentId = extractConnectionId(answer.field_1301);
-      const activityId = extractConnectionId(answer.field_1302);
-      if (studentId && activityId) {
-        const key = `${studentId}_${activityId}`;
+      const studentEmail = extractEmail(answer.field_1301);
+      const activityName = answer.field_1302; // Activity name directly
+      if (studentEmail && activityName) {
+        const key = `${studentEmail.toLowerCase()}_${activityName}`;
         answersMap[key] = answer;
       }
     });
@@ -248,34 +248,24 @@ async function migrate() {
       stats.object126Processed++;
       
       try {
-        // Get student connection
-        const studentKnackId = extractConnectionId(progressRecord.field_3536);
-        if (!studentKnackId) {
-          stats.skipped.push({ reason: 'No student ID', record: progressRecord.id });
+        // FIXED: field_3536 contains STUDENT EMAIL directly!
+        const studentEmail = extractEmail(progressRecord.field_3536);
+        if (!studentEmail) {
+          stats.skipped.push({ reason: 'No student email', record: progressRecord.id });
           continue;
         }
         
-        // Get activity connection
-        const activityKnackId = extractConnectionId(progressRecord.field_3537);
-        if (!activityKnackId) {
-          stats.skipped.push({ reason: 'No activity ID', record: progressRecord.id });
+        // FIXED: field_3537 contains ACTIVITY NAME directly!
+        const activityName = progressRecord.field_3537;
+        if (!activityName) {
+          stats.skipped.push({ reason: 'No activity name', record: progressRecord.id });
           continue;
         }
         
-        // Resolve to Supabase activity UUID
-        const activityUuid = activityIdMap[activityKnackId];
+        // Resolve activity name to Supabase UUID
+        const activityUuid = activityNameMap[activityName];
         if (!activityUuid) {
-          stats.skipped.push({ reason: 'Activity not in Supabase', activityId: activityKnackId });
-          continue;
-        }
-        
-        // Get student from Object_6 via Knack API to get email
-        let studentEmail = null;
-        try {
-          const studentRecord = await knackAPI(`objects/object_6/records/${studentKnackId}`);
-          studentEmail = extractEmail(studentRecord.field_91);
-        } catch (err) {
-          stats.skipped.push({ reason: 'Could not fetch student', studentId: studentKnackId });
+          stats.skipped.push({ reason: 'Activity not in Supabase', activityName });
           continue;
         }
         
@@ -288,7 +278,7 @@ async function migrate() {
         const vespaData = vespaMap[studentEmail.toLowerCase()] || { cycle: 1, scores: {} };
         
         // Find matching Object_46 record
-        const answerKey = `${studentKnackId}_${activityKnackId}`;
+        const answerKey = `${studentEmail.toLowerCase()}_${activityName}`;
         const answerRecord = answersMap[answerKey];
         
         // Determine if prescribed using threshold logic
