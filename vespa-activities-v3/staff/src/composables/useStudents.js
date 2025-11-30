@@ -59,14 +59,37 @@ export function useStudents() {
 
       if (error) throw error;
 
-      // RPC returns basic student data - add default progress fields for UI
+      // RPC returns student data with category counts - map to UI format
       students.value = (data || []).map(student => ({
         ...student,
-        prescribedCount: 0,  // TODO: Load from activity_responses
-        completedCount: 0,
-        totalCompletedCount: 0,
-        progress: 0,
-        categoryBreakdown: {},
+        prescribedCount: student.total_activities || 0,
+        completedCount: student.completed_activities || 0,
+        totalCompletedCount: student.completed_activities || 0,
+        progress: student.total_activities > 0 
+          ? Math.round((student.completed_activities / student.total_activities) * 100) 
+          : 0,
+        categoryBreakdown: {
+          vision: {
+            prescribed: Array(student.vision_total || 0).fill(null),
+            completed: Array(student.vision_completed || 0).fill(null)
+          },
+          effort: {
+            prescribed: Array(student.effort_total || 0).fill(null),
+            completed: Array(student.effort_completed || 0).fill(null)
+          },
+          systems: {
+            prescribed: Array(student.systems_total || 0).fill(null),
+            completed: Array(student.systems_completed || 0).fill(null)
+          },
+          practice: {
+            prescribed: Array(student.practice_total || 0).fill(null),
+            completed: Array(student.practice_completed || 0).fill(null)
+          },
+          attitude: {
+            prescribed: Array(student.attitude_total || 0).fill(null),
+            completed: Array(student.attitude_completed || 0).fill(null)
+          }
+        },
         unreadFeedbackCount: 0
       }));
       
