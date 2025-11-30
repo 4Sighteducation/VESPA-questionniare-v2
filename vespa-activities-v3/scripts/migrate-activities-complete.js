@@ -86,9 +86,44 @@ function extractEmail(emailField) {
   if (!emailField) return null;
   if (typeof emailField === 'string') {
     // Remove HTML tags if present
-    return emailField.replace(/<[^>]*>/g, '').trim();
+    const cleaned = emailField.replace(/<[^>]*>/g, '').trim();
+    return cleaned || null;
+  }
+  if (Array.isArray(emailField) && emailField.length > 0) {
+    if (emailField[0].email) return emailField[0].email;
+    return emailField[0];
   }
   if (emailField.email) return emailField.email;
+  return null;
+}
+
+function extractActivityName(activityField) {
+  if (!activityField) return null;
+  
+  // Handle HTML format: <span class="..." data-kn="connection-value">Activity Name</span>
+  if (typeof activityField === 'string' && activityField.includes('<span')) {
+    const match = activityField.match(/>([^<]+)</);
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+    // Fallback: remove all HTML tags
+    return activityField.replace(/<[^>]*>/g, '').trim();
+  }
+  
+  // Handle _raw format with identifier
+  if (Array.isArray(activityField) && activityField.length > 0) {
+    if (activityField[0].identifier) return activityField[0].identifier;
+    if (activityField[0].name) return activityField[0].name;
+  }
+  
+  if (typeof activityField === 'object' && activityField.identifier) {
+    return activityField.identifier;
+  }
+  
+  if (typeof activityField === 'string') {
+    return activityField.trim();
+  }
+  
   return null;
 }
 
@@ -262,8 +297,8 @@ async function migrate() {
           continue;
         }
         
-        // FIXED: field_3537 contains ACTIVITY NAME directly!
-        const activityName = progressRecord.field_3537;
+        // FIXED: field_3537 contains ACTIVITY NAME (with HTML wrapper!)
+        const activityName = extractActivityName(progressRecord.field_3537);
         if (!activityName) {
           stats.skipped.push({ 
             reason: 'No activity name', 
