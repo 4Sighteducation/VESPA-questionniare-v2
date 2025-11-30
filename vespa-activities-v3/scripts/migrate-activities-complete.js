@@ -283,16 +283,29 @@ async function migrate() {
       stats.object126Processed++;
       
       try {
-        // FIXED: field_3536 contains STUDENT EMAIL directly!
-        const studentEmail = extractEmail(progressRecord.field_3536);
+        // TRY BOTH field_3536 and field_3536_raw for student
+        let studentEmail = extractEmail(progressRecord.field_3536);
+        
+        // If empty, try the _raw field which might have connection data
+        if (!studentEmail && progressRecord.field_3536_raw) {
+          if (Array.isArray(progressRecord.field_3536_raw) && progressRecord.field_3536_raw.length > 0) {
+            // Extract email from connection object
+            const conn = progressRecord.field_3536_raw[0];
+            studentEmail = conn.email || conn.identifier || null;
+          }
+        }
+        
         if (!studentEmail) {
           stats.skipped.push({ 
             reason: 'No student email', 
             record: progressRecord.id,
-            field: progressRecord.field_3536 
+            field_3536: progressRecord.field_3536,
+            field_3536_raw: progressRecord.field_3536_raw 
           });
           if (stats.skipped.length <= 3) {
-            console.log('SKIP #' + stats.skipped.length + ':', progressRecord);
+            console.log('SKIP #' + stats.skipped.length + ': No student connection');
+            console.log('  field_3536:', progressRecord.field_3536);
+            console.log('  field_3536_raw:', progressRecord.field_3536_raw);
           }
           continue;
         }
