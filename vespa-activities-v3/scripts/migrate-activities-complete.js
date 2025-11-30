@@ -284,8 +284,7 @@ async function migrate() {
         // Determine if prescribed using threshold logic
         let selectedVia = 'student_choice'; // Default
         
-        // Get activity name from Supabase
-        const activityName = sbActivities.find(a => a.id === activityUuid)?.name;
+        // Activity name already extracted above, use it for threshold lookup
         if (activityName && thresholdMap[activityName] && vespaData.scores) {
           const threshold = thresholdMap[activityName];
           const category = (threshold.category || '').toLowerCase();
