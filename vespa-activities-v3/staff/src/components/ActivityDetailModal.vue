@@ -185,11 +185,11 @@
           
           <button
             class="btn btn-danger"
-            @click="deletePermanently"
+            @click="clearAndRemove"
             :disabled="isSaving"
-            title="Permanently delete - cannot be undone!"
+            title="Clear all answers and remove from student - cannot be undone!"
           >
-            <i class="fas fa-trash"></i> Delete Permanently
+            <i class="fas fa-eraser"></i> Clear All Answers
           </button>
         </div>
 
@@ -460,15 +460,20 @@ const markIncomplete = async () => {
   }
 };
 
-const deletePermanently = async () => {
+const clearAndRemove = async () => {
   const activityName = props.activity.activities?.name || 'this activity';
+  const studentName = props.student.full_name;
   
   // Strong warning about data loss
   const confirmed = confirm(
-    `⚠️ PERMANENTLY DELETE "${activityName}"?\n\n` +
-    `This will delete ALL student responses and feedback.\n` +
+    `⚠️ CLEAR ALL ANSWERS for "${activityName}"?\n\n` +
+    `This will:\n` +
+    `• Remove the activity from ${studentName}\n` +
+    `• Clear ALL student responses\n` +
+    `• Delete any staff feedback\n\n` +
     `This CANNOT be undone!\n\n` +
-    `Are you absolutely sure?`
+    `(The activity can be reassigned later, but will start blank)\n\n` +
+    `Are you sure?`
   );
   
   if (!confirmed) return;
@@ -476,8 +481,9 @@ const deletePermanently = async () => {
   // Second confirmation
   const doubleCheck = confirm(
     `Final confirmation:\n\n` +
-    `Delete "${activityName}" and ALL its data permanently?\n\n` +
-    `Student: ${props.student.full_name}`
+    `Clear all answers and remove "${activityName}"?\n\n` +
+    `Student: ${studentName}\n\n` +
+    `This will erase their work permanently.`
   );
   
   if (!doubleCheck) return;
@@ -493,12 +499,12 @@ const deletePermanently = async () => {
       props.staffContext.schoolId
     );
 
-    alert(`"${activityName}" permanently deleted`);
+    alert(`All answers cleared and "${activityName}" removed from ${studentName}`);
     emit('status-changed');
 
   } catch (error) {
-    console.error('Failed to delete permanently:', error);
-    alert('Failed to delete. Please try again.');
+    console.error('Failed to clear and remove:', error);
+    alert('Failed to clear answers. Please try again.');
   } finally {
     isSaving.value = false;
   }
