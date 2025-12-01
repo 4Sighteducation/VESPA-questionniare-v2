@@ -30,13 +30,13 @@ export default defineConfig(({ mode }) => {
           main: path.resolve(__dirname, 'index.html')
         },
         output: {
-          format: 'iife',  // IIFE format for Knack compatibility!
+          format: 'iife',  // Back to IIFE for Knack
           name: 'VESPAStaffActivities',
-          entryFileNames: 'activity-dashboard-1z.js',  // Version 1z - Fixed useStudents export
-          chunkFileNames: 'activity-dashboard-1z-[hash].js',
+          entryFileNames: 'activity-dashboard-2b.js',  // Version 2b - IIFE with window storage
+          chunkFileNames: 'activity-dashboard-2b-[hash].js',
           assetFileNames: (assetInfo) => {
             if (assetInfo.name.endsWith('.css')) {
-              return 'activity-dashboard-1z.css';
+              return 'activity-dashboard-2b.css';
             }
             return 'assets/[name]-[hash][extname]';
           }

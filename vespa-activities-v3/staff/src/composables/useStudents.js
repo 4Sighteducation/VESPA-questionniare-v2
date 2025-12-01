@@ -7,12 +7,15 @@ import { ref, computed } from 'vue';
 import supabase from '../supabaseClient';
 import { useAuth } from './useAuth';
 
-// Singleton state object to avoid IIFE scoping issues
-const state = {
-  students: ref([]),
-  isLoadingStudents: ref(false),
-  studentsError: ref(null)
-};
+// Store state on window to bypass IIFE scoping completely
+if (!window.__VESPAStudentsState) {
+  window.__VESPAStudentsState = {
+    students: ref([]),
+    isLoadingStudents: ref(false),
+    studentsError: ref(null)
+  };
+}
+const state = window.__VESPAStudentsState;
 
 export function useStudents() {
   const { staffContext, currentUser, hasRole } = useAuth();

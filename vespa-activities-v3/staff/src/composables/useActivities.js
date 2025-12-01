@@ -6,11 +6,14 @@
 import { ref } from 'vue';
 import supabase from '../supabaseClient';
 
-// Singleton state object to avoid IIFE scoping issues
-const state = {
-  allActivities: ref([]),
-  isLoadingActivities: ref(false)
-};
+// Store state on window to bypass IIFE scoping completely
+if (!window.__VESPAActivitiesState) {
+  window.__VESPAActivitiesState = {
+    allActivities: ref([]),
+    isLoadingActivities: ref(false)
+  };
+}
+const state = window.__VESPAActivitiesState;
 
 /**
  * Mark activity as complete (staff override)

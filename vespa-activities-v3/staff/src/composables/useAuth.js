@@ -5,14 +5,17 @@
 
 import { ref } from 'vue';
 
-// Singleton state object to avoid IIFE scoping issues
-const state = {
-  isAuthenticated: ref(true),
-  staffContext: ref(null),
-  currentUser: ref(null),
-  isLoading: ref(false),
-  error: ref(null)
-};
+// Store state on window to bypass IIFE scoping completely
+if (!window.__VESPAAuthState) {
+  window.__VESPAAuthState = {
+    isAuthenticated: ref(true),
+    staffContext: ref(null),
+    currentUser: ref(null),
+    isLoading: ref(false),
+    error: ref(null)
+  };
+}
+const state = window.__VESPAAuthState;
 
 export function useAuth() {
 
