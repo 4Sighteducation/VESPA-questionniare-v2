@@ -199,18 +199,26 @@ export function useActivities() {
    */
   const removeActivity = async (studentEmail, activityId, cycleNumber, staffEmail) => {
     try {
+      console.log('🗑️ Removing activity:', { studentEmail, activityId, cycleNumber });
+      
       // Update status to 'removed'
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('activity_responses')
         .update({ status: 'removed', updated_at: new Date().toISOString() })
         .eq('student_email', studentEmail)
         .eq('activity_id', activityId)
-        .eq('cycle_number', cycleNumber);
+        .eq('cycle_number', cycleNumber)
+        .select();  // Return updated rows
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Supabase update error:', error);
+        throw error;
+      }
+
+      console.log('✅ Database updated:', data);
 
       // Log action
-      await supabase
+      const { error: historyError } = await supabase
         .from('activity_history')
         .insert({
           student_email: studentEmail,
