@@ -199,23 +199,42 @@ export function useActivities() {
    */
   const removeActivity = async (studentEmail, activityId, cycleNumber, staffEmail, schoolId) => {
     try {
-      console.log('🗑️ Removing activity via RPC:', { studentEmail, activityId, cycleNumber, staffEmail, schoolId });
+      console.log('🗑️ Removing activity (DELETE):', { studentEmail, activityId, cycleNumber });
       
-      // Use RPC function to remove (bypasses RLS)
-      const { data, error } = await supabase.rpc('remove_activity_from_student', {
-        p_student_email: studentEmail,
-        p_activity_id: activityId,
-        p_cycle_number: cycleNumber,
-        p_staff_email: staffEmail,
-        p_school_id: schoolId
-      });
+      // ACTUALLY DELETE the row (simpler than marking removed)
+      const { data, error } = await supabase
+        .from('activity_responses')
+        .delete()
+        .eq('student_email', studentEmail)
+        .eq('activity_id', activityId)
+        .eq('cycle_number', cycleNumber)
+        .select();
 
       if (error) {
-        console.error('❌ RPC error:', error);
+        console.error('❌ Delete error:', error);
         throw error;
       }
 
-      console.log('✅ Activity removed via RPC:', data);
+      console.log('✅ Activity deleted from database:', data);
+
+      // Log the removal action
+      try {
+        await supabase
+          .from('activity_history')
+          .insert({
+            student_email: studentEmail,
+            activity_id: activityId,
+            action: 'removed',
+            triggered_by: 'staff',
+            triggered_by_email: staffEmail,
+            cycle_number: cycleNumber,
+            metadata: { school_id: schoolId }
+          });
+      } catch (historyError) {
+        console.warn('⚠️ Failed to log removal to history:', historyError);
+        // Don't fail the whole operation if logging fails
+      }
+
       return data;
 
     } catch (err) {
