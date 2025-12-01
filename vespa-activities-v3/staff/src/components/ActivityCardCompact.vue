@@ -12,15 +12,9 @@
     @click.stop="handleClick"
     :title="activityName"
   >
-    <!-- Status Badge - Clear Visual Indicator -->
-    <span v-if="isCompleted" class="status-badge completed-badge" title="Completed">✓</span>
-    <span v-else-if="isInProgress" class="status-badge in-progress-badge" title="In Progress">⏳</span>
-    
-    <!-- Source Indicator -->
-    <span v-if="isAssigned && sourceType" class="source-circle" :class="sourceType" :title="sourceTitle"></span>
-    
-    <!-- Feedback Indicator -->
-    <span v-if="hasUnreadFeedback" class="source-circle feedback" title="Unread feedback"></span>
+    <!-- Source Indicator - Only ONE indicator per card -->
+    <span v-if="hasUnreadFeedback" class="source-circle feedback pulse" title="Unread feedback from staff"></span>
+    <span v-else-if="isAssigned && sourceType" class="source-circle" :class="sourceType" :title="sourceTitle"></span>
     
     <!-- Activity Name -->
     <span class="activity-text">{{ activityName }}</span>
@@ -32,7 +26,7 @@
       @click.stop="$emit('remove')"
       title="Remove"
     >
-      −
+      ×
     </button>
     
     <!-- Add Button (for available activities) -->
@@ -158,11 +152,11 @@ const handleClick = (event) => {
 </script>
 
 <style scoped>
-/* Compact Activity Card - Draggable Workspace Style */
+/* Compact Activity Card - Smaller & Cleaner */
 .compact-activity-card {
-  padding: 6px 8px;
-  border-radius: 6px;
-  font-size: 12px;
+  padding: 4px 6px;  /* Reduced padding */
+  border-radius: 5px;
+  font-size: 11px;  /* Smaller text */
   font-weight: 500;
   color: white;
   cursor: pointer;
@@ -170,12 +164,13 @@ const handleClick = (event) => {
   transition: all 0.2s;
   display: flex;
   align-items: center;
-  gap: 4px;
-  min-height: 28px;
+  gap: 3px;  /* Tighter gap */
+  min-height: 24px;  /* Reduced from 28px */
   white-space: nowrap;
   overflow: hidden;
-  pointer-events: auto !important; /* Ensure clicks work */
-  z-index: 1; /* Ensure card is above drop zones */
+  pointer-events: auto !important;
+  z-index: 1;
+  border: 1px solid transparent;
 }
 
 /* Category Colors - IN-PROGRESS (full bright colors) */
@@ -197,19 +192,23 @@ const handleClick = (event) => {
 .compact-activity-card.in-progress.level-level2.attitude { background: #ff66e6; }
 .compact-activity-card.in-progress.level-level3.attitude { background: #f032e6; }
 
-/* COMPLETED State - Grey/Desaturated (like in screenshot) */
+/* COMPLETED State - Clean grey (no overlapping) */
 .compact-activity-card.completed {
-  background: rgba(108, 117, 125, 0.4) !important;
-  opacity: 0.8 !important;
-  color: #495057 !important;
-  border: 2px solid rgba(108, 117, 125, 0.6) !important;
-  cursor: pointer !important; /* Still clickable to view responses! */
+  background: #e9ecef !important;  /* Solid grey - no transparency issues */
+  color: #6c757d !important;
+  border: 1px solid #ced4da !important;
+  cursor: pointer !important;
+  opacity: 1 !important;  /* No opacity - prevents overlapping */
 }
 
 .compact-activity-card.completed .activity-text {
-  padding-left: 20px;
-  color: #343a40 !important;
-  font-weight: 700 !important;
+  color: #6c757d !important;
+  font-weight: 500 !important;
+}
+
+.compact-activity-card.completed:hover {
+  background: #dee2e6 !important;
+  border-color: #adb5bd !important;
 }
 
 /* DEFAULT State (not assigned yet) - Lighter colors */
@@ -220,8 +219,9 @@ const handleClick = (event) => {
 .compact-activity-card:not(.in-progress):not(.completed).attitude { background: #ff99f0; }
 
 .compact-activity-card:hover {
-  transform: translateX(2px);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+  filter: brightness(1.05);
 }
 
 .compact-activity-card.dragging {
@@ -236,110 +236,106 @@ const handleClick = (event) => {
   text-overflow: ellipsis;
 }
 
-/* Status Badges - Clear Visual Indicators */
-.status-badge {
-  position: absolute;
-  right: 26px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: bold;
-  z-index: 5;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-}
-
-.status-badge.completed-badge {
-  background: #22c55e;
-  color: white;
-}
-
-.status-badge.in-progress-badge {
-  background: #fbbf24;
-  color: #78350f;
-}
+/* Status shown by card color instead of badges */
+/* Bright colors = In Progress | Grey = Completed | Light = Available */
 
 /* Source Circle Indicators */
 .source-circle {
-  position: absolute;
-  width: 12px;
-  height: 12px;
+  width: 8px;  /* Smaller indicator */
+  height: 8px;
   border-radius: 50%;
-  border: 2px solid white;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-  z-index: 2;
+  border: 1.5px solid white;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  flex-shrink: 0;
 }
 
 .source-circle.questionnaire {
-  background: #1e7e34;
-  top: 4px;
-  left: 4px;
+  background: #28a745;  /* Green = Questionnaire */
 }
 
 .source-circle.student {
-  background: #007bff;
-  top: 4px;
-  left: 4px;
+  background: #007bff;  /* Blue = Student choice */
 }
 
 .source-circle.staff {
-  background: #6f42c1;
-  top: 4px;
-  left: 4px;
+  background: #6f42c1;  /* Purple = Staff assigned */
 }
 
 .source-circle.feedback {
-  background: #dc3545;
-  top: 4px;
-  left: 18px;
+  background: #dc3545;  /* Red = Unread feedback */
 }
 
-/* Action Buttons - Only show on hover, don't block clicks */
+/* Pulse animation for unread feedback */
+.source-circle.pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.2); }
+}
+
+/* Action Buttons - Inline compact */
 .btn-remove-compact,
 .btn-add-compact {
-  position: absolute;
-  right: 4px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  border-radius: 3px;
   border: none;
-  background: rgba(255,255,255,0.9);
-  color: #333;
+  background: rgba(255,255,255,0.3);
+  color: white;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  font-weight: bold;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0.7;
   transition: all 0.2s;
-  opacity: 0;
-  pointer-events: none; /* Don't block clicks when hidden */
-  z-index: 10; /* Above everything when visible */
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .compact-activity-card:hover .btn-remove-compact,
 .compact-activity-card:hover .btn-add-compact {
   opacity: 1;
-  pointer-events: auto; /* Enable clicks when visible */
+  background: rgba(255,255,255,0.9);
+  color: #333;
 }
 
 .btn-remove-compact:hover {
-  background: #ef4444;
-  color: white;
-  transform: translateY(-50%) scale(1.1);
+  background: #ef4444 !important;
+  color: white !important;
+  transform: scale(1.15);
 }
 
 .btn-add-compact:hover {
-  background: #10b981;
-  color: white;
-  transform: translateY(-50%) scale(1.1);
+  background: #10b981 !important;
+  color: white !important;
+  transform: scale(1.15);
+}
+
+/* Responsive - smaller screens */
+@media (max-width: 1400px) {
+  .compact-activity-card {
+    font-size: 10px;
+    min-height: 22px;
+    padding: 3px 5px;
+  }
+  
+  .source-circle {
+    width: 7px;
+    height: 7px;
+  }
+  
+  .btn-remove-compact,
+  .btn-add-compact {
+    width: 14px;
+    height: 14px;
+    font-size: 11px;
+  }
 }
 </style>
 

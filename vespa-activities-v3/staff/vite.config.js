@@ -32,11 +32,11 @@ export default defineConfig(({ mode }) => {
         output: {
           format: 'iife',  // Back to IIFE for Knack
           name: 'VESPAStaffActivities',
-          entryFileNames: 'activity-dashboard-2f.js',  // Version 2f - Fixed question matching, PDF modal, notifications
-          chunkFileNames: 'activity-dashboard-2f-[hash].js',
+          entryFileNames: 'activity-dashboard-2g.js',  // Version 2g - Responsive UX overhaul, simplified indicators
+          chunkFileNames: 'activity-dashboard-2g-[hash].js',
           assetFileNames: (assetInfo) => {
             if (assetInfo.name.endsWith('.css')) {
-              return 'activity-dashboard-2f.css';
+              return 'activity-dashboard-2g.css';
             }
             return 'assets/[name]-[hash][extname]';
           }

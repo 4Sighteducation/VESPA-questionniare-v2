@@ -447,11 +447,11 @@ const handleStatusChanged = () => {
   overflow: hidden;
 }
 
-/* Compact Header - Smart spacing for GeneralHeader */
+/* Compact Header - Large spacing for GeneralHeader */
 .workspace-header-compact {
   background: white !important;
-  padding: 15px 20px !important;
-  margin: 150px 20px 20px 20px !important;  /* Increased from 120px to 150px for GeneralHeader with breadcrumb */
+  padding: 12px 16px !important;
+  margin: 200px 16px 16px 16px !important;  /* Increased to 200px for large GeneralHeader */
   border-radius: 8px !important;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
   display: flex !important;
@@ -466,7 +466,7 @@ const handleStatusChanged = () => {
 
 /* Adjust for pages without breadcrumb */
 body:not(.has-breadcrumb) .workspace-header-compact {
-  margin-top: 100px !important;  /* Less margin if no breadcrumb row */
+  margin-top: 140px !important;  /* Still generous for no breadcrumb */
 }
 
 .student-info-compact {
@@ -476,13 +476,14 @@ body:not(.has-breadcrumb) .workspace-header-compact {
 
 .student-info-compact h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 16px;  /* Smaller header */
   color: #212529;
+  font-weight: 600;
 }
 
 .student-info-compact span {
   color: #6c757d;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .header-actions {
@@ -499,21 +500,22 @@ body:not(.has-breadcrumb) .workspace-header-compact {
   width: 200px;
 }
 
-/* Main Content Area */
+/* Main Content Area - Improved scrolling */
 .workspace-content {
   margin-top: 0;
-  padding: 0 16px;
-  height: calc(100vh - 220px);
+  padding: 0 16px 16px 16px;
+  height: calc(100vh - 280px);  /* Adjusted for larger header */
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  overflow: hidden;
+  gap: 12px;
+  overflow-y: auto;  /* Allow main content to scroll */
+  overflow-x: hidden;
 }
 
-/* Student Section - Fixed Height */
+/* Student Section - Compact height */
 .student-section {
   flex-shrink: 0;
-  height: 280px;
+  height: 240px;  /* Reduced from 280px */
   overflow: visible;
 }
 
@@ -521,32 +523,33 @@ body:not(.has-breadcrumb) .workspace-header-compact {
 .all-section {
   flex: 1;
   overflow-y: auto;
-  min-height: 300px;
+  min-height: 250px;  /* Reduced from 300px */
+  padding-bottom: 20px;  /* Add space at bottom for scroll */
 }
 
 .section-header-compact {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
-  padding: 8px 12px;
+  margin-bottom: 6px;
+  padding: 6px 10px;  /* Tighter padding */
   background: white;
   border-radius: 6px;
 }
 
 .section-header-compact h4 {
   margin: 0;
-  font-size: 14px;
+  font-size: 13px;  /* Smaller */
   font-weight: 600;
   color: #23356f;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .legend-compact {
   display: inline-flex;
-  gap: 15px;
+  gap: 12px;
   font-size: 10px;
   align-items: center;
 }
@@ -554,19 +557,21 @@ body:not(.has-breadcrumb) .workspace-header-compact {
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   color: #6c757d;
+  white-space: nowrap;
 }
 
 .source-circle {
-  width: 12px;
-  height: 12px;
+  width: 10px;  /* Smaller indicators */
+  height: 10px;
   border-radius: 50%;
-  border: 2px solid white;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  border: 1.5px solid white;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  flex-shrink: 0;
 }
 
-.source-circle.questionnaire { background: #1e7e34; }
+.source-circle.questionnaire { background: #28a745; }  /* Brighter green */
 .source-circle.staff { background: #6f42c1; }
 .source-circle.student { background: #007bff; }
 .source-circle.feedback { background: #dc3545; }
