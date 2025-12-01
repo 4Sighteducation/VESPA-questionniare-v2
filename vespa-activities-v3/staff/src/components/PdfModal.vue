@@ -4,16 +4,16 @@
       <div class="pdf-modal-header">
         <h3 class="pdf-modal-title">
           <i class="fas fa-file-pdf"></i>
-          {{ title || 'PDF Document' }}
+          View PDF: {{ title || 'Document' }}
         </h3>
         <div class="pdf-modal-actions">
-          <a :href="pdfUrl" target="_blank" class="btn-icon" title="Open in new tab">
+          <a :href="pdfUrl" target="_blank" class="btn-icon btn-primary" title="Open in new tab">
             <i class="fas fa-external-link-alt"></i>
           </a>
-          <a :href="pdfUrl" download class="btn-icon" title="Download PDF">
+          <a :href="pdfUrl" download class="btn-icon" title="Download">
             <i class="fas fa-download"></i>
           </a>
-          <button class="btn-icon" @click="$emit('close')" title="Close">
+          <button class="btn-icon btn-close" @click="$emit('close')" title="Close (or click outside)">
             <i class="fas fa-times"></i>
           </button>
         </div>
@@ -53,20 +53,21 @@ defineEmits(['close']);
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0, 0, 0, 0.75);  /* Slightly lighter */
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: 99999;  /* Higher than anything */
   padding: 20px;
+  cursor: pointer;  /* Shows it's clickable to close */
 }
 
 .pdf-modal {
   background: white;
   border-radius: 12px;
   width: 100%;
-  max-width: 1200px;
-  height: 90vh;
+  max-width: 800px;  /* MUCH smaller - was 1200px */
+  height: 70vh;  /* MUCH smaller - was 90vh */
   display: flex;
   flex-direction: column;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
@@ -77,19 +78,23 @@ defineEmits(['close']);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
+  padding: 12px 20px;  /* Slightly smaller */
   background: #f8f9fa;
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 2px solid #dee2e6;
+  flex-shrink: 0;
 }
 
 .pdf-modal-title {
   margin: 0;
-  font-size: 18px;
+  font-size: 16px;  /* Smaller */
   font-weight: 600;
   color: #343a40;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .pdf-modal-title i {
@@ -124,6 +129,28 @@ defineEmits(['close']);
   color: white;
   border-color: #079baa;
   transform: translateY(-1px);
+}
+
+.btn-close {
+  background: #dc3545 !important;
+  color: white !important;
+  border-color: #dc3545 !important;
+}
+
+.btn-close:hover {
+  background: #c82333 !important;
+  border-color: #bd2130 !important;
+}
+
+.btn-primary {
+  background: #079baa !important;
+  color: white !important;
+  border-color: #079baa !important;
+}
+
+.btn-primary:hover {
+  background: #006b77 !important;
+  border-color: #006b77 !important;
 }
 
 .pdf-modal-body {
