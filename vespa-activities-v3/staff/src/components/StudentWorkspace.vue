@@ -264,19 +264,9 @@ const draggedActivity = ref(null);
 // Constants
 const categories = ['Vision', 'Effort', 'Systems', 'Practice', 'Attitude'];
 
-// Load all activities IMMEDIATELY (not waiting for mount)
-// This ensures activities are available before rendering
-if (!allActivities.value || allActivities.value.length === 0) {
-  loadAllActivities().catch(err => {
-    console.error('Failed to load activities:', err);
-  });
-}
-
+// Load activities on mount
 onMounted(async () => {
-  // Ensure activities are loaded
-  if (!allActivities.value || allActivities.value.length === 0) {
-    await loadAllActivities();
-  }
+  await loadAllActivities();
 });
 
 // Computed
