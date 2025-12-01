@@ -6,8 +6,10 @@
 import { ref } from 'vue';
 import supabase from '../supabaseClient';
 
-const allActivities = ref([]);
-const isLoadingActivities = ref(false);
+// Move refs inside composable to avoid IIFE scoping issues
+// Module-level state causes problems with Vite IIFE compilation
+let allActivities = null;
+let isLoadingActivities = null;
 
 /**
  * Mark activity as complete (staff override)
@@ -88,6 +90,13 @@ const markActivityIncomplete = async (responseId, studentEmail, activityId, staf
 };
 
 export function useActivities() {
+  // Initialize refs on first call (singleton pattern)
+  if (!allActivities) {
+    allActivities = ref([]);
+  }
+  if (!isLoadingActivities) {
+    isLoadingActivities = ref(false);
+  }
 
   /**
    * Load all available activities from catalog

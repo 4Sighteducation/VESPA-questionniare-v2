@@ -32,11 +32,11 @@ export default defineConfig(({ mode }) => {
         output: {
           format: 'iife',  // IIFE format for Knack compatibility!
           name: 'VESPAStaffActivities',
-          entryFileNames: 'activity-dashboard-1v.js',  // Version 1v - Fixed header spacing, status indicators, clickable cards
-          chunkFileNames: 'activity-dashboard-1v-[hash].js',
+          entryFileNames: 'activity-dashboard-1w.js',  // Version 1w - Fixed IIFE scoping bug (allActivities not defined)
+          chunkFileNames: 'activity-dashboard-1w-[hash].js',
           assetFileNames: (assetInfo) => {
             if (assetInfo.name.endsWith('.css')) {
-              return 'activity-dashboard-1v.css';
+              return 'activity-dashboard-1w.css';
             }
             return 'assets/[name]-[hash][extname]';
           }
