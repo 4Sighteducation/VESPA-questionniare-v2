@@ -32,11 +32,11 @@ export default defineConfig(({ mode }) => {
         output: {
           format: 'iife',  // Back to IIFE for Knack
           name: 'VESPAStaffActivities',
-          entryFileNames: 'activity-dashboard-2j.js',  // Version 2j - Fixed responsive header visibility, better debug
-          chunkFileNames: 'activity-dashboard-2j-[hash].js',
+          entryFileNames: 'activity-dashboard-2k.js',  // Version 2k - Fixed drag-drop removal refresh logic
+          chunkFileNames: 'activity-dashboard-2k-[hash].js',
           assetFileNames: (assetInfo) => {
             if (assetInfo.name.endsWith('.css')) {
-              return 'activity-dashboard-2j.css';
+              return 'activity-dashboard-2k.css';
             }
             return 'assets/[name]-[hash][extname]';
           }

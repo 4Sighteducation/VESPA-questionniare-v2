@@ -271,7 +271,9 @@ onMounted(async () => {
 
 // Computed
 const assignedActivities = computed(() => {
-  return props.student.activity_responses?.filter(r => r.status !== 'removed') || [];
+  const assigned = props.student.activity_responses?.filter(r => r.status !== 'removed') || [];
+  console.log(`📊 Assigned activities for ${props.student.full_name}:`, assigned.length);
+  return assigned;
 });
 
 const assignedActivityIds = computed(() => {
@@ -338,7 +340,10 @@ const onDrop = async (event, category, level, isStudentSection) => {
   event.preventDefault();
   event.currentTarget.classList.remove('drag-over');
   
-  if (!draggedActivity.value) return;
+  if (!draggedActivity.value) {
+    console.log('⚠️ No dragged activity found');
+    return;
+  }
   
   const activity = draggedActivity.value;
   
@@ -360,7 +365,22 @@ const onDrop = async (event, category, level, isStudentSection) => {
   // If dropping in available section and activity is assigned
   if (!isStudentSection && activity.activity_id) {
     console.log('➖ Removing activity from student');
-    await removeActivity(activity);
+    
+    // Remove without confirmation dialog (already dragged)
+    try {
+      await removeActivityAPI(
+        activity.student_email,
+        activity.activity_id,
+        activity.cycle_number,
+        getStaffEmail()
+      );
+      
+      console.log('✅ Activity removed successfully');
+      emit('refresh');
+    } catch (error) {
+      console.error('❌ Failed to remove activity:', error);
+      alert('Failed to remove activity. Please try again.');
+    }
   }
   
   draggedActivity.value = null;
@@ -403,6 +423,8 @@ const removeActivity = async (activity) => {
   }
 
   try {
+    console.log('🗑️ Removing activity:', activity.activities.name);
+    
     await removeActivityAPI(
       activity.student_email,
       activity.activity_id,
@@ -410,9 +432,17 @@ const removeActivity = async (activity) => {
       getStaffEmail()
     );
 
+    console.log('✅ Activity removed from database, refreshing UI...');
+    
+    // Force immediate UI update
+    draggedActivity.value = null;
+    
+    // Emit refresh to parent
     emit('refresh');
+    
+    console.log('🔄 Refresh event emitted');
   } catch (error) {
-    console.error('Failed to remove activity:', error);
+    console.error('❌ Failed to remove activity:', error);
     alert('Failed to remove activity. Please try again.');
   }
 };
