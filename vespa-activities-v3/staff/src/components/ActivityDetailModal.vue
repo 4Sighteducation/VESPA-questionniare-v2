@@ -1,6 +1,6 @@
 <template>
   <div class="modal-overlay" @click.self="$emit('close')">
-    <div class="modal modal-large">
+    <div class="modal modal-large" @click.stop>
       <div class="modal-header">
         <div class="header-content">
           <h2 class="modal-title">{{ activity.activities?.name }}</h2>

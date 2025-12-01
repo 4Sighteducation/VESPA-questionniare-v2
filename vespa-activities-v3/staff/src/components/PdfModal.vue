@@ -48,18 +48,18 @@ defineEmits(['close']);
 
 <style scoped>
 .pdf-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.75);  /* Slightly lighter */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 99999;  /* Higher than anything */
-  padding: 20px;
-  cursor: pointer;  /* Shows it's clickable to close */
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: rgba(0, 0, 0, 0.8) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 1000000 !important;  /* HIGHEST - above activity modal */
+  padding: 20px !important;
+  cursor: pointer !important;
 }
 
 .pdf-modal {

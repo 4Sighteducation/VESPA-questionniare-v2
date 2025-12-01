@@ -447,11 +447,11 @@ const handleStatusChanged = () => {
   overflow: hidden;
 }
 
-/* Compact Header - Large spacing for GeneralHeader */
+/* Compact Header - MASSIVE spacing for GeneralHeader */
 .workspace-header-compact {
   background: white !important;
   padding: 12px 16px !important;
-  margin: 200px 16px 16px 16px !important;  /* Increased to 200px for large GeneralHeader */
+  margin: 260px 16px 16px 16px !important;  /* INCREASED to 260px - much more space */
   border-radius: 8px !important;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
   display: flex !important;
@@ -459,14 +459,14 @@ const handleStatusChanged = () => {
   justify-content: space-between !important;
   border: 1px solid #dee2e6 !important;
   position: relative !important;
-  z-index: 999998 !important;
+  z-index: 100 !important;  /* Lower z-index - modals should be above */
   visibility: visible !important;
   opacity: 1 !important;
 }
 
 /* Adjust for pages without breadcrumb */
 body:not(.has-breadcrumb) .workspace-header-compact {
-  margin-top: 140px !important;  /* Still generous for no breadcrumb */
+  margin-top: 180px !important;  /* Still very generous */
 }
 
 .student-info-compact {
@@ -504,7 +504,7 @@ body:not(.has-breadcrumb) .workspace-header-compact {
 .workspace-content {
   margin-top: 0;
   padding: 0 16px 16px 16px;
-  height: calc(100vh - 280px);  /* Adjusted for larger header */
+  height: calc(100vh - 340px);  /* Adjusted for MUCH larger header (260px + 80px extra) */
   display: flex;
   flex-direction: column;
   gap: 12px;
