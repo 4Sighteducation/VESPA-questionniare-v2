@@ -3,7 +3,7 @@
     <div class="modal modal-large">
       <div class="modal-header">
         <div class="header-content">
-          <h3 class="modal-title">{{ activity.activities?.name }}</h3>
+          <h2 class="modal-title">{{ activity.activities?.name }}</h2>
           <div class="activity-meta-header">
             <span class="student-badge">
               <i class="fas fa-user"></i> {{ student.full_name }}
@@ -55,6 +55,10 @@
         <!-- Tab: Student Responses -->
         <div v-show="activeTab === 'responses'" class="tab-content">
           <div v-if="isCompleted && parsedResponses.length > 0" class="responses-section">
+            <div class="response-context">
+              <h4><i class="fas fa-comments"></i> Student Responses</h4>
+              <p>Review the student's answers below</p>
+            </div>
             <div
               v-for="(resp, index) in parsedResponses"
               :key="index"
@@ -64,6 +68,7 @@
                 <strong>Q{{ index + 1 }}:</strong> {{ resp.question }}
               </div>
               <div class="response-answer">
+                <strong style="color: #495057; font-size: 13px; display: block; margin-bottom: 8px;">Answer:</strong>
                 {{ resp.answer }}
               </div>
             </div>
@@ -362,11 +367,24 @@ const formatDate = (dateString) => {
 <style scoped>
 /* Enhanced Modal Styling - Matching V2 Professional Design */
 .modal-large {
-  max-width: 1000px;
+  max-width: 900px;
+  width: 90%;
   max-height: 90vh;
-  border-radius: 16px;
+  border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  background: white;
+}
+
+/* Modal Header - Match V2 Design */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  border-bottom: 1px solid #dee2e6;
+  background: #f8f9fa;
+  border-radius: 12px 12px 0 0;
 }
 
 .header-content {
@@ -376,15 +394,16 @@ const formatDate = (dateString) => {
 .modal-title {
   font-size: 24px;
   font-weight: 600;
-  color: #212529;
+  color: #343a40;
   margin: 0 0 12px 0;
   line-height: 1.2;
 }
 
 .activity-meta-header {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .student-badge {
@@ -505,16 +524,49 @@ const formatDate = (dateString) => {
   background: #e8f4fd;
   padding: 20px;
   border-radius: 8px;
-  border-left: 4px solid #079baa;
+  border-left: 4px solid #17a2b8;
+}
+
+.response-context {
+  background: #f8f9fa;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  border-left: 3px solid #079baa;
+  border-radius: 6px;
+  font-size: 0.9em;
+  color: #666;
+  line-height: 1.4;
+}
+
+.response-context h4 {
+  margin: 0 0 4px 0;
+  color: #079baa;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.response-context p {
+  margin: 0;
+  color: #6c757d;
+  font-size: 13px;
 }
 
 .response-item {
   background: white;
-  border-radius: 8px;
-  padding: 20px;
+  border-radius: 6px;
+  padding: 16px;
   border: 1px solid #b8daff;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   transition: all 0.2s;
+}
+
+.response-item:not(:last-child) {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #b8daff;
 }
 
 .response-item:hover {
@@ -527,24 +579,21 @@ const formatDate = (dateString) => {
   color: #495057;
   margin-bottom: 12px;
   font-size: 15px;
-  display: flex;
-  align-items: start;
-  gap: 8px;
 }
 
 .response-question strong {
   color: #079baa;
-  flex-shrink: 0;
+  margin-right: 4px;
 }
 
 .response-answer {
   color: #212529;
   line-height: 1.7;
   white-space: pre-wrap;
-  background: #f8f9fa;
+  background: white;
   padding: 12px;
-  border-radius: 6px;
-  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  border: 1px solid #e1e5e9;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -661,6 +710,37 @@ const formatDate = (dateString) => {
   margin: 20px 0;
   font-style: italic;
   color: #6c757d;
+}
+
+/* Modal Body - Enhanced Scrolling */
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  max-height: calc(90vh - 200px);
+}
+
+/* Modal Close Button - Match V2 */
+.modal-close {
+  background: transparent;
+  border: none;
+  font-size: 28px;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.modal-close:hover {
+  background: #e9ecef;
+  color: #495057;
+  transform: scale(1.1);
 }
 
 /* Feedback Section - Enhanced from V2 */
