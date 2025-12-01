@@ -11,26 +11,28 @@ export function useFeedback() {
   /**
    * Save feedback on a completed activity
    */
-  const saveFeedback = async (responseId, feedbackText, staffEmail) => {
+  const saveFeedback = async (responseId, feedbackText, staffEmail, schoolId) => {
     try {
       if (!feedbackText || !feedbackText.trim()) {
         throw new Error('Feedback text is required');
       }
 
-      const { data, error } = await supabase
-        .from('activity_responses')
-        .update({
-          staff_feedback: feedbackText.trim(),
-          staff_feedback_by: staffEmail,
-          staff_feedback_at: new Date().toISOString(),
-          feedback_read_by_student: false, // Mark as unread (triggers notification!)
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', responseId)
-        .select()
-        .single();
+      console.log('💬 Saving feedback via RPC:', { responseId, staffEmail, schoolId });
 
-      if (error) throw error;
+      // Use RPC to bypass RLS
+      const { data, error } = await supabase.rpc('save_staff_feedback', {
+        p_response_id: responseId,
+        p_feedback_text: feedbackText.trim(),
+        p_staff_email: staffEmail,
+        p_school_id: schoolId
+      });
+
+      if (error) {
+        console.error('❌ RPC error saving feedback:', error);
+        throw error;
+      }
+
+      console.log('✅ Feedback saved via RPC:', data);
 
       // Log to history
       await supabase

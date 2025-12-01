@@ -32,11 +32,11 @@ export default defineConfig(({ mode }) => {
         output: {
           format: 'iife',  // Back to IIFE for Knack
           name: 'VESPAStaffActivities',
-          entryFileNames: 'activity-dashboard-2q.js',  // Version 2q - Use RPC for removal (bypasses RLS like assignment)
-          chunkFileNames: 'activity-dashboard-2q-[hash].js',
+          entryFileNames: 'activity-dashboard-2r.js',  // Version 2r - RPC for feedback & delete, enhanced drop zones
+          chunkFileNames: 'activity-dashboard-2r-[hash].js',
           assetFileNames: (assetInfo) => {
             if (assetInfo.name.endsWith('.css')) {
-              return 'activity-dashboard-2q.css';
+              return 'activity-dashboard-2r.css';
             }
             return 'assets/[name]-[hash][extname]';
           }

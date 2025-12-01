@@ -397,7 +397,8 @@ const saveFeedback = async () => {
     await saveFeedbackAPI(
       props.activity.id,
       feedbackText.value,
-      getStaffEmail()
+      getStaffEmail(),
+      props.staffContext.schoolId  // Add schoolId for RPC
     );
 
     alert('Feedback saved successfully! Student will be notified.');
@@ -487,7 +488,9 @@ const deletePermanently = async () => {
     await deleteAPI(
       props.activity.student_email,
       props.activity.activity_id,
-      props.activity.cycle_number
+      props.activity.cycle_number,
+      getStaffEmail(),
+      props.staffContext.schoolId
     );
 
     alert(`"${activityName}" permanently deleted`);

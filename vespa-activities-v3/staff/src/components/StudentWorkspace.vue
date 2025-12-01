@@ -157,11 +157,11 @@
               <div class="level-column">
                 <div class="level-header">Level 2</div>
                 <div 
-                  class="column-activities-compact level-2-activities"
+                  class="column-activities-compact level-2-activities drop-zone-enhanced"
                   @drop="onDrop($event, cat, 2, false)"
-                  @dragover.prevent
-                  @dragenter="$event.currentTarget.classList.add('drag-over')"
-                  @dragleave="$event.currentTarget.classList.remove('drag-over')"
+                  @dragover.prevent="onDragOver"
+                  @dragenter="onDragEnter($event)"
+                  @dragleave="onDragLeave($event)"
                 >
                   <ActivityCardCompact
                     v-for="activity in getCategoryActivities(cat, false).filter(a => a.level === 'Level 2')"
@@ -178,11 +178,11 @@
               <div class="level-column">
                 <div class="level-header">Level 3</div>
                 <div 
-                  class="column-activities-compact level-3-activities"
+                  class="column-activities-compact level-3-activities drop-zone-enhanced"
                   @drop="onDrop($event, cat, 3, false)"
-                  @dragover.prevent
-                  @dragenter="$event.currentTarget.classList.add('drag-over')"
-                  @dragleave="$event.currentTarget.classList.remove('drag-over')"
+                  @dragover.prevent="onDragOver"
+                  @dragenter="onDragEnter($event)"
+                  @dragleave="onDragLeave($event)"
                 >
                   <ActivityCardCompact
                     v-for="activity in getCategoryActivities(cat, false).filter(a => a.level === 'Level 3')"
@@ -328,12 +328,29 @@ const getCategoryActivities = (category, assigned = true) => {
   }
 };
 
-// Drag and Drop Handlers
+// Drag and Drop Handlers - Enhanced
 const onDragStart = (event, activity) => {
   draggedActivity.value = activity;
   event.dataTransfer.effectAllowed = 'move';
-  event.dataTransfer.setData('text/plain', activity.id);
+  event.dataTransfer.setData('text/plain', activity.id || activity.activity_id);
   event.currentTarget.classList.add('dragging');
+  console.log('🖱️ Drag started:', activity.activities?.name || activity.name);
+};
+
+const onDragOver = (event) => {
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'move';
+};
+
+const onDragEnter = (event) => {
+  event.currentTarget.classList.add('drag-over');
+};
+
+const onDragLeave = (event) => {
+  // Only remove if actually leaving (not entering child)
+  if (!event.currentTarget.contains(event.relatedTarget)) {
+    event.currentTarget.classList.remove('drag-over');
+  }
 };
 
 const onDrop = async (event, category, level, isStudentSection) => {
@@ -739,10 +756,25 @@ body:not(.has-breadcrumb) .workspace-header-compact {
   min-height: 200px;
 }
 
+/* Enhanced drop zone feedback */
+.drop-zone-enhanced {
+  min-height: 80px !important;  /* Larger target */
+  transition: all 0.2s;
+}
+
+.drop-zone-enhanced.drag-over {
+  background: #dbeafe !important;  /* Bright blue highlight */
+  border: 3px dashed #079baa !important;
+  border-radius: 6px !important;
+  box-shadow: inset 0 0 20px rgba(7, 155, 170, 0.2) !important;
+  transform: scale(1.02);  /* Slight grow */
+}
+
 .column-activities-compact.drag-over {
-  background: #e0f2fe;
-  border: 2px dashed #079baa;
-  border-radius: 4px;
+  background: #dbeafe;
+  border: 3px dashed #079baa;
+  border-radius: 6px;
+  min-height: 100px;  /* Expand when dragging over */
 }
 
 .empty-level {

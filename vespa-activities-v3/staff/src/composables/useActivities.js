@@ -352,25 +352,25 @@ export function useActivities() {
   /**
    * Permanently delete activity response (deletes all data!)
    */
-  const deleteActivityPermanently = async (studentEmail, activityId, cycleNumber) => {
+  const deleteActivityPermanently = async (studentEmail, activityId, cycleNumber, staffEmail, schoolId) => {
     try {
-      console.log('🗑️ PERMANENTLY DELETING activity:', { studentEmail, activityId, cycleNumber });
+      console.log('🗑️ PERMANENTLY DELETING activity via RPC:', { studentEmail, activityId, cycleNumber, staffEmail, schoolId });
       
-      // DELETE the row (removes all data)
-      const { data, error } = await supabase
-        .from('activity_responses')
-        .delete()
-        .eq('student_email', studentEmail)
-        .eq('activity_id', activityId)
-        .eq('cycle_number', cycleNumber)
-        .select();
+      // Use RPC to bypass RLS
+      const { data, error } = await supabase.rpc('delete_activity_permanently', {
+        p_student_email: studentEmail,
+        p_activity_id: activityId,
+        p_cycle_number: cycleNumber,
+        p_staff_email: staffEmail,
+        p_school_id: schoolId
+      });
 
       if (error) {
-        console.error('❌ Delete error:', error);
+        console.error('❌ RPC error deleting:', error);
         throw error;
       }
 
-      console.log('✅ Activity permanently deleted:', data);
+      console.log('✅ Activity permanently deleted via RPC:', data);
       return data;
 
     } catch (err) {
