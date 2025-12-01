@@ -5,20 +5,16 @@
 
 import { ref } from 'vue';
 
-// IIFE-safe refs - initialize inside function
-let isAuthenticated = null;
-let staffContext = null;
-let currentUser = null;
-let isLoading = null;
-let error = null;
+// Singleton state object to avoid IIFE scoping issues
+const state = {
+  isAuthenticated: ref(true),
+  staffContext: ref(null),
+  currentUser: ref(null),
+  isLoading: ref(false),
+  error: ref(null)
+};
 
 export function useAuth() {
-  // Initialize on first call (singleton pattern)
-  if (!isAuthenticated) isAuthenticated = ref(true);
-  if (!staffContext) staffContext = ref(null);
-  if (!currentUser) currentUser = ref(null);
-  if (!isLoading) isLoading = ref(false);
-  if (!error) error = ref(null);
 
   /**
    * Get user info from Knack session and school context from API
@@ -60,7 +56,7 @@ export function useAuth() {
       console.log('✅ Auth check response:', authData);
 
       // Store user data
-      currentUser.value = {
+      state.currentUser.value = {
         email: userEmail,
         userId: user.id,
         profiles: roles,
@@ -68,7 +64,7 @@ export function useAuth() {
       };
 
       // Get school context from API (has the Supabase UUID!)
-      staffContext.value = {
+      state.staffContext.value = {
         schoolId: authData.schoolContext?.schoolId || null,  // Supabase UUID!
         customerId: authData.schoolContext?.customerId || null,  // Knack ID
         schoolName: authData.schoolContext?.customerName || 'Unknown School',
@@ -76,12 +72,12 @@ export function useAuth() {
         roles: roles
       };
 
-      isAuthenticated.value = true;
-      console.log('✅ Ready to load data for:', userEmail, 'School:', staffContext.value.schoolName);
+      state.isAuthenticated.value = true;
+      console.log('✅ Ready to load data for:', userEmail, 'School:', state.staffContext.value.schoolName);
 
     } catch (err) {
       console.error('❌ Error getting auth context:', err);
-      isAuthenticated.value = false;
+      state.isAuthenticated.value = false;
       throw err;
     }
   };
@@ -90,22 +86,22 @@ export function useAuth() {
    * Check if user has specific role
    */
   const hasRole = (role) => {
-    return staffContext.value?.roles?.includes(role) || staffContext.value?.isSuperUser;
+    return state.staffContext.value?.roles?.includes(role) || state.staffContext.value?.isSuperUser;
   };
 
   /**
    * Get current staff member's email
    */
   const getStaffEmail = () => {
-    return currentUser.value?.email;
+    return state.currentUser.value?.email;
   };
 
   return {
-    isAuthenticated,
-    isLoading,
-    error,
-    staffContext,
-    currentUser,
+    isAuthenticated: state.isAuthenticated,
+    isLoading: state.isLoading,
+    error: state.error,
+    staffContext: state.staffContext,
+    currentUser: state.currentUser,
     checkAuth,
     hasRole,
     getStaffEmail

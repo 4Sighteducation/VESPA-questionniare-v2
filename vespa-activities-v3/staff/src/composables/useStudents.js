@@ -7,17 +7,14 @@ import { ref, computed } from 'vue';
 import supabase from '../supabaseClient';
 import { useAuth } from './useAuth';
 
-// IIFE-safe refs - initialize inside function
-let students = null;
-let isLoadingStudents = null;
-let studentsError = null;
+// Singleton state object to avoid IIFE scoping issues
+const state = {
+  students: ref([]),
+  isLoadingStudents: ref(false),
+  studentsError: ref(null)
+};
 
 export function useStudents() {
-  // Initialize on first call
-  if (!students) students = ref([]);
-  if (!isLoadingStudents) isLoadingStudents = ref(false);
-  if (!studentsError) studentsError = ref(null);
-  
   const { staffContext, currentUser, hasRole } = useAuth();
 
   /**
@@ -25,8 +22,8 @@ export function useStudents() {
    * Uses RPC functions to bypass RLS properly
    */
   const loadStudents = async () => {
-    isLoadingStudents.value = true;
-    studentsError.value = null;
+    state.isLoadingStudents.value = true;
+    state.studentsError.value = null;
 
     try {
       console.log('📚 Loading students via RPC for school:', staffContext.value.schoolId);
@@ -65,7 +62,7 @@ export function useStudents() {
       if (error) throw error;
 
       // RPC returns student data with category counts - map to UI format
-      students.value = (data || []).map(student => ({
+      state.students.value = (data || []).map(student => ({
         ...student,
         prescribedCount: student.total_activities || 0,
         completedCount: student.completed_activities || 0,
@@ -98,14 +95,14 @@ export function useStudents() {
         unreadFeedbackCount: 0
       }));
       
-      console.log(`✅ Loaded ${students.value.length} students via RPC`);
+      console.log(`✅ Loaded ${state.students.value.length} students via RPC`);
 
     } catch (err) {
       console.error('❌ Failed to load students:', err);
-      studentsError.value = err.message;
+      state.studentsError.value = err.message;
       throw err;
     } finally {
-      isLoadingStudents.value = false;
+      state.isLoadingStudents.value = false;
     }
   };
 
@@ -118,7 +115,7 @@ export function useStudents() {
       console.log('🔍 Getting student:', studentId);
       
       // Get student from cache
-      const student = students.value.find(s => s.id === studentId);
+      const student = state.students.value.find(s => s.id === studentId);
       
       if (!student) {
         console.warn('⚠️ Student not found in cache');
@@ -175,10 +172,10 @@ export function useStudents() {
    * Filter students by search term
    */
   const filterStudents = (searchTerm) => {
-    if (!searchTerm) return students.value;
+    if (!searchTerm) return state.students.value;
     
     const term = searchTerm.toLowerCase();
-    return students.value.filter(s => 
+    return state.students.value.filter(s => 
       s.full_name?.toLowerCase().includes(term) ||
       s.email?.toLowerCase().includes(term) ||
       s.student_group?.toLowerCase().includes(term)
@@ -187,8 +184,8 @@ export function useStudents() {
 
   return {
     students,
-    isLoadingStudents,
-    studentsError,
+    isLoadingStudents: state.isLoadingStudents,
+    studentsError: state.studentsError,
     loadStudents,
     getStudent,
     filterStudents

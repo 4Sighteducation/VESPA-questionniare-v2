@@ -6,10 +6,11 @@
 import { ref } from 'vue';
 import supabase from '../supabaseClient';
 
-// Move refs inside composable to avoid IIFE scoping issues
-// Module-level state causes problems with Vite IIFE compilation
-let allActivities = null;
-let isLoadingActivities = null;
+// Singleton state object to avoid IIFE scoping issues
+const state = {
+  allActivities: ref([]),
+  isLoadingActivities: ref(false)
+};
 
 /**
  * Mark activity as complete (staff override)
@@ -90,23 +91,15 @@ const markActivityIncomplete = async (responseId, studentEmail, activityId, staf
 };
 
 export function useActivities() {
-  // Initialize refs on first call (singleton pattern)
-  if (!allActivities) {
-    allActivities = ref([]);
-  }
-  if (!isLoadingActivities) {
-    isLoadingActivities = ref(false);
-  }
-
   /**
    * Load all available activities from catalog
    */
   const loadAllActivities = async () => {
-    if (allActivities.value.length > 0) {
-      return allActivities.value; // Already loaded
+    if (state.allActivities.value.length > 0) {
+      return state.allActivities.value; // Already loaded
     }
 
-    isLoadingActivities.value = true;
+    state.isLoadingActivities.value = true;
 
     try {
       const { data, error } = await supabase
@@ -117,16 +110,16 @@ export function useActivities() {
 
       if (error) throw error;
 
-      allActivities.value = data || [];
-      console.log(`✅ Loaded ${allActivities.value.length} activities`);
+      state.allActivities.value = data || [];
+      console.log(`✅ Loaded ${state.allActivities.value.length} activities`);
       
-      return allActivities.value;
+      return state.allActivities.value;
 
     } catch (err) {
       console.error('Failed to load activities:', err);
       throw err;
     } finally {
-      isLoadingActivities.value = false;
+      state.isLoadingActivities.value = false;
     }
   };
 
@@ -263,7 +256,7 @@ export function useActivities() {
     const grouped = {};
 
     categories.forEach(cat => {
-      grouped[cat] = allActivities.value.filter(a => a.vespa_category === cat);
+      grouped[cat] = state.allActivities.value.filter(a => a.vespa_category === cat);
     });
 
     return grouped;
@@ -273,7 +266,7 @@ export function useActivities() {
    * Filter activities by search term, category, level
    */
   const filterActivities = (filters = {}) => {
-    let filtered = allActivities.value;
+    let filtered = state.allActivities.value;
 
     if (filters.search) {
       const term = filters.search.toLowerCase();
@@ -295,8 +288,8 @@ export function useActivities() {
   };
 
   return {
-    allActivities,
-    isLoadingActivities,
+    allActivities: state.allActivities,
+    isLoadingActivities: state.isLoadingActivities,
     loadAllActivities,
     assignActivity,
     bulkAssignActivities,
