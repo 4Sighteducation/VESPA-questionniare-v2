@@ -7,12 +7,17 @@ import { ref, computed } from 'vue';
 import supabase from '../supabaseClient';
 import { useAuth } from './useAuth';
 
-// Global state
-const students = ref([]);
-const isLoadingStudents = ref(false);
-const studentsError = ref(null);
+// IIFE-safe refs - initialize inside function
+let students = null;
+let isLoadingStudents = null;
+let studentsError = null;
 
 export function useStudents() {
+  // Initialize on first call
+  if (!students) students = ref([]);
+  if (!isLoadingStudents) isLoadingStudents = ref(false);
+  if (!studentsError) studentsError = ref(null);
+  
   const { staffContext, currentUser, hasRole } = useAuth();
 
   /**

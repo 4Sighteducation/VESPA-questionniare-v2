@@ -5,14 +5,20 @@
 
 import { ref } from 'vue';
 
-// Global state (shared across components)
-const isAuthenticated = ref(true); // Always true - if you're on the page, you're authenticated!
-const staffContext = ref(null);
-const currentUser = ref(null);
-const isLoading = ref(false);
-const error = ref(null);
+// IIFE-safe refs - initialize inside function
+let isAuthenticated = null;
+let staffContext = null;
+let currentUser = null;
+let isLoading = null;
+let error = null;
 
 export function useAuth() {
+  // Initialize on first call (singleton pattern)
+  if (!isAuthenticated) isAuthenticated = ref(true);
+  if (!staffContext) staffContext = ref(null);
+  if (!currentUser) currentUser = ref(null);
+  if (!isLoading) isLoading = ref(false);
+  if (!error) error = ref(null);
 
   /**
    * Get user info from Knack session and school context from API
