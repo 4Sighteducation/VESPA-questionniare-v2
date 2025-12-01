@@ -45,7 +45,19 @@ export function useFeedback() {
           metadata: { feedback_length: feedbackText.length }
         });
 
+      // TODO: Send email notification to student
+      // This would typically call a Supabase Edge Function or external API:
+      // await supabase.functions.invoke('send-feedback-email', {
+      //   body: {
+      //     studentEmail: data.student_email,
+      //     activityId: data.activity_id,
+      //     staffEmail: staffEmail,
+      //     feedbackPreview: feedbackText.substring(0, 100)
+      //   }
+      // });
+
       console.log('✅ Feedback saved:', { responseId, feedbackLength: feedbackText.length });
+      console.log('📧 Student will see notification on next login');
       return data;
 
     } catch (err) {

@@ -342,13 +342,24 @@ const onDrop = async (event, category, level, isStudentSection) => {
   
   const activity = draggedActivity.value;
   
+  console.log('🎯 DROP EVENT:', {
+    activity: activity.activities?.name || activity.name,
+    isStudentSection,
+    hasActivityId: !!activity.activity_id,
+    activityId: activity.activity_id,
+    category,
+    level
+  });
+  
   // If dropping in student section and activity is not assigned yet
   if (isStudentSection && !activity.activity_id) {
+    console.log('➕ Adding activity to student');
     await quickAddActivity(activity);
   }
   
   // If dropping in available section and activity is assigned
   if (!isStudentSection && activity.activity_id) {
+    console.log('➖ Removing activity from student');
     await removeActivity(activity);
   }
   

@@ -32,19 +32,19 @@
         <div class="content-tabs">
           <button
             :class="['tab-btn', { active: activeTab === 'responses' }]"
-            @click="activeTab = 'responses'"
+            @click="handleTabChange('responses')"
           >
             <i class="fas fa-comments"></i> Student Responses
           </button>
           <button
             :class="['tab-btn', { active: activeTab === 'content' }]"
-            @click="activeTab = 'content'"
+            @click="handleTabChange('content')"
           >
             <i class="fas fa-book"></i> Activity Content
           </button>
           <button
             :class="['tab-btn', { active: activeTab === 'feedback' }]"
-            @click="activeTab = 'feedback'"
+            @click="handleTabChange('feedback')"
           >
             <i class="fas fa-comment-alt"></i>
             Feedback
@@ -65,7 +65,10 @@
               class="response-item"
             >
               <div class="response-question">
-                <strong>Q{{ index + 1 }}:</strong> {{ resp.question }}
+                <strong>Q{{ resp.questionNumber }}:</strong> {{ resp.question }}
+                <span v-if="!resp.found" class="question-note" title="Question text not available in database">
+                  (migrated from old system)
+                </span>
               </div>
               <div class="response-answer">
                 <strong style="color: #495057; font-size: 13px; display: block; margin-bottom: 8px;">Answer:</strong>
@@ -196,14 +199,23 @@
         </div>
       </div>
     </div>
+
+    <!-- PDF Modal -->
+    <PdfModal
+      v-if="pdfModalOpen"
+      :pdf-url="pdfUrl"
+      :title="pdfTitle"
+      @close="pdfModalOpen = false"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import { useActivities } from '../composables/useActivities';
 import { useFeedback } from '../composables/useFeedback';
 import { useAuth } from '../composables/useAuth';
+import PdfModal from './PdfModal.vue';
 
 const props = defineProps({
   activity: {
@@ -233,6 +245,9 @@ const feedbackText = ref(props.activity.staff_feedback || '');
 const questions = ref([]);
 const isLoadingQuestions = ref(false);
 const isSaving = ref(false);
+const pdfModalOpen = ref(false);
+const pdfUrl = ref('');
+const pdfTitle = ref('');
 
 // Computed
 const isCompleted = computed(() => !!props.activity.completed_at);
@@ -260,14 +275,54 @@ const parsedResponses = computed(() => {
       ? JSON.parse(props.activity.responses) 
       : props.activity.responses;
 
-    // Match responses with questions
-    return Object.entries(responsesData).map(([questionId, answer]) => {
-      const question = questions.value.find(q => q.id === questionId);
+    console.log('📝 Parsing responses:', responsesData);
+    console.log('📝 Available questions:', questions.value);
+
+    // Parse responses - handle nested cycle structure from old Knack data
+    const entries = Object.entries(responsesData);
+    
+    // Sort questions by display_order for matching
+    const sortedQuestions = [...questions.value].sort((a, b) => a.display_order - b.display_order);
+    
+    return entries.map(([questionId, answerData], index) => {
+      // Try to find question by ID first
+      let question = questions.value.find(q => q.id === questionId);
+      
+      // If not found and we have questions, match by index/order
+      if (!question && sortedQuestions.length > index) {
+        question = sortedQuestions[index];
+        console.log(`📝 Matched by order: old ID ${questionId} => question at display_order ${question.display_order}`);
+      }
+      
+      // Extract answer from nested structure (cycle_1, cycle_2, etc.)
+      let answerText = '';
+      if (typeof answerData === 'object' && answerData !== null) {
+        // Handle {cycle_1: {value: "text"}} structure
+        const cycleKeys = Object.keys(answerData).filter(k => k.startsWith('cycle_'));
+        if (cycleKeys.length > 0) {
+          const cycleData = answerData[cycleKeys[0]];
+          answerText = cycleData?.value || JSON.stringify(cycleData);
+        } else if (answerData.value) {
+          answerText = answerData.value;
+        } else {
+          answerText = JSON.stringify(answerData);
+        }
+      } else {
+        answerText = String(answerData);
+      }
+      
+      // Generate question label - use question_title from database
+      const questionLabel = question?.question_title || `Question ${index + 1}`;
+      
+      console.log(`📝 Q${index + 1} [${questionId}] => "${questionLabel}" (${question ? 'MATCHED' : 'FALLBACK'})`);
+      
       return {
-        question: question?.question_text || 'Question not found',
-        answer: typeof answer === 'object' ? answer.value || JSON.stringify(answer) : answer
+        question: questionLabel,
+        answer: answerText,
+        questionNumber: index + 1,
+        found: !!question
       };
-    });
+    }).filter(r => r.answer && r.answer.trim() !== ''); // Filter out empty answers
   } catch (e) {
     console.error('Error parsing responses:', e);
     return [];
@@ -275,6 +330,27 @@ const parsedResponses = computed(() => {
 });
 
 // Methods
+const openPdfModal = (url, title = '') => {
+  pdfUrl.value = url;
+  pdfTitle.value = title;
+  pdfModalOpen.value = true;
+};
+
+const interceptPdfLinks = () => {
+  // Wait for content to render, then intercept PDF links
+  nextTick(() => {
+    const pdfLinks = document.querySelectorAll('.html-content a[href*=".pdf"]');
+    pdfLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const url = link.getAttribute('href');
+        const title = link.textContent || 'PDF Document';
+        openPdfModal(url, title);
+      });
+    });
+  });
+};
+
 onMounted(async () => {
   // Load questions for response matching
   if (props.activity.activity_id) {
@@ -287,7 +363,18 @@ onMounted(async () => {
       isLoadingQuestions.value = false;
     }
   }
+  
+  // Intercept PDF links after content loads
+  interceptPdfLinks();
 });
+
+// Re-intercept when switching to content tab
+const handleTabChange = (tab) => {
+  activeTab.value = tab;
+  if (tab === 'content') {
+    interceptPdfLinks();
+  }
+};
 
 const saveFeedback = async () => {
   if (!feedbackText.value.trim()) {
@@ -596,6 +683,14 @@ const formatDate = (dateString) => {
 .response-question strong {
   color: #079baa;
   margin-right: 4px;
+}
+
+.question-note {
+  font-size: 11px;
+  color: #6c757d;
+  font-style: italic;
+  font-weight: normal;
+  margin-left: 8px;
 }
 
 .response-answer {

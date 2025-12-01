@@ -239,10 +239,12 @@ export function useActivities() {
         .select('*')
         .eq('activity_id', activityId)
         .eq('is_active', true)
+        .eq('show_in_final_questions', false) // Exclude rating questions
         .order('display_order');
 
       if (error) throw error;
 
+      console.log(`📋 Loaded ${data?.length || 0} questions for activity ${activityId}`);
       return data || [];
 
     } catch (err) {
