@@ -360,9 +360,13 @@ const formatDate = (dateString) => {
 </script>
 
 <style scoped>
+/* Enhanced Modal Styling - Matching V2 Professional Design */
 .modal-large {
   max-width: 1000px;
   max-height: 90vh;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
 .header-content {
@@ -370,10 +374,11 @@ const formatDate = (dateString) => {
 }
 
 .modal-title {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 600;
   color: #212529;
-  margin: 0 0 8px 0;
+  margin: 0 0 12px 0;
+  line-height: 1.2;
 }
 
 .activity-meta-header {
@@ -436,21 +441,25 @@ const formatDate = (dateString) => {
   color: #92400e;
 }
 
+/* Tab System - Enhanced from V2 */
 .content-tabs {
   display: flex;
-  gap: 8px;
-  border-bottom: 2px solid #f1f5f9;
+  gap: 4px;
+  border-bottom: 2px solid #dee2e6;
   margin-bottom: 24px;
+  background: #f8f9fa;
+  padding: 4px;
+  border-radius: 8px 8px 0 0;
 }
 
 .tab-btn {
   padding: 12px 20px;
-  background: none;
+  background: transparent;
   border: none;
-  border-bottom: 3px solid transparent;
+  border-radius: 6px 6px 0 0;
   color: #6c757d;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
@@ -461,11 +470,14 @@ const formatDate = (dateString) => {
 
 .tab-btn:hover {
   color: #079baa;
+  background: rgba(7, 155, 170, 0.05);
 }
 
 .tab-btn.active {
   color: #079baa;
-  border-bottom-color: #079baa;
+  background: white;
+  box-shadow: 0 -2px 4px rgba(0,0,0,0.05);
+  border-bottom: 2px solid #079baa;
 }
 
 .notification-dot {
@@ -485,92 +497,189 @@ const formatDate = (dateString) => {
   to { opacity: 1; }
 }
 
+/* Response Display - Enhanced from V2 */
 .responses-section {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
+  background: #e8f4fd;
+  padding: 20px;
+  border-radius: 8px;
+  border-left: 4px solid #079baa;
 }
 
 .response-item {
-  background: #f8f9fa;
+  background: white;
   border-radius: 8px;
-  padding: 16px;
-  border-left: 4px solid #079baa;
+  padding: 20px;
+  border: 1px solid #b8daff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: all 0.2s;
+}
+
+.response-item:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+  transform: translateY(-1px);
 }
 
 .response-question {
   font-weight: 600;
   color: #495057;
-  margin-bottom: 8px;
-  font-size: 14px;
+  margin-bottom: 12px;
+  font-size: 15px;
+  display: flex;
+  align-items: start;
+  gap: 8px;
+}
+
+.response-question strong {
+  color: #079baa;
+  flex-shrink: 0;
 }
 
 .response-answer {
   color: #212529;
-  line-height: 1.6;
+  line-height: 1.7;
   white-space: pre-wrap;
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* Empty States - Enhanced */
 .empty-responses,
 .empty-content {
   text-align: center;
   padding: 60px 20px;
   color: #6c757d;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px dashed #dee2e6;
 }
 
 .empty-icon {
-  font-size: 48px;
+  font-size: 56px;
   color: #cbd5e1;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  display: block;
+  filter: grayscale(0.3);
 }
 
+/* Activity Content Preview - Enhanced */
 .activity-content-preview {
   display: flex;
   flex-direction: column;
   gap: 24px;
 }
 
+.content-section {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  border-left: 4px solid #079baa;
+  transition: all 0.2s;
+}
+
+.content-section:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
 .content-section h4 {
-  margin: 0 0 12px 0;
+  margin: 0 0 16px 0;
   font-size: 18px;
   font-weight: 600;
   color: #23356f;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.content-section h4 i {
+  color: #079baa;
+  font-size: 20px;
 }
 
 .html-content {
   line-height: 1.8;
   color: #495057;
+  font-size: 15px;
 }
 
+/* Rich Text Content Styling */
 .html-content :deep(h1),
 .html-content :deep(h2),
 .html-content :deep(h3) {
   color: #23356f;
-  margin-top: 20px;
-  margin-bottom: 10px;
+  margin-top: 24px;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.html-content :deep(h1) {
+  font-size: 24px;
+}
+
+.html-content :deep(h2) {
+  font-size: 20px;
+}
+
+.html-content :deep(h3) {
+  font-size: 18px;
+}
+
+.html-content :deep(p) {
+  margin-bottom: 16px;
+  line-height: 1.7;
+}
+
+.html-content :deep(ul),
+.html-content :deep(ol) {
+  margin: 16px 0 16px 24px;
+}
+
+.html-content :deep(li) {
+  margin-bottom: 8px;
 }
 
 .html-content :deep(img) {
   max-width: 100%;
+  max-height: 400px;
   height: auto;
   border-radius: 8px;
-  margin: 16px 0;
+  margin: 20px auto;
+  display: block;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
+.html-content :deep(blockquote) {
+  border-left: 4px solid #079baa;
+  padding-left: 20px;
+  margin: 20px 0;
+  font-style: italic;
+  color: #6c757d;
+}
+
+/* Feedback Section - Enhanced from V2 */
 .feedback-section {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  background: #f1f8ff;
+  padding: 24px;
+  border-radius: 12px;
+  border: 2px solid #007bff;
 }
 
 .existing-feedback {
-  background: #f8f9fa;
+  background: white;
   border-radius: 8px;
-  padding: 16px;
+  padding: 20px;
   border-left: 4px solid #079baa;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .feedback-meta {
