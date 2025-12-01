@@ -182,6 +182,15 @@
           >
             <i class="fas fa-check"></i> Mark Complete
           </button>
+          
+          <button
+            class="btn btn-danger"
+            @click="deletePermanently"
+            :disabled="isSaving"
+            title="Permanently delete - cannot be undone!"
+          >
+            <i class="fas fa-trash"></i> Delete Permanently
+          </button>
         </div>
 
         <div class="footer-actions-right">
@@ -235,7 +244,7 @@ const props = defineProps({
 const emit = defineEmits(['close', 'feedback-saved', 'status-changed']);
 
 // Composables
-const { loadActivityQuestions, markActivityComplete: markCompleteAPI, markActivityIncomplete: markIncompleteAPI } = useActivities();
+const { loadActivityQuestions, markActivityComplete: markCompleteAPI, markActivityIncomplete: markIncompleteAPI, deleteActivityPermanently: deleteAPI } = useActivities();
 const { saveFeedback: saveFeedbackAPI } = useFeedback();
 const { getStaffEmail } = useAuth();
 
@@ -445,6 +454,48 @@ const markIncomplete = async () => {
   } catch (error) {
     console.error('Failed to mark incomplete:', error);
     alert('Failed to update status. Please try again.');
+  } finally {
+    isSaving.value = false;
+  }
+};
+
+const deletePermanently = async () => {
+  const activityName = props.activity.activities?.name || 'this activity';
+  
+  // Strong warning about data loss
+  const confirmed = confirm(
+    `⚠️ PERMANENTLY DELETE "${activityName}"?\n\n` +
+    `This will delete ALL student responses and feedback.\n` +
+    `This CANNOT be undone!\n\n` +
+    `Are you absolutely sure?`
+  );
+  
+  if (!confirmed) return;
+
+  // Second confirmation
+  const doubleCheck = confirm(
+    `Final confirmation:\n\n` +
+    `Delete "${activityName}" and ALL its data permanently?\n\n` +
+    `Student: ${props.student.full_name}`
+  );
+  
+  if (!doubleCheck) return;
+
+  isSaving.value = true;
+
+  try {
+    await deleteAPI(
+      props.activity.student_email,
+      props.activity.activity_id,
+      props.activity.cycle_number
+    );
+
+    alert(`"${activityName}" permanently deleted`);
+    emit('status-changed');
+
+  } catch (error) {
+    console.error('Failed to delete permanently:', error);
+    alert('Failed to delete. Please try again.');
   } finally {
     isSaving.value = false;
   }
@@ -1116,6 +1167,22 @@ const formatDate = (dateString) => {
 
 .btn-warning:hover:not(:disabled) {
   background: #e0a800;
+}
+
+.btn-danger {
+  background: #dc3545;
+  color: white;
+  border: 1px solid #dc3545;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #c82333;
+  border-color: #bd2130;
+}
+
+.btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>
 

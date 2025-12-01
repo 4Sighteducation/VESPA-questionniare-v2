@@ -353,6 +353,36 @@ export function useActivities() {
     return filtered;
   };
 
+  /**
+   * Permanently delete activity response (deletes all data!)
+   */
+  const deleteActivityPermanently = async (studentEmail, activityId, cycleNumber) => {
+    try {
+      console.log('🗑️ PERMANENTLY DELETING activity:', { studentEmail, activityId, cycleNumber });
+      
+      // DELETE the row (removes all data)
+      const { data, error } = await supabase
+        .from('activity_responses')
+        .delete()
+        .eq('student_email', studentEmail)
+        .eq('activity_id', activityId)
+        .eq('cycle_number', cycleNumber)
+        .select();
+
+      if (error) {
+        console.error('❌ Delete error:', error);
+        throw error;
+      }
+
+      console.log('✅ Activity permanently deleted:', data);
+      return data;
+
+    } catch (err) {
+      console.error('❌ Failed to delete activity:', err);
+      throw err;
+    }
+  };
+
   return {
     allActivities: state.allActivities,
     isLoadingActivities: state.isLoadingActivities,
@@ -360,6 +390,7 @@ export function useActivities() {
     assignActivity,
     bulkAssignActivities,
     removeActivity,
+    deleteActivityPermanently,
     loadActivityQuestions,
     getActivitiesByCategory,
     filterActivities,
