@@ -2,17 +2,19 @@
   <div
     :class="['compact-activity-card', categoryClass, levelClass, {
       'completed': isCompleted,
+      'in-progress': isInProgress,
       'has-feedback': hasUnreadFeedback,
       'dragging': isDragging
     }]"
     :draggable="draggable"
     @dragstart="handleDragStart"
     @dragend="handleDragEnd"
-    @click="handleClick"
+    @click.stop="handleClick"
     :title="activityName"
   >
-    <!-- Completion Indicator -->
-    <span v-if="isCompleted" class="completion-flag">✓</span>
+    <!-- Status Badge - Clear Visual Indicator -->
+    <span v-if="isCompleted" class="status-badge completed-badge" title="Completed">✓</span>
+    <span v-else-if="isInProgress" class="status-badge in-progress-badge" title="In Progress">⏳</span>
     
     <!-- Source Indicator -->
     <span v-if="isAssigned && sourceType" class="source-circle" :class="sourceType" :title="sourceTitle"></span>
@@ -96,11 +98,21 @@ const levelClass = computed(() => {
 });
 
 const isCompleted = computed(() => {
-  return !!props.activity.completed_at;
+  // Check both completed_at and status field
+  if (props.isAssigned) {
+    return props.activity.status === 'completed' || !!props.activity.completed_at;
+  }
+  return false;
 });
 
 const hasUnreadFeedback = computed(() => {
+  if (!props.isAssigned) return false;
   return props.activity.staff_feedback && !props.activity.feedback_read_by_student;
+});
+
+const isInProgress = computed(() => {
+  if (!props.isAssigned) return false;
+  return props.activity.status === 'in_progress' && !props.activity.completed_at;
 });
 
 const sourceType = computed(() => {
@@ -125,13 +137,22 @@ const sourceTitle = computed(() => {
 const handleDragStart = (event) => {
   isDragging.value = true;
   emit('dragstart', event, props.activity);
+  console.log('🖱️ Drag started:', activityName.value);
 };
 
 const handleDragEnd = () => {
   isDragging.value = false;
 };
 
-const handleClick = () => {
+const handleClick = (event) => {
+  console.log('🖱️ ActivityCardCompact clicked:', activityName.value);
+  console.log('🖱️ Activity data:', props.activity);
+  console.log('🖱️ Is assigned:', props.isAssigned);
+  
+  // Prevent event from bubbling to parent drag handlers
+  event.stopPropagation();
+  
+  // Emit click event to parent
   emit('click', props.activity);
 };
 </script>
@@ -153,57 +174,36 @@ const handleClick = () => {
   min-height: 28px;
   white-space: nowrap;
   overflow: hidden;
+  pointer-events: auto !important; /* Ensure clicks work */
+  z-index: 1; /* Ensure card is above drop zones */
 }
 
-/* Category Colors */
-.compact-activity-card.vision { background: #ff8f00; }
-.compact-activity-card.effort { background: #86b4f0; }
-.compact-activity-card.systems { background: #84cc16; }
-.compact-activity-card.practice { background: #7f31a4; }
-.compact-activity-card.attitude { background: #f032e6; }
+/* Category Colors - IN-PROGRESS (full bright colors) */
+.compact-activity-card.in-progress.vision { background: #ff8f00; }
+.compact-activity-card.in-progress.effort { background: #86b4f0; }
+.compact-activity-card.in-progress.systems { background: #84cc16; }
+.compact-activity-card.in-progress.practice { background: #7f31a4; }
+.compact-activity-card.in-progress.attitude { background: #f032e6; }
 
-/* Level Variations */
-.compact-activity-card.level-level2.vision {
-  background: #ffb366;
-}
-.compact-activity-card.level-level3.vision {
-  background: #ff9933;
-}
+/* Level Variations - IN-PROGRESS */
+.compact-activity-card.in-progress.level-level2.vision { background: #ffb366; }
+.compact-activity-card.in-progress.level-level3.vision { background: #ff9933; }
+.compact-activity-card.in-progress.level-level2.effort { background: #a6c8f0; }
+.compact-activity-card.in-progress.level-level3.effort { background: #86b4f0; }
+.compact-activity-card.in-progress.level-level2.systems { background: #99e066; }
+.compact-activity-card.in-progress.level-level3.systems { background: #72cb44; }
+.compact-activity-card.in-progress.level-level2.practice { background: #b366cc; }
+.compact-activity-card.in-progress.level-level3.practice { background: #9952b8; }
+.compact-activity-card.in-progress.level-level2.attitude { background: #ff66e6; }
+.compact-activity-card.in-progress.level-level3.attitude { background: #f032e6; }
 
-.compact-activity-card.level-level2.effort {
-  background: #a6c8f0;
-}
-.compact-activity-card.level-level3.effort {
-  background: #86b4f0;
-}
-
-.compact-activity-card.level-level2.systems {
-  background: #99e066;
-}
-.compact-activity-card.level-level3.systems {
-  background: #72cb44;
-}
-
-.compact-activity-card.level-level2.practice {
-  background: #b366cc;
-}
-.compact-activity-card.level-level3.practice {
-  background: #9952b8;
-}
-
-.compact-activity-card.level-level2.attitude {
-  background: #ff66e6;
-}
-.compact-activity-card.level-level3.attitude {
-  background: #f032e6;
-}
-
-/* Completed State */
+/* COMPLETED State - Grey/Desaturated (like in screenshot) */
 .compact-activity-card.completed {
-  background: rgba(108, 117, 125, 0.3) !important;
-  opacity: 0.7 !important;
+  background: rgba(108, 117, 125, 0.4) !important;
+  opacity: 0.8 !important;
   color: #495057 !important;
-  border: 2px solid rgba(108, 117, 125, 0.5) !important;
+  border: 2px solid rgba(108, 117, 125, 0.6) !important;
+  cursor: pointer !important; /* Still clickable to view responses! */
 }
 
 .compact-activity-card.completed .activity-text {
@@ -211,6 +211,13 @@ const handleClick = () => {
   color: #343a40 !important;
   font-weight: 700 !important;
 }
+
+/* DEFAULT State (not assigned yet) - Lighter colors */
+.compact-activity-card:not(.in-progress):not(.completed).vision { background: #ffcc80; }
+.compact-activity-card:not(.in-progress):not(.completed).effort { background: #b3d4f5; }
+.compact-activity-card:not(.in-progress):not(.completed).systems { background: #b3e680; }
+.compact-activity-card:not(.in-progress):not(.completed).practice { background: #c580d9; }
+.compact-activity-card:not(.in-progress):not(.completed).attitude { background: #ff99f0; }
 
 .compact-activity-card:hover {
   transform: translateX(2px);
@@ -229,22 +236,32 @@ const handleClick = () => {
   text-overflow: ellipsis;
 }
 
-/* Completion Flag */
-.completion-flag {
+/* Status Badges - Clear Visual Indicators */
+.status-badge {
   position: absolute;
-  left: 4px;
+  right: 26px;
   top: 50%;
   transform: translateY(-50%);
-  width: 16px;
-  height: 16px;
-  background: white;
-  color: #16a34a;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: bold;
+  z-index: 5;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.status-badge.completed-badge {
+  background: #22c55e;
+  color: white;
+}
+
+.status-badge.in-progress-badge {
+  background: #fbbf24;
+  color: #78350f;
 }
 
 /* Source Circle Indicators */
@@ -282,7 +299,7 @@ const handleClick = () => {
   left: 18px;
 }
 
-/* Action Buttons */
+/* Action Buttons - Only show on hover, don't block clicks */
 .btn-remove-compact,
 .btn-add-compact {
   position: absolute;
@@ -303,11 +320,14 @@ const handleClick = () => {
   font-weight: bold;
   transition: all 0.2s;
   opacity: 0;
+  pointer-events: none; /* Don't block clicks when hidden */
+  z-index: 10; /* Above everything when visible */
 }
 
 .compact-activity-card:hover .btn-remove-compact,
 .compact-activity-card:hover .btn-add-compact {
   opacity: 1;
+  pointer-events: auto; /* Enable clicks when visible */
 }
 
 .btn-remove-compact:hover {

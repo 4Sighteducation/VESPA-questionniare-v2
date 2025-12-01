@@ -354,7 +354,14 @@ const onDrop = async (event, category, level, isStudentSection) => {
 };
 
 const viewActivityDetail = (activity) => {
-  console.log('🖱️ Activity card clicked:', activity.activities?.name);
+  console.log('=== VIEW ACTIVITY DETAIL CALLED ===');
+  console.log('🖱️ Activity object:', activity);
+  console.log('🖱️ Activity name:', activity.activities?.name || activity.name);
+  console.log('🖱️ Activity status:', activity.status);
+  console.log('🖱️ Activity completed_at:', activity.completed_at);
+  console.log('🖱️ Has responses:', !!activity.responses);
+  console.log('===================================');
+  
   selectedActivity.value = activity;
 };
 
@@ -427,11 +434,11 @@ const handleStatusChanged = () => {
   overflow: hidden;
 }
 
-/* Compact Header */
+/* Compact Header - Smart spacing for GeneralHeader */
 .workspace-header-compact {
   background: white !important;
   padding: 15px 20px !important;
-  margin: 120px 20px 20px 20px !important;
+  margin: 150px 20px 20px 20px !important;  /* Increased from 120px to 150px for GeneralHeader with breadcrumb */
   border-radius: 8px !important;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
   display: flex !important;
@@ -442,6 +449,11 @@ const handleStatusChanged = () => {
   z-index: 999998 !important;
   visibility: visible !important;
   opacity: 1 !important;
+}
+
+/* Adjust for pages without breadcrumb */
+body:not(.has-breadcrumb) .workspace-header-compact {
+  margin-top: 100px !important;  /* Less margin if no breadcrumb row */
 }
 
 .student-info-compact {
