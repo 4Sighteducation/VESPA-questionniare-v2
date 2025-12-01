@@ -199,23 +199,27 @@ export function useActivities() {
    */
   const removeActivity = async (studentEmail, activityId, cycleNumber, staffEmail, schoolId) => {
     try {
-      console.log('🗑️ Removing activity (DELETE):', { studentEmail, activityId, cycleNumber });
+      console.log('🗑️ Marking activity as removed (preserves responses):', { studentEmail, activityId, cycleNumber });
       
-      // ACTUALLY DELETE the row (simpler than marking removed)
+      // UPDATE status to 'removed' (preserves all student data!)
       const { data, error } = await supabase
         .from('activity_responses')
-        .delete()
+        .update({ 
+          status: 'removed', 
+          updated_at: new Date().toISOString() 
+        })
         .eq('student_email', studentEmail)
         .eq('activity_id', activityId)
         .eq('cycle_number', cycleNumber)
         .select();
 
       if (error) {
-        console.error('❌ Delete error:', error);
+        console.error('❌ Update error:', error);
+        console.error('❌ This likely means the constraint needs fixing - run FIX_STATUS_CONSTRAINT.sql');
         throw error;
       }
 
-      console.log('✅ Activity deleted from database:', data);
+      console.log('✅ Activity marked as removed (data preserved):', data);
 
       // Log the removal action
       try {
@@ -231,7 +235,7 @@ export function useActivities() {
             metadata: { school_id: schoolId }
           });
       } catch (historyError) {
-        console.warn('⚠️ Failed to log removal to history:', historyError);
+        console.warn('⚠️ Failed to log removal to history (non-critical):', historyError);
         // Don't fail the whole operation if logging fails
       }
 
