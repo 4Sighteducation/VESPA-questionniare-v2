@@ -436,15 +436,17 @@ const handleStatusChanged = () => {
 <style scoped>
 /* Radical Workspace Design - Based on v2 Staff 8b */
 .student-workspace {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #f8f9fa;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;  /* Force full viewport width */
+  background: #f8f9fa !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  z-index: 10 !important;  /* Above Knack content, below modals */
 }
 
 /* Compact Header - MASSIVE spacing for GeneralHeader */
@@ -462,11 +464,26 @@ const handleStatusChanged = () => {
   z-index: 100 !important;  /* Lower z-index - modals should be above */
   visibility: visible !important;
   opacity: 1 !important;
+  min-height: 50px !important;  /* Ensure header has height */
+  width: auto !important;
 }
 
 /* Adjust for pages without breadcrumb */
 body:not(.has-breadcrumb) .workspace-header-compact {
   margin-top: 180px !important;  /* Still very generous */
+}
+
+/* Force visibility at all screen sizes */
+@media (min-width: 768px) {
+  .workspace-header-compact {
+    margin-top: 260px !important;  /* Maintain spacing on desktop */
+  }
+}
+
+@media (max-width: 767px) {
+  .workspace-header-compact {
+    margin-top: 160px !important;  /* Less on mobile (smaller header) */
+  }
 }
 
 .student-info-compact {
