@@ -264,9 +264,19 @@ const draggedActivity = ref(null);
 // Constants
 const categories = ['Vision', 'Effort', 'Systems', 'Practice', 'Attitude'];
 
-// Load all activities on mount
+// Load all activities IMMEDIATELY (not waiting for mount)
+// This ensures activities are available before rendering
+if (!allActivities.value || allActivities.value.length === 0) {
+  loadAllActivities().catch(err => {
+    console.error('Failed to load activities:', err);
+  });
+}
+
 onMounted(async () => {
-  await loadAllActivities();
+  // Ensure activities are loaded
+  if (!allActivities.value || allActivities.value.length === 0) {
+    await loadAllActivities();
+  }
 });
 
 // Computed
@@ -279,12 +289,14 @@ const assignedActivityIds = computed(() => {
 });
 
 const availableActivities = computed(() => {
-  let available = allActivities.value.filter(a => !assignedActivityIds.value.has(a.id));
+  // Get all activities, ensuring they're loaded
+  const allActivitiesList = allActivities?.value || [];
+  let available = allActivitiesList.filter(a => !assignedActivityIds.value.has(a.id));
   
   if (searchTerm.value) {
     const term = searchTerm.value.toLowerCase();
     available = available.filter(a =>
-      a.name.toLowerCase().includes(term)
+      a.name?.toLowerCase().includes(term)
     );
   }
   
