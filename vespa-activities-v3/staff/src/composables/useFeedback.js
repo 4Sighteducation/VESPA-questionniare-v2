@@ -201,9 +201,6 @@ export function useFeedback() {
   };
 
   return {
-    allActivities,
-    isLoadingActivities,
-    loadAllActivities,
     saveFeedback,
     getUnreadFeedbackCount,
     getStudentsAwaitingFeedbackRead,
