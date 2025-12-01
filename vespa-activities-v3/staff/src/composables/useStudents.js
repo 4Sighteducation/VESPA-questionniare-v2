@@ -183,7 +183,7 @@ export function useStudents() {
   };
 
   return {
-    students,
+    students: state.students,
     isLoadingStudents: state.isLoadingStudents,
     studentsError: state.studentsError,
     loadStudents,
