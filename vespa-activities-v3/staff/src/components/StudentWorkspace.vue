@@ -372,7 +372,8 @@ const onDrop = async (event, category, level, isStudentSection) => {
         activity.student_email,
         activity.activity_id,
         activity.cycle_number,
-        getStaffEmail()
+        getStaffEmail(),
+        props.staffContext.schoolId  // Add schoolId for RPC
       );
       
       console.log('✅ Activity removed successfully');
@@ -429,7 +430,8 @@ const removeActivity = async (activity) => {
       activity.student_email,
       activity.activity_id,
       activity.cycle_number,
-      getStaffEmail()
+      getStaffEmail(),
+      props.staffContext.schoolId  // Add schoolId for RPC
     );
 
     console.log('✅ Activity removed from database, refreshing UI...');

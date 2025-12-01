@@ -197,9 +197,39 @@ export function useActivities() {
   /**
    * Remove activity from student
    */
-  const removeActivity = async (studentEmail, activityId, cycleNumber, staffEmail) => {
+  const removeActivity = async (studentEmail, activityId, cycleNumber, staffEmail, schoolId) => {
     try {
-      console.log('🗑️ Removing activity:', { studentEmail, activityId, cycleNumber });
+      console.log('🗑️ Removing activity via RPC:', { studentEmail, activityId, cycleNumber, staffEmail, schoolId });
+      
+      // Use RPC function to remove (bypasses RLS)
+      const { data, error } = await supabase.rpc('remove_activity_from_student', {
+        p_student_email: studentEmail,
+        p_activity_id: activityId,
+        p_cycle_number: cycleNumber,
+        p_staff_email: staffEmail,
+        p_school_id: schoolId
+      });
+
+      if (error) {
+        console.error('❌ RPC error:', error);
+        throw error;
+      }
+
+      console.log('✅ Activity removed via RPC:', data);
+      return data;
+
+    } catch (err) {
+      console.error('❌ Failed to remove activity:', err);
+      throw err;
+    }
+  };
+
+  /**
+   * LEGACY: Direct update method (blocked by RLS)
+   */
+  const removeActivityDirect = async (studentEmail, activityId, cycleNumber, staffEmail) => {
+    try {
+      console.log('🗑️ Removing activity (direct):', { studentEmail, activityId, cycleNumber });
       
       // Update status to 'removed'
       const { data, error } = await supabase
@@ -208,7 +238,7 @@ export function useActivities() {
         .eq('student_email', studentEmail)
         .eq('activity_id', activityId)
         .eq('cycle_number', cycleNumber)
-        .select();  // Return updated rows
+        .select();
 
       if (error) {
         console.error('❌ Supabase update error:', error);
