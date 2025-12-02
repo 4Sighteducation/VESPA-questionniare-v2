@@ -299,45 +299,55 @@ const retry = () => {
 };
 
 const openActivityModal = async (activity) => {
+  const API_URL = import.meta.env.VITE_API_URL || 'https://vespa-dashboard-9a1f84ee5341.herokuapp.com';
   activeActivity.value = activity;
   
   try {
+    console.log('[VESPA Activities] 📂 Opening activity:', activity.name, activity.id);
+    
     // Fetch questions for this activity
-    const response = await fetch(
-      `${import.meta.env.VITE_API_URL || 'https://vespa-dashboard-9a1f84ee5341.herokuapp.com'}/api/activities/questions?activity_id=${activity.id}`
+    const questionsResponse = await fetch(
+      `${API_URL}/api/activities/questions?activity_id=${activity.id}`
     );
     
-    if (response.ok) {
-      const data = await response.json();
-      activityQuestions.value = data.questions || [];
+    if (questionsResponse.ok) {
+      const questionsData = await questionsResponse.json();
+      activityQuestions.value = questionsData.questions || [];
+      console.log('[VESPA Activities] 📋 Loaded', activityQuestions.value.length, 'questions');
     }
     
-    // Fetch existing response if any (use current cycle)
-    const { data } = await supabase
-      .from('activity_responses')
-      .select('*')
-      .eq('student_email', studentEmail.value)
-      .eq('activity_id', activity.id)
-      .eq('cycle_number', currentCycle.value)
-      .maybeSingle();
+    // ALWAYS call start endpoint first - it will return existing record if one exists
+    // This avoids RLS issues with direct Supabase queries
+    console.log('[VESPA Activities] 🚀 Calling start activity API...');
+    const startResponse = await fetch(`${API_URL}/api/activities/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        studentEmail: studentEmail.value,
+        activityId: activity.id,
+        selectedVia: 'student_choice',
+        cycle: currentCycle.value
+      })
+    });
     
-    existingResponses.value = data || {};
-    
-    // Start activity if not already started
-    if (!existingResponses.value.id) {
-      await fetch(`${import.meta.env.VITE_API_URL || 'https://vespa-dashboard-9a1f84ee5341.herokuapp.com'}/api/activities/start`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          studentEmail: studentEmail.value,
-          activityId: activity.id,
-          selectedVia: 'student_choice',
-          cycle: currentCycle.value
-        })
-      });
+    if (startResponse.ok) {
+      const startData = await startResponse.json();
+      console.log('[VESPA Activities] ✅ Start API response:', startData.existed ? 'Record exists' : 'New record created');
+      
+      // Use the response from start API as existing responses
+      if (startData.response && startData.response.responses) {
+        existingResponses.value = startData.response;
+        console.log('[VESPA Activities] 📥 Loaded existing responses:', Object.keys(startData.response.responses).length, 'answers');
+      } else {
+        existingResponses.value = startData.response || {};
+      }
+    } else {
+      console.error('[VESPA Activities] ❌ Start API failed:', startResponse.status);
+      existingResponses.value = {};
     }
+    
   } catch (err) {
-    console.error('[App] Error opening activity:', err);
+    console.error('[VESPA Activities] ❌ Error opening activity:', err);
     activityQuestions.value = [];
     existingResponses.value = {};
   }
@@ -370,49 +380,91 @@ const removeActivityFromDashboard = async (activityId) => {
 
 const saveActivityProgress = async (saveData) => {
   try {
-    await fetch(`${import.meta.env.VITE_API_URL || 'https://vespa-dashboard-9a1f84ee5341.herokuapp.com'}/api/activities/save`, {
+    const API_URL = import.meta.env.VITE_API_URL || 'https://vespa-dashboard-9a1f84ee5341.herokuapp.com';
+    
+    // Debug: Log what we're sending
+    const payload = {
+      studentEmail: studentEmail.value,
+      activityId: activeActivity.value?.id,
+      responses: saveData.responses,
+      timeMinutes: saveData.timeMinutes,
+      cycle: currentCycle.value
+    };
+    
+    console.log('[VESPA Activities] 📤 Saving progress to API:', {
+      url: `${API_URL}/api/activities/save`,
+      activityId: payload.activityId,
+      responsesCount: Object.keys(payload.responses || {}).length,
+      cycle: payload.cycle
+    });
+    
+    // Validate before sending
+    if (!payload.studentEmail || !payload.activityId) {
+      console.error('[VESPA Activities] ❌ Missing required data for save:', payload);
+      return;
+    }
+    
+    const response = await fetch(`${API_URL}/api/activities/save`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        studentEmail: studentEmail.value,
-        activityId: activeActivity.value.id,
-        responses: saveData.responses,
-        timeMinutes: saveData.timeMinutes,
-        cycle: currentCycle.value
-      })
+      body: JSON.stringify(payload)
     });
-    console.log('[VESPA Activities] ✅ Progress saved');
+    
+    const data = await response.json();
+    
+    if (response.ok && data.success) {
+      console.log('[VESPA Activities] ✅ Progress saved successfully');
+    } else {
+      console.error('[VESPA Activities] ❌ Save failed:', response.status, data);
+    }
   } catch (err) {
-    console.error('[VESPA Activities] Error saving progress:', err);
+    console.error('[VESPA Activities] ❌ Network error saving progress:', err);
   }
 };
 
 const completeActivity = async (completeData) => {
   try {
-    // Calculate points based on level (stub implementation)
+    const API_URL = import.meta.env.VITE_API_URL || 'https://vespa-dashboard-9a1f84ee5341.herokuapp.com';
+    
+    // Calculate points based on level
     const activityLevel = activeActivity.value?.level || 'Level 2';
     const pointsEarned = activityLevel === 'Level 3' ? 15 : 10;
     
-    console.log(`[VESPA Activities] 💎 Activity completion - awarding ${pointsEarned} points`);
+    const payload = {
+      studentEmail: studentEmail.value,
+      activityId: activeActivity.value?.id,
+      responses: completeData.responses,
+      reflection: completeData.reflection,
+      timeMinutes: completeData.timeMinutes,
+      wordCount: completeData.wordCount,
+      cycle: currentCycle.value,
+      pointsEarned: pointsEarned
+    };
     
-    const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://vespa-dashboard-9a1f84ee5341.herokuapp.com'}/api/activities/complete`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        studentEmail: studentEmail.value,
-        activityId: activeActivity.value.id,
-        responses: completeData.responses,
-        reflection: completeData.reflection,
-        timeMinutes: completeData.timeMinutes,
-        wordCount: completeData.wordCount,
-        cycle: currentCycle.value,
-        pointsEarned: pointsEarned  // Send points to backend
-      })
+    console.log(`[VESPA Activities] 📤 Completing activity - awarding ${pointsEarned} points`, {
+      activityId: payload.activityId,
+      responsesCount: Object.keys(payload.responses || {}).length,
+      wordCount: payload.wordCount,
+      cycle: payload.cycle
     });
     
-    if (response.ok) {
-      const data = await response.json();
-      console.log('[VESPA Activities] ✅ Activity completed:', data);
+    // Validate before sending
+    if (!payload.studentEmail || !payload.activityId) {
+      console.error('[VESPA Activities] ❌ Missing required data for complete:', payload);
+      alert('Missing required data. Please try again.');
+      return;
+    }
+    
+    const response = await fetch(`${API_URL}/api/activities/complete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    const data = await response.json();
+    
+    if (response.ok && data.success) {
+      console.log('[VESPA Activities] ✅ Activity completed successfully:', data);
       
       // Show achievements if earned
       if (data.newAchievements && data.newAchievements.length > 0) {
@@ -433,10 +485,13 @@ const completeActivity = async (completeData) => {
       
       // Show success message with points
       showSuccessNotification(pointsEarned);
+    } else {
+      console.error('[VESPA Activities] ❌ Complete failed:', response.status, data);
+      alert(`Failed to complete activity: ${data.error || 'Unknown error'}`);
     }
   } catch (err) {
-    console.error('[VESPA Activities] Error completing activity:', err);
-    alert('Failed to complete activity. Please try again.');
+    console.error('[VESPA Activities] ❌ Network error completing activity:', err);
+    alert('Failed to complete activity. Please check your connection and try again.');
   }
 };
 
