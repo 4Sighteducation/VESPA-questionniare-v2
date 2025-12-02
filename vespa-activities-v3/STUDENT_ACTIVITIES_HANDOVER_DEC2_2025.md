@@ -1,9 +1,138 @@
 # 🎓 VESPA Student Activities - Handover Document
 
-**Date**: December 2, 2025 (Updated Evening Session)  
-**Current Version**: v1s  
-**Status**: 🟢 90% Complete - Core Functionality Working!  
-**Next Phase**: UI Polish, Gamification & Notifications
+**Date**: December 2, 2025 (Updated Late Night Session 3)  
+**Current Version**: Student v1x, Staff v3j  
+**Status**: 🟡 85% Complete - CRITICAL BUGS REMAINING  
+**Next Phase**: Fix Save/Notification Persistence, Then Polish
+
+---
+
+## 🚨 CRITICAL UNRESOLVED ISSUES (December 2, 2025 - Late Night)
+
+### ❌ ISSUE 1: Activity Progress NOT SAVING
+**Severity**: 🔴 CRITICAL - Blocks all activity functionality
+
+**Symptoms**:
+- User fills in activity answers
+- Console shows `[VESPA Activities] ✅ Progress saved`
+- User reopens activity → ALL answers are GONE
+- Activity completion never triggers (no points, no achievements)
+
+**Investigation Done**:
+- API endpoint `/api/activities/save` was doing UPDATE (not UPSERT)
+- Changed to UPSERT but still not working
+- The `activity_responses` record may not exist when save is called
+
+**Suspected Root Cause**:
+- `activity_responses` table might have missing records
+- Or UPSERT conflict constraint `student_email,activity_id,cycle_number` may not exist
+- Or RLS might be blocking the UPSERT silently
+
+**Files Involved**:
+- `DASHBOARD/DASHBOARD/activities_api.py` - `/api/activities/save` endpoint (lines 366-420)
+- `VESPAQuestionnaireV2/vespa-activities-v3/student/src/App.vue` - `saveActivityProgress` function
+
+**Action Required**:
+1. Check Supabase for `activity_responses` unique constraint on `(student_email, activity_id, cycle_number)`
+2. Check Heroku logs for actual errors from save endpoint
+3. Test direct insert via Supabase dashboard
+4. Consider bypassing RLS with RPC function for save
+
+---
+
+### ❌ ISSUE 2: Notifications NOT Dismissing Persistently
+**Severity**: 🟠 HIGH - Poor UX, notifications reappear every page load
+
+**Symptoms**:
+- User clicks dismiss on notification banner
+- Notification disappears temporarily
+- User refreshes page → Same 5 notifications appear again
+- `[useNotifications] Fetched notifications via API: 5` every time
+
+**Investigation Done**:
+- Added `/api/notifications/dismiss` endpoint to set `is_dismissed=true`
+- Added filter in `/api/notifications` to exclude `is_dismissed=true`
+- Frontend filters dismissed notifications client-side too
+- But they still come back on reload
+
+**Suspected Root Cause**:
+- The dismiss API might be failing (RLS blocking update?)
+- Or the `is_dismissed` column might not exist/be wrong type
+- Or API is not actually being called (check network tab)
+
+**Files Involved**:
+- `DASHBOARD/DASHBOARD/activities_api.py` - `/api/notifications/dismiss` endpoint
+- `VESPAQuestionnaireV2/vespa-activities-v3/student/src/composables/useNotifications.js` - `dismissNotification` function
+
+**Action Required**:
+1. Check network tab for dismiss API call when clicking X
+2. Check Supabase `notifications` table schema for `is_dismissed` column
+3. Test direct update via Supabase dashboard
+4. Check Heroku logs for errors
+
+---
+
+## 🎉 SESSION 3 ACHIEVEMENTS (December 2, 2025 - Late Night)
+
+### ✅ COMPLETED THIS SESSION
+
+#### 1. **Fixed VESPA Brand Colors**
+- Updated ALL color sources to match brand
+- Vision: `#fc8900` (Orange)
+- Effort: `#78aced` (Blue)  
+- Systems: `#7bc114` (Green)
+- Practice: `#792e9c` (Purple)
+- Attitude: `#eb2de3` (Pink)
+
+**Files Updated**:
+- `student/shared/constants.js` - CATEGORY_COLORS
+- `student/src/style.css` - CSS variables
+- `student/src/components/ActivityModal.vue` - categoryColors object
+- `student/src/components/ProblemSelector.vue` - .category-header colors
+- `student/src/components/SelectedActivitiesModal.vue` - badge colors
+- `student/src/components/CategoryActivitiesModal.vue` - activity item colors
+
+#### 2. **Staff Dashboard VESPA Scores Toggle Fixed**
+- Re-enabled toggle button
+- Fixed SQL RPC to return `vespa_scores` field
+- Staff can now see student VESPA scores when toggled
+
+**Files Updated**:
+- `staff/src/components/StudentListView.vue` - Uncommented toggle
+- `DASHBOARD/UPDATE_RPC_ADD_VESPA_SCORES.sql` - Added vespa_scores to RPC return
+- `staff/src/composables/useStudents.js` - Map vespa_scores to student object
+
+#### 3. **Staff Drag-Drop Activity Assignment Working**
+- Fixed to use RPC for reliable assignment
+- Added fire-and-forget notification API call
+- Assignment now works reliably
+
+**Files Updated**:
+- `staff/src/composables/useActivities.js` - Reverted to RPC + added notification call
+
+#### 4. **Problem Selector Shows All Activities**
+- Fixed to show activities from all categories for selected problems
+- No longer filters by category
+
+#### 5. **"Improve" Button Opens Correct Modal**
+- Now opens CategoryActivitiesModal (not ProblemSelector underneath)
+- Shows only activities for that category
+
+#### 6. **Selection Counter Fixed**
+- Changed from Set to Array for Vue reactivity
+- Counter now correctly shows selected count
+
+#### 7. **Grey Out Assigned/Completed Activities**
+- CategoryActivitiesModal greys out already assigned activities
+- SelectedActivitiesModal greys out assigned/completed activities
+
+#### 8. **Staff Notification on Activity Completion**
+- API now notifies staff when student completes their assigned activity
+
+#### 9. **CSV Data Import**
+- Created `import_knack_responses.py` script
+- Successfully imported 146 activity responses from Knack
+- Fixed NULL responses issue (now stores empty `{}`)
 
 ---
 
@@ -1543,9 +1672,9 @@ DASHBOARD repo:
 
 ---
 
-**Last Updated**: December 2, 2025 (Evening Session 2)
-**Version**: v1s  
-**Status**: Backend ✅ | Cycle Detection ✅ | Prescription Logic ✅ | Points System ✅ | Activities Loading ✅ | Modals ✅ | Gamification 🟡 | Notifications 🔴  
+**Last Updated**: December 2, 2025 (Late Night Session 3)
+**Version**: Student v1x, Staff v3j  
+**Status**: 🔴 ACTIVITY SAVE BROKEN | 🔴 NOTIFICATIONS BROKEN | ✅ UI/Colors Fixed | ✅ Modals Working
 
 ---
 
@@ -1553,33 +1682,107 @@ DASHBOARD repo:
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| **Backend API** | ✅ Complete | All endpoints working |
+| **Backend API** | 🟡 Partial | Save endpoint not persisting! |
 | **Cycle Detection** | ✅ Complete | Reads from Supabase cache |
 | **VESPA Scores Display** | ✅ Complete | Shows correct scores |
 | **Activity Loading** | ✅ Fixed | Now uses activity_responses table |
 | **Prescription Flow** | ✅ Complete | Welcome + Motivational modals |
-| **Problem Selector** | ✅ Complete | 35 problems, 5 categories |
-| **Points Calculation** | ✅ Complete | 10pts L2, 15pts L3 |
-| **Activity Removal** | ✅ Complete | Soft delete preserves data |
-| **Staff-Student Sync** | ✅ Complete | Both use activity_responses |
-| **Theme Colors** | 🟡 Partial | Needs category-specific colors |
-| **Improve Buttons** | 🔴 Not Working | Need to filter by category |
-| **Gamification UI** | 🟡 Partial | Logic ready, UI needs polish |
-| **Achievements** | 🟡 Partial | System ready, display incomplete |
-| **Streaks** | 🔴 Not Working | Logic needed |
-| **Notifications** | 🔴 Not Started | Banners, dots, emails |
+| **Problem Selector** | ✅ Complete | Shows all activities for problems |
+| **Theme Colors** | ✅ Fixed | All VESPA brand colors applied |
+| **Staff VESPA Toggle** | ✅ Fixed | Toggle shows scores correctly |
+| **Staff Drag-Drop** | ✅ Fixed | Uses RPC + notification |
+| **Improve Buttons** | ✅ Fixed | Opens CategoryActivitiesModal |
+| **Selection Counter** | ✅ Fixed | Uses Array for Vue reactivity |
+| **Grey Out Assigned** | ✅ Fixed | Shows which activities already added |
+| **CSV Import** | ✅ Complete | 146 records imported |
+| **Activity Saving** | 🔴 BROKEN | Progress not persisting to DB! |
+| **Activity Completion** | 🔴 BROKEN | Depends on save working |
+| **Points Calculation** | 🔴 BLOCKED | Needs completion to work |
+| **Achievements** | 🔴 BLOCKED | Needs completion to work |
+| **Streaks** | 🔴 BLOCKED | Needs completion to work |
+| **Notification Dismiss** | 🔴 BROKEN | Dismissed notifications reappear |
+| **Staff Completion Notify** | 🟡 Unknown | Code added, can't test without save |
 
 ---
 
-## 🎯 IMMEDIATE NEXT ACTIONS
+## 🎯 IMMEDIATE NEXT ACTIONS (PRIORITY ORDER)
 
-1. **Staff Dashboard**: Re-add VESPA scores toggle + progress button UI
-2. **Student Theme Colors**: Apply category colors to activity cards
-3. **Fix Buttons**: Improve, Choose by Problem, Gamification
-4. **Gamification**: Get achievements and streaks displaying
-5. **Notifications**: Build indicator system (dots, banners, emails)
+### 🔴 MUST FIX FIRST:
+1. **Activity Save Persistence** - Debug why UPSERT not working
+   - Check Supabase unique constraint exists
+   - Check Heroku logs for actual errors
+   - Test with direct SQL insert
+   - Consider RPC function for save
+
+2. **Notification Dismiss** - Debug why is_dismissed not persisting
+   - Check network tab for API calls
+   - Check Supabase column exists
+   - Check Heroku logs
+
+### 🟡 THEN:
+3. **Test Activity Completion** - Once save works, test full flow
+4. **Test Points/Achievements** - Should work once completion works
+5. **Test Staff Notifications** - Should work once completion works
 
 ---
 
-🚀 **MAJOR PROGRESS! Core functionality complete, activities loading correctly, modals working. Ready for UI polish phase!**
+## 📁 FILES CHANGED SESSION 3
+
+### Backend (DASHBOARD repo):
+```
+activities_api.py
+├── Lines 366-420: Changed save to UPSERT (still not working)
+├── Lines 1011-1040: Added is_dismissed filter to notifications GET
+├── Lines 1063-1082: Added /api/notifications/dismiss endpoint
+├── Lines 1095-1130: Added /api/notifications/create endpoint
+├── Lines 626-670: Added staff notification on activity completion
+└── Deployed: Multiple Heroku pushes
+```
+
+### Frontend (VESPAQuestionnaireV2 repo):
+```
+vespa-activities-v3/student/
+├── shared/constants.js - Fixed CATEGORY_COLORS
+├── src/style.css - Fixed CSS variables
+├── src/components/ActivityModal.vue - Fixed colors + completion logging
+├── src/components/ProblemSelector.vue - Fixed colors
+├── src/components/CategoryActivitiesModal.vue - Fixed colors + counter
+├── src/composables/useNotifications.js - Added dismiss API call
+└── dist/ → student-activities1x.js/css
+
+vespa-activities-v3/staff/
+├── src/composables/useActivities.js - RPC + notification fire-and-forget
+├── src/composables/useStudents.js - Map vespa_scores
+├── src/components/StudentListView.vue - Badge visibility fix
+└── dist/ → activity-dashboard-3j.js/css
+```
+
+### SQL Scripts:
+```
+DASHBOARD/UPDATE_RPC_ADD_VESPA_SCORES.sql - Staff RPC returns vespa_scores
+```
+
+---
+
+## 🔍 DEBUGGING CHECKLIST FOR NEXT SESSION
+
+### For Activity Save Issue:
+- [ ] Open browser Network tab
+- [ ] Fill in activity, wait 30 sec for auto-save
+- [ ] Check if `/api/activities/save` call appears
+- [ ] Check response code (200? 500?)
+- [ ] Check response body for error
+- [ ] Check Heroku logs: `heroku logs --tail -a vespa-dashboard`
+- [ ] Check Supabase: Does unique constraint exist on `activity_responses(student_email, activity_id, cycle_number)`?
+
+### For Notification Dismiss Issue:
+- [ ] Click dismiss button
+- [ ] Check Network tab for `/api/notifications/dismiss` call
+- [ ] Check response code
+- [ ] Check Supabase: `SELECT * FROM notifications WHERE recipient_email = 'cali@vespa.academy'`
+- [ ] Is `is_dismissed` column TRUE for dismissed ones?
+
+---
+
+⚠️ **BLOCKER**: Until activity save works, cannot test completion, points, achievements, or staff notifications. This is the critical path!**
 
