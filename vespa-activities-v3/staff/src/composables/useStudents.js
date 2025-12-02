@@ -73,6 +73,14 @@ export function useStudents() {
         progress: student.total_activities > 0 
           ? Math.round((student.completed_activities / student.total_activities) * 100) 
           : 0,
+        // Map VESPA scores from the vespa_scores column (JSONB)
+        latest_vespa_scores: student.vespa_scores || {
+          vision: 0,
+          effort: 0,
+          systems: 0,
+          practice: 0,
+          attitude: 0
+        },
         categoryBreakdown: {
           vision: {
             prescribed: Array(student.vision_total || 0).fill(null),

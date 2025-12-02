@@ -32,11 +32,11 @@ export default defineConfig(({ mode }) => {
         output: {
           format: 'iife',  // Back to IIFE for Knack
           name: 'VESPAStaffActivities',
-          entryFileNames: 'activity-dashboard-3g.js',  // Version 3g - VESPA toggle, colors, UI polish
-          chunkFileNames: 'activity-dashboard-3g-[hash].js',
+          entryFileNames: 'activity-dashboard-3h.js',  // Version 3h - VESPA scores fix, badge visibility
+          chunkFileNames: 'activity-dashboard-3h-[hash].js',
           assetFileNames: (assetInfo) => {
             if (assetInfo.name.endsWith('.css')) {
-              return 'activity-dashboard-3g.css';
+              return 'activity-dashboard-3h.css';
             }
             return 'assets/[name]-[hash][extname]';
           }

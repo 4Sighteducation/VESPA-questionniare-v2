@@ -97,6 +97,16 @@
       :total-points="totalPoints"
       @close="showAchievements = false"
     />
+    
+    <!-- Category Activities Modal (for Improve button) -->
+    <CategoryActivitiesModal
+      v-if="showCategoryModal && selectedCategoryForModal"
+      :category="selectedCategoryForModal"
+      :completed-activity-ids="completedActivityIds"
+      :assigned-activity-ids="assignedActivityIds"
+      @add-activities="handleAddCategoryActivities"
+      @close="closeCategoryModal"
+    />
   </div>
 </template>
 
@@ -110,6 +120,7 @@ import MotivationalPopup from './components/MotivationalPopup.vue';
 import ProblemSelector from './components/ProblemSelector.vue';
 import SelectedActivitiesModal from './components/SelectedActivitiesModal.vue';
 import NotificationBanner from './components/NotificationBanner.vue';
+import CategoryActivitiesModal from './components/CategoryActivitiesModal.vue';
 import { useActivities } from './composables/useActivities';
 import { useVESPAScores } from './composables/useVESPAScores';
 import { useNotifications } from './composables/useNotifications';
@@ -141,7 +152,9 @@ const activeActivity = ref(null);
 const activityQuestions = ref([]);
 const existingResponses = ref({});
 const showAchievements = ref(false);
-const selectedCategory = ref(null); // For improve button -> problem selector
+const selectedCategory = ref(null); // For problem selector pre-selection
+const showCategoryModal = ref(false); // For Improve button -> category activities
+const selectedCategoryForModal = ref(null); // The category being improved
 
 // Composables
 const {
@@ -525,9 +538,57 @@ const handleShowProblemSelector = (data) => {
 };
 
 const handleImproveCategory = (category) => {
-  console.log('[App] 🎯 Improve category event received:', category);
-  selectedCategory.value = category;
-  // The show-problem-selector event will be emitted right after this
+  console.log('[App] 🎯 Improve category - opening category activities modal:', category);
+  selectedCategoryForModal.value = category;
+  showCategoryModal.value = true;
+};
+
+// Get completed activity IDs for the category modal
+const completedActivityIds = computed(() => {
+  return myActivities.value
+    .filter(a => a.status === 'completed')
+    .map(a => a.activity_id || a.id);
+});
+
+// Get assigned activity IDs for the category modal
+const assignedActivityIds = computed(() => {
+  return myActivities.value
+    .filter(a => a.status !== 'removed')
+    .map(a => a.activity_id || a.id);
+});
+
+// Close the category modal
+const closeCategoryModal = () => {
+  showCategoryModal.value = false;
+  selectedCategoryForModal.value = null;
+};
+
+// Add activities from category modal
+const handleAddCategoryActivities = async (selectedActivities) => {
+  try {
+    console.log('[App] 📝 Adding category activities:', selectedActivities.length);
+    
+    for (const activity of selectedActivities) {
+      try {
+        await addActivity(activity.id, 'student_choice', currentCycle.value);
+        console.log(`✅ Added: ${activity.name}`);
+      } catch (err) {
+        console.error(`❌ Failed to add ${activity.name}:`, err);
+      }
+    }
+    
+    // Close modal
+    closeCategoryModal();
+    
+    // Refresh activities
+    await fetchMyActivities(currentCycle.value);
+    
+    console.log('[App] ✅ Category activities added');
+    
+  } catch (err) {
+    console.error('[App] Failed to add category activities:', err);
+    alert('Failed to add activities. Please try again.');
+  }
 };
 
 // Notification handlers

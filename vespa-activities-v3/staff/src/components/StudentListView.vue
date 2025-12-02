@@ -489,13 +489,12 @@ watch([searchTerm, filterYearGroup, filterProgress], () => {
   background: rgba(7, 155, 170, 0.15);
   border-radius: 20px;
   font-size: 14px;
-  color: white;  /* White text */
+  color: #23356f;  /* Dark blue text - visible on white bg */
   font-weight: 600;
-  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .info-badge i {
-  color: white;  /* White icons */
+  color: #079baa;  /* Teal icons */
 }
 
 .filter-bar {

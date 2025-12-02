@@ -236,11 +236,17 @@ const hidePreview = () => {
   hoveredProblem.value = null;
 };
 
-// Get selected problems as objects
+// Get selected problems as objects (with full data including recommendedActivities)
 const getSelectedProblems = () => {
   const allProblems = [];
   Object.values(problemMappings.value).forEach(categoryProblems => {
-    allProblems.push(...categoryProblems);
+    categoryProblems.forEach(p => {
+      allProblems.push({
+        id: p.id,
+        text: p.text,
+        recommendedActivities: p.recommendedActivities || []
+      });
+    });
   });
   return allProblems.filter(p => selectedProblems.value.has(p.id));
 };
@@ -254,26 +260,36 @@ const loadActivitiesForSelectedProblems = async () => {
   try {
     isLoadingActivities.value = true;
     
-    // Get all selected problem IDs
-    const problemIds = Array.from(selectedProblems.value);
+    // Get all selected problems with their recommended activity NAMES
+    const selectedProblemsList = getSelectedProblems();
     
-    // Query for activities that match ANY of the selected problems
-    // Using OR logic with array overlap
+    // Collect ALL activity names from all selected problems
+    const activityNames = new Set();
+    selectedProblemsList.forEach(problem => {
+      (problem.recommendedActivities || []).forEach(name => {
+        activityNames.add(name);
+      });
+    });
+    
+    console.log('📋 Looking up activities by name:', Array.from(activityNames));
+    
+    // Query activities BY NAME - this gets ALL activities for the problems
+    // regardless of their VESPA category!
     const { data: activities, error: queryError } = await supabase
       .from('activities')
       .select('*')
-      .overlaps('problem_mappings', problemIds)
+      .in('name', Array.from(activityNames))
       .eq('is_active', true)
       .order('vespa_category, level, display_order');
 
     if (queryError) throw queryError;
 
-    console.log(`✅ Found ${activities?.length || 0} activities for ${problemIds.length} problems`);
+    console.log(`✅ Found ${activities?.length || 0} activities for ${selectedProblemsList.length} problems`);
     
     // Emit event with all selected problems and matching activities
     emit('problem-selected', {
-      problem: getSelectedProblems()[0], // Primary problem for display
-      problems: getSelectedProblems(),   // All selected problems
+      problem: selectedProblemsList[0], // Primary problem for display
+      problems: selectedProblemsList,   // All selected problems
       activities: activities || []
     });
 

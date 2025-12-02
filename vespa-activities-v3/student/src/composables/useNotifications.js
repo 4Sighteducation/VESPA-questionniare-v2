@@ -31,31 +31,50 @@ export function useNotifications(userEmail) {
     });
   });
   
+  // API Base URL
+  const API_BASE_URL = import.meta.env?.VITE_API_URL || 'https://vespa-dashboard-9a1f84ee5341.herokuapp.com';
+  
   // Methods
   const fetchNotifications = async (unreadOnly = false) => {
     try {
       loading.value = true;
       
-      let query = supabase
-        .from('notifications')
-        .select('*')
-        .eq('recipient_email', userEmail);
+      // Use API endpoint (bypasses RLS)
+      const url = `${API_BASE_URL}/api/notifications?email=${encodeURIComponent(userEmail)}${unreadOnly ? '&unread_only=true' : ''}`;
       
-      if (unreadOnly) {
-        query = query.eq('is_read', false);
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
       }
       
-      query = query.order('created_at', { ascending: false }).limit(50);
-      
-      const { data, error } = await query;
-      
-      if (error) throw error;
-      
-      notifications.value = data || [];
-      console.log('[useNotifications] Fetched notifications:', notifications.value.length);
+      const data = await response.json();
+      notifications.value = data.notifications || [];
+      console.log('[useNotifications] Fetched notifications via API:', notifications.value.length);
       
     } catch (err) {
       console.error('[useNotifications] Error fetching:', err);
+      // Fallback to Supabase direct query
+      try {
+        let query = supabase
+          .from('notifications')
+          .select('*')
+          .eq('recipient_email', userEmail);
+        
+        if (unreadOnly) {
+          query = query.eq('is_read', false);
+        }
+        
+        query = query.order('created_at', { ascending: false }).limit(50);
+        
+        const { data, error } = await query;
+        
+        if (!error) {
+          notifications.value = data || [];
+          console.log('[useNotifications] Fetched notifications via Supabase fallback:', notifications.value.length);
+        }
+      } catch (fallbackErr) {
+        console.error('[useNotifications] Fallback also failed:', fallbackErr);
+      }
     } finally {
       loading.value = false;
     }
