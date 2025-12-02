@@ -118,14 +118,16 @@ const periodStats = computed(() => {
 .scorecard {
   background: linear-gradient(135deg, #079baa 0%, #00b4cc 100%);
   border-radius: 12px;
-  padding: 16px;
+  padding: 20px;
   color: white;
-  box-shadow: 0 4px 12px rgba(7, 155, 170, 0.2);
+  box-shadow: 0 4px 12px rgba(7, 155, 170, 0.25);
+  min-width: 480px;  /* Make it bigger */
 }
 
 .scorecard.compact {
-  padding: 10px 12px;
+  padding: 14px 16px;  /* Increased from 10px 12px */
   border-radius: 8px;
+  min-width: 480px;
 }
 
 .scorecard-header {
@@ -189,24 +191,24 @@ const periodStats = computed(() => {
 }
 
 .stat-number {
-  font-size: 22px;
+  font-size: 26px;  /* Bigger */
   font-weight: 700;
   line-height: 1;
   margin-bottom: 4px;
 }
 
 .scorecard.compact .stat-number {
-  font-size: 16px;
+  font-size: 20px;  /* Bigger for compact too */
 }
 
 .stat-label {
-  font-size: 10px;
-  opacity: 0.85;
+  font-size: 11px;  /* Slightly bigger */
+  opacity: 0.9;
   font-weight: 500;
 }
 
 .scorecard.compact .stat-label {
-  font-size: 9px;
+  font-size: 10px;  /* Bigger */
 }
 
 .stat-item.completed {

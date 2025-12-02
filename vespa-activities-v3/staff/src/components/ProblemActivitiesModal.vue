@@ -95,6 +95,7 @@
 import { ref, computed } from 'vue';
 import { useActivities } from '../composables/useActivities';
 import { useAuth } from '../composables/useAuth';
+import supabase from '../supabaseClient';
 
 const props = defineProps({
   problem: {
@@ -166,6 +167,41 @@ const assignActivities = async (mode = 'add') => {
   try {
     console.log(`${mode === 'replace' ? '🔄 Replacing' : '➕ Adding'} ${selectedIds.value.size} activities`);
     
+    // If replacing, first mark ALL current activities as removed
+    if (mode === 'replace') {
+      console.log('🗑️ Marking all current activities as removed...');
+      
+      const { data: currentActivities, error: fetchError } = await supabase
+        .from('activity_responses')
+        .select('id, activity_id')
+        .eq('student_email', props.student.email)
+        .neq('status', 'removed');
+
+      if (fetchError) {
+        console.error('Failed to fetch current activities:', fetchError);
+      } else if (currentActivities && currentActivities.length > 0) {
+        console.log(`Found ${currentActivities.length} activities to remove`);
+        
+        // Mark each as removed via RPC
+        for (const activity of currentActivities) {
+          try {
+            const { error } = await supabase.rpc('remove_activity_from_student', {
+              p_student_email: props.student.email,
+              p_activity_id: activity.activity_id,
+              p_cycle_number: props.student.current_cycle || 1,
+              p_staff_email: getStaffEmail(),
+              p_school_id: props.staffContext.schoolId
+            });
+            if (error) console.error('Failed to remove:', error);
+          } catch (err) {
+            console.warn('Error removing activity:', err);
+          }
+        }
+        console.log('✅ All existing activities marked as removed');
+      }
+    }
+    
+    // Now assign new activities
     let assigned = 0;
     for (const activityId of selectedIds.value) {
       try {
@@ -184,7 +220,7 @@ const assignActivities = async (mode = 'add') => {
     }
 
     const message = mode === 'replace' ? 
-      `Replaced all activities with ${assigned} new activities` :
+      `Replaced all activities with ${assigned} new ones` :
       `Added ${assigned} activities to current assignments`;
     
     alert(`✅ Success!\n\n${message}`);
