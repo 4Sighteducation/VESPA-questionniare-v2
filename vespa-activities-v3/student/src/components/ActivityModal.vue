@@ -102,11 +102,31 @@
               <div class="background-info-content" v-html="activity.learn_section_html"></div>
             </div>
             
+            <!-- Confirmation Checkbox (not shown in review mode) -->
+            <div v-if="!isReviewMode" class="learn-confirmation">
+              <label class="confirmation-checkbox">
+                <input 
+                  type="checkbox" 
+                  v-model="hasConfirmedLearnContent"
+                  class="confirmation-input"
+                />
+                <span class="confirmation-checkmark"></span>
+                <span class="confirmation-text">
+                  ✓ I've reviewed the content above and I'm ready to practice!
+                </span>
+              </label>
+            </div>
+            
             <div class="stage-navigation">
               <button class="secondary-btn prev-stage-btn" @click="navigateToStage('intro')">
                 <span class="btn-arrow">←</span> Back
               </button>
-              <button class="primary-btn next-stage-btn" @click="navigateToStage('do')">
+              <button 
+                class="primary-btn next-stage-btn" 
+                @click="navigateToStage('do')"
+                :disabled="!hasConfirmedLearnContent && !isReviewMode"
+                :class="{ 'btn-disabled': !hasConfirmedLearnContent && !isReviewMode }"
+              >
                 Ready to Practice! <span class="btn-arrow">→</span>
               </button>
             </div>
@@ -117,6 +137,22 @@
             <div class="stage-header">
               <h2>Your Turn!</h2>
               <p class="stage-description">Complete the following activities.</p>
+              <!-- Progress indicator for minimum responses (not in review mode) -->
+              <div v-if="!isReviewMode && doQuestions.length > 0" class="response-progress">
+                <div class="progress-info">
+                  <span class="progress-count">
+                    {{ answeredDoQuestionsCount }} / {{ minRequiredResponses }} 
+                  </span>
+                  <span class="progress-label">responses to unlock Reflect</span>
+                </div>
+                <div class="progress-bar-mini">
+                  <div 
+                    class="progress-fill-mini" 
+                    :style="{ width: `${Math.min(100, (answeredDoQuestionsCount / minRequiredResponses) * 100)}%` }"
+                    :class="{ 'complete': answeredDoQuestionsCount >= minRequiredResponses }"
+                  ></div>
+                </div>
+              </div>
             </div>
             
             <!-- DO Section HTML -->
@@ -178,8 +214,15 @@
                 class="primary-btn next-stage-btn reflect-btn" 
                 @click="navigateToStage('reflect')"
                 :disabled="!canProceedFromDo"
+                :class="{ 'btn-disabled': !canProceedFromDo }"
+                :title="!canProceedFromDo ? `Answer at least ${minRequiredResponses} questions to continue` : ''"
               >
-                Continue to Reflection <span class="btn-arrow">→</span>
+                <template v-if="canProceedFromDo">
+                  Continue to Reflection <span class="btn-arrow">→</span>
+                </template>
+                <template v-else>
+                  🔒 {{ answeredDoQuestionsCount }}/{{ minRequiredResponses }} answered
+                </template>
               </button>
             </div>
           </div>
@@ -189,6 +232,11 @@
             <div class="stage-header">
               <h2>Reflection Time</h2>
               <p class="stage-description">Take a moment to reflect on what you've learned.</p>
+              <!-- Rating requirement indicator (not in review mode) -->
+              <div v-if="!isReviewMode && !hasSelectedRating" class="rating-required-hint">
+                <span class="hint-icon">💡</span>
+                <span class="hint-text">Please select a rating below to complete the activity</span>
+              </div>
             </div>
             
             <!-- REFLECT Section HTML -->
@@ -222,8 +270,15 @@
                 class="primary-btn complete-btn" 
                 @click="handleComplete"
                 :disabled="!canComplete"
+                :class="{ 'btn-disabled': !canComplete }"
+                :title="!hasSelectedRating ? 'Please select a rating first' : ''"
               >
-                Complete Activity! <span class="btn-arrow">🎉</span>
+                <template v-if="canComplete">
+                  Complete Activity! <span class="btn-arrow">🎉</span>
+                </template>
+                <template v-else>
+                  🔒 Select a rating to complete
+                </template>
               </button>
               <button 
                 v-else
@@ -293,6 +348,9 @@ const currentQuestionPage = ref(0);
 const questionsPerPage = 2;
 let autoSaveIntervalId = null;
 let timeInterval = null;
+
+// Engagement tracking - ensure students actually view content
+const hasConfirmedLearnContent = ref(false);  // Checkbox: "I've reviewed this content"
 
 // Check if this is a completed activity being reviewed (read-only mode)
 const isReviewMode = computed(() => {
@@ -370,35 +428,90 @@ const isStageCompleted = (stageId) => {
 };
 
 const canAccessStage = (stageId) => {
-  if (stageId === 'complete') {
-    return canComplete.value;
+  // In review mode, allow access to all stages
+  if (isReviewMode.value) return true;
+  
+  const stageIndex = stages.findIndex(s => s.id === stageId);
+  const currentIndex = stages.findIndex(s => s.id === currentStage.value);
+  
+  // Can always go back
+  if (stageIndex <= currentIndex) return true;
+  
+  // Forward navigation requires meeting requirements
+  switch (stageId) {
+    case 'intro':
+      return true;
+    case 'learn':
+      return true; // Can always access Learn from Intro
+    case 'do':
+      return hasConfirmedLearnContent.value; // Must confirm Learn content
+    case 'reflect':
+      return canProceedFromDo.value; // Must answer min questions in Do
+    case 'complete':
+      return canComplete.value; // Must have rating selected
+    default:
+      return true;
   }
-  return true;
 };
 
-const canProceedFromDo = computed(() => {
-  const requiredDoQuestions = doQuestions.value.filter(q => q.answer_required);
-  return requiredDoQuestions.every(q => {
+// Count how many Do questions have been answered
+const answeredDoQuestionsCount = computed(() => {
+  return doQuestions.value.filter(q => {
     const value = responses.value[q.id] || getExistingResponse(q.id);
-    return value !== null && value !== undefined && value !== '';
-  });
+    return value !== null && value !== undefined && value !== '' && String(value).trim().length > 0;
+  }).length;
+});
+
+// Minimum required responses to proceed from Do to Reflect (6 or all if fewer questions)
+const minRequiredResponses = computed(() => {
+  return Math.min(6, doQuestions.value.length);
+});
+
+const canProceedFromDo = computed(() => {
+  // In review mode, always allow navigation
+  if (isReviewMode.value) return true;
+  
+  // Must have answered at least 6 questions (or all if fewer than 6)
+  return answeredDoQuestionsCount.value >= minRequiredResponses.value;
 });
 
 const canProceedToNextQuestions = computed(() => {
-  const requiredOnPage = paginatedDoQuestions.value.filter(q => q.answer_required);
-  return requiredOnPage.every(q => {
+  // In review mode, always allow navigation
+  if (isReviewMode.value) return true;
+  
+  // Check current page questions - at least try to answer them
+  const answeredOnPage = paginatedDoQuestions.value.filter(q => {
     const value = responses.value[q.id] || getExistingResponse(q.id);
-    return value !== null && value !== undefined && value !== '';
-  });
+    return value !== null && value !== undefined && value !== '' && String(value).trim().length > 0;
+  }).length;
+  
+  // Must answer at least 1 question on current page to proceed
+  return answeredOnPage > 0 || paginatedDoQuestions.value.length === 0;
+});
+
+// Check if rating question has been answered in Reflect section
+const hasSelectedRating = computed(() => {
+  // Find the rating question (usually a dropdown asking to rate the activity)
+  const ratingQuestion = reflectionQuestions.value.find(q => 
+    q.question_type === 'Dropdown' && 
+    (q.question_title?.toLowerCase().includes('rating') || 
+     q.question_title?.toLowerCase().includes('rate'))
+  );
+  
+  if (!ratingQuestion) return true; // No rating question, allow completion
+  
+  const value = responses.value[ratingQuestion.id] || getExistingResponse(ratingQuestion.id);
+  return value !== null && value !== undefined && value !== '';
 });
 
 const canComplete = computed(() => {
-  // All required questions (both do and reflect) must be answered
-  const allRequiredQuestions = props.questions.filter(q => q.answer_required);
-  return allRequiredQuestions.every(q => {
-    const value = responses.value[q.id] || getExistingResponse(q.id);
-    return value !== null && value !== undefined && value !== '';
-  });
+  // In review mode, don't show complete button anyway
+  if (isReviewMode.value) return false;
+  
+  // Must have:
+  // 1. Answered minimum required Do questions
+  // 2. Selected a rating in Reflect section
+  return canProceedFromDo.value && hasSelectedRating.value;
 });
 
 // Methods
@@ -697,6 +810,138 @@ onUnmounted(() => {
 .close-review-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(114, 203, 68, 0.3);
+}
+
+/* ===== Engagement & Validation Styles ===== */
+
+/* Learn Confirmation Checkbox */
+.learn-confirmation {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);
+  border: 2px solid #14b8a6;
+  border-radius: 12px;
+}
+
+.confirmation-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #0f766e;
+}
+
+.confirmation-input {
+  display: none;
+}
+
+.confirmation-checkmark {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #14b8a6;
+  border-radius: 6px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+
+.confirmation-input:checked + .confirmation-checkmark {
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  border-color: #0d9488;
+}
+
+.confirmation-input:checked + .confirmation-checkmark::after {
+  content: '✓';
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.confirmation-text {
+  line-height: 1.4;
+}
+
+/* Response Progress Bar in Do Section */
+.response-progress {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-radius: 10px;
+  border: 2px solid #f59e0b;
+}
+
+.progress-info {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.progress-count {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #b45309;
+}
+
+.progress-label {
+  font-size: 0.875rem;
+  color: #92400e;
+}
+
+.progress-bar-mini {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill-mini {
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-fill-mini.complete {
+  background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
+}
+
+/* Rating Required Hint */
+.rating-required-hint {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-radius: 10px;
+  border: 2px solid #f59e0b;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hint-icon {
+  font-size: 1.5rem;
+}
+
+.hint-text {
+  font-weight: 500;
+  color: #92400e;
+}
+
+/* Disabled Button State */
+.btn-disabled {
+  opacity: 0.6;
+  cursor: not-allowed !important;
+  background: #94a3b8 !important;
+}
+
+.btn-disabled:hover {
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 .activity-exit-btn {

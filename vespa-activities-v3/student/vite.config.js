@@ -67,11 +67,11 @@ export default defineConfig(({ mode }) => {
           format: 'iife',
           name: 'VESPAStudentActivities',
           // Version suffix for CDN cache busting - INCREMENT FOR EACH BUILD
-          entryFileNames: 'student-activities2a.js',
-          chunkFileNames: 'student-activities2a-[hash].js',
+          entryFileNames: 'student-activities2b.js',
+          chunkFileNames: 'student-activities2b-[hash].js',
           assetFileNames: (assetInfo) => {
             if (assetInfo.name.endsWith('.css')) {
-              return 'student-activities2a.css';
+              return 'student-activities2b.css';
             }
             return 'assets/[name]-[hash][extname]';
           }
