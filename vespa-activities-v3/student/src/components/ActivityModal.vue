@@ -443,7 +443,12 @@ const handleSave = async (isAutoSave = false) => {
 };
 
 const handleComplete = async () => {
+  console.log('[ActivityModal] 🎉 handleComplete called');
+  console.log('[ActivityModal] canComplete:', canComplete.value);
+  console.log('[ActivityModal] responses:', Object.keys(responses.value).length, 'answers');
+  
   if (!canComplete.value) {
+    console.log('[ActivityModal] ❌ Cannot complete - required questions not answered');
     alert('Please answer all required questions before completing.');
     return;
   }
@@ -465,9 +470,12 @@ const handleComplete = async () => {
   // Show completion stage first
   currentStage.value = 'complete';
   
+  console.log('[ActivityModal] ✅ Emitting complete event with data:', completeData);
+  
   // Emit complete after showing celebration
   setTimeout(() => {
     emit('complete', completeData);
+    console.log('[ActivityModal] ✅ Complete event emitted');
   }, 500);
   
   // Auto-close after 5 seconds

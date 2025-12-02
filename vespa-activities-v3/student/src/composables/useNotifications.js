@@ -48,7 +48,8 @@ export function useNotifications(userEmail) {
       }
       
       const data = await response.json();
-      notifications.value = data.notifications || [];
+      // Filter out dismissed notifications
+      notifications.value = (data.notifications || []).filter(n => !n.is_dismissed);
       console.log('[useNotifications] Fetched notifications via API:', notifications.value.length);
       
     } catch (err) {
@@ -141,20 +142,26 @@ export function useNotifications(userEmail) {
   
   const dismissNotification = async (notificationId) => {
     try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ is_dismissed: true })
-        .eq('id', notificationId);
+      // Use API to dismiss (bypasses RLS)
+      const response = await fetch(`${API_BASE_URL}/api/notifications/dismiss`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notificationId })
+      });
       
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error('API dismiss failed');
+      }
       
-      // Remove from local state
+      // Remove from local state immediately
       notifications.value = notifications.value.filter(n => n.id !== notificationId);
       
-      console.log('[useNotifications] Dismissed:', notificationId);
+      console.log('[useNotifications] ✅ Dismissed:', notificationId);
       
     } catch (err) {
       console.error('[useNotifications] Error dismissing:', err);
+      // Still remove from local state for UX
+      notifications.value = notifications.value.filter(n => n.id !== notificationId);
     }
   };
   
