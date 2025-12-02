@@ -1,36 +1,42 @@
 <template>
   <div class="student-workspace">
-    <!-- Compact Header -->
+    <!-- Two-Row Header -->
     <div class="workspace-header-compact">
-      <button class="btn btn-secondary" @click="$emit('back')">
-        <i class="fas fa-arrow-left"></i> Back to List
-      </button>
-      
-      <div class="student-info-compact">
-        <h3>{{ student.full_name }}</h3>
-        <StudentScorecard 
-          :activities="student.activity_responses" 
-          :compact="true"
-          :show-weekly="true"
-        />
-      </div>
-      
-      <div class="header-actions">
-        <input
-          type="search"
-          v-model="searchTerm"
-          placeholder="Search activities..."
-          class="search-input-compact"
-        />
-        <button class="btn btn-primary" @click="showAssignModal = true">
-          <i class="fas fa-user-md"></i> Assign by Problem
+      <!-- Row 1: Navigation and Title -->
+      <div class="header-row-1">
+        <button class="btn btn-secondary" @click="$emit('back')">
+          <i class="fas fa-arrow-left"></i> Back to List
         </button>
-        <button class="btn btn-warning" @click="clearAllActivities" title="Remove all activities (preserves data)">
-          <i class="fas fa-broom"></i> Clear All
-        </button>
+        <div class="student-name-large">
+          <h3>{{ student.full_name }}</h3>
+          <span class="student-email-sub">{{ student.email }}</span>
+        </div>
         <button class="btn btn-secondary" @click="$emit('refresh')">
           <i class="fas fa-sync"></i>
         </button>
+      </div>
+      
+      <!-- Row 2: Scorecard and Actions -->
+      <div class="header-row-2">
+        <StudentScorecard 
+          :activities="student.activity_responses" 
+          :compact="true"
+          :show-period-filter="true"
+        />
+        <div class="header-actions-row2">
+          <input
+            type="search"
+            v-model="searchTerm"
+            placeholder="Search activities..."
+            class="search-input-compact"
+          />
+          <button class="btn btn-primary" @click="showAssignModal = true">
+            <i class="fas fa-user-md"></i> Assign by Problem
+          </button>
+          <button class="btn btn-warning" @click="clearAllActivities" title="Remove all activities (preserves data)">
+            <i class="fas fa-broom"></i> Clear All
+          </button>
+        </div>
       </div>
     </div>
 
@@ -544,59 +550,82 @@ const clearAllActivities = async () => {
   z-index: 10 !important;  /* Above Knack content, below modals */
 }
 
-/* Compact Header - MASSIVE spacing for GeneralHeader */
+/* Two-Row Header - Better Layout */
 .workspace-header-compact {
   background: white !important;
-  padding: 12px 16px !important;
-  margin: 260px 16px 16px 16px !important;  /* INCREASED to 260px - much more space */
+  padding: 12px 20px !important;
+  margin: 260px 16px 16px 16px !important;
   border-radius: 8px !important;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
   display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
+  flex-direction: column !important;  /* Stack rows */
+  gap: 12px !important;
   border: 1px solid #dee2e6 !important;
   position: relative !important;
-  z-index: 100 !important;  /* Lower z-index - modals should be above */
+  z-index: 100 !important;
   visibility: visible !important;
   opacity: 1 !important;
-  min-height: 50px !important;  /* Ensure header has height */
   width: auto !important;
+}
+
+.header-row-1 {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+}
+
+.student-name-large {
+  flex: 1 !important;
+  text-align: center !important;
+}
+
+.student-name-large h3 {
+  margin: 0 !important;
+  font-size: 18px !important;
+  color: #212529 !important;
+  font-weight: 600 !important;
+}
+
+.student-email-sub {
+  font-size: 12px !important;
+  color: #6c757d !important;
+}
+
+.header-row-2 {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  justify-content: space-between !important;
+}
+
+.header-actions-row2 {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  flex: 1 !important;
+  justify-content: flex-end !important;
 }
 
 /* Adjust for pages without breadcrumb */
 body:not(.has-breadcrumb) .workspace-header-compact {
-  margin-top: 180px !important;  /* Still very generous */
+  margin-top: 180px !important;
 }
 
 /* Force visibility at all screen sizes */
 @media (min-width: 768px) {
   .workspace-header-compact {
-    margin-top: 260px !important;  /* Maintain spacing on desktop */
+    margin-top: 260px !important;
   }
 }
 
 @media (max-width: 767px) {
   .workspace-header-compact {
-    margin-top: 160px !important;  /* Less on mobile (smaller header) */
+    margin-top: 160px !important;
   }
 }
 
-.student-info-compact {
-  flex: 1;
-  text-align: center;
-}
-
-.student-info-compact h3 {
-  margin: 0;
-  font-size: 16px;  /* Smaller header */
-  color: #212529;
-  font-weight: 600;
-}
-
-.student-info-compact span {
-  color: #6c757d;
-  font-size: 13px;
-}
+/* Removed - using new two-row layout */
 
 .header-actions {
   display: flex;
@@ -937,3 +966,4 @@ body:not(.has-breadcrumb) .workspace-header-compact {
   background: #f0f9ff;
 }
 </style>
+

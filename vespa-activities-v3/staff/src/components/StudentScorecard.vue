@@ -3,11 +3,16 @@
     <div class="scorecard-header">
       <i class="fas fa-chart-line"></i>
       <span>{{ compact ? 'Progress' : 'Activity Progress' }}</span>
+      <select v-if="showPeriodFilter" v-model="selectedPeriod" class="period-filter" @change="$emit('period-changed', selectedPeriod)">
+        <option value="week">Last Week</option>
+        <option value="month">Last Month</option>
+        <option value="all">All Time</option>
+      </select>
     </div>
     
     <div class="scorecard-stats">
       <div class="stat-item completed">
-        <div class="stat-number">{{ stats.completed }}</div>
+        <div class="stat-number">{{ periodStats.completed }}</div>
         <div class="stat-label">Completed</div>
       </div>
       
@@ -27,9 +32,8 @@
       </div>
     </div>
     
-    <div v-if="!compact && showWeekly" class="weekly-stats">
-      <div class="weekly-label">This Week:</div>
-      <div class="weekly-number">{{ weeklyCompleted }} completed</div>
+    <div v-if="!compact && selectedPeriod !== 'all'" class="period-info">
+      {{ periodLabel }}: {{ periodStats.completed }} of {{ periodStats.total }} completed
     </div>
   </div>
 </template>
@@ -46,11 +50,15 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  showWeekly: {
+  showPeriodFilter: {
     type: Boolean,
-    default: false
+    default: true
   }
 });
+
+defineEmits(['period-changed']);
+
+const selectedPeriod = ref('week');
 
 const stats = computed(() => {
   const activities = props.activities || [];
@@ -66,17 +74,43 @@ const completionRate = computed(() => {
   return Math.round((stats.value.completed / stats.value.total) * 100);
 });
 
-const weeklyCompleted = computed(() => {
-  if (!props.showWeekly) return 0;
+const periodLabel = computed(() => {
+  switch (selectedPeriod.value) {
+    case 'week': return 'This Week';
+    case 'month': return 'This Month';
+    case 'all': return 'All Time';
+    default: return 'This Week';
+  }
+});
+
+const periodStats = computed(() => {
+  const activities = props.activities || [];
+  const now = new Date();
+  let startDate;
   
-  const oneWeekAgo = new Date();
-  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+  switch (selectedPeriod.value) {
+    case 'week':
+      startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      break;
+    case 'month':
+      startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      break;
+    case 'all':
+    default:
+      startDate = new Date(0); // Beginning of time
+  }
   
-  return (props.activities || []).filter(a => {
+  const periodActivities = activities.filter(a => {
+    if (a.status === 'removed') return false;
     if (!a.completed_at) return false;
     const completedDate = new Date(a.completed_at);
-    return completedDate >= oneWeekAgo;
-  }).length;
+    return completedDate >= startDate;
+  });
+  
+  return {
+    completed: periodActivities.length,
+    total: activities.filter(a => a.status !== 'removed').length
+  };
 });
 </script>
 
@@ -102,11 +136,28 @@ const weeklyCompleted = computed(() => {
   font-size: 13px;
   margin-bottom: 12px;
   opacity: 0.9;
+  justify-content: space-between;
 }
 
 .scorecard.compact .scorecard-header {
   font-size: 11px;
   margin-bottom: 8px;
+}
+
+.period-filter {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.period-filter option {
+  background: #079baa;
+  color: white;
 }
 
 .scorecard-stats {
@@ -170,23 +221,13 @@ const weeklyCompleted = computed(() => {
   color: #fbbf24;
 }
 
-.weekly-stats {
-  margin-top: 12px;
-  padding-top: 12px;
+.period-info {
+  margin-top: 10px;
+  padding-top: 10px;
   border-top: 1px solid rgba(255, 255, 255, 0.2);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 12px;
-}
-
-.weekly-label {
-  opacity: 0.85;
-}
-
-.weekly-number {
-  font-weight: 700;
-  font-size: 14px;
+  font-size: 11px;
+  opacity: 0.9;
+  text-align: center;
 }
 </style>
 

@@ -32,11 +32,11 @@ export default defineConfig(({ mode }) => {
         output: {
           format: 'iife',  // Back to IIFE for Knack
           name: 'VESPAStaffActivities',
-          entryFileNames: 'activity-dashboard-2w.js',  // Version 2w - Scorecards, Clear All button, Assign by Problem prep
-          chunkFileNames: 'activity-dashboard-2w-[hash].js',
+          entryFileNames: 'activity-dashboard-2x.js',  // Version 2x - Two-row header, period filters (week/month/all)
+          chunkFileNames: 'activity-dashboard-2x-[hash].js',
           assetFileNames: (assetInfo) => {
             if (assetInfo.name.endsWith('.css')) {
-              return 'activity-dashboard-2w.css';
+              return 'activity-dashboard-2x.css';
             }
             return 'assets/[name]-[hash][extname]';
           }
