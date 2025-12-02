@@ -173,12 +173,13 @@ def import_csv(csv_path: str, dry_run: bool = False):
             completed_at = parse_knack_date(date_str) if is_completed else None
             
             # Build response record (only columns that exist in activity_responses)
+            # Note: responses must be {} not None (NOT NULL constraint in DB)
             response_record = {
                 'student_email': student_email,
                 'activity_id': activity_id,
                 'cycle_number': 1,  # Default to cycle 1 for imported data
                 'status': 'completed' if is_completed else 'assigned',
-                'responses': responses if responses else None,
+                'responses': responses if responses else {},  # Always use {} not None
                 'staff_feedback': feedback,
                 'feedback_read_by_student': feedback_read,
                 'completed_at': completed_at
