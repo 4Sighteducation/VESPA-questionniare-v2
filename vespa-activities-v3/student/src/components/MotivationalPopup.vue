@@ -91,7 +91,9 @@ const handleDismiss = () => {
 };
 
 const handleAddMore = () => {
+  console.log('[MotivationalPopup] 🎯 Add More button clicked');
   emit('add-more');
+  console.log('[MotivationalPopup] 📤 Emitted add-more event');
 };
 </script>
 

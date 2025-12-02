@@ -49,7 +49,7 @@
       v-if="showMotivationalPopup"
       :stats="motivationalStats"
       @dismiss="handleMotivationalDismiss"
-      @add-more="handleMotivationalAddMore"
+      @add-more="handleMotivationalAddMoreClick"
     />
     
     <!-- Problem Selector Modal -->
@@ -472,7 +472,14 @@ const handleWelcomeChooseOwn = async () => {
 };
 
 const handleProblemSelection = (data) => {
+  console.log('[App] 📥 Problem selected event received:', data);
   handleProblemSelected(data);
+};
+
+const handleMotivationalAddMoreClick = () => {
+  console.log('[App] 🎯 Motivational Add More clicked');
+  handleMotivationalAddMore();
+  console.log('[App] showProblemSelector should be:', showProblemSelector.value);
 };
 
 const handleAddSelectedActivities = async (selectedActivities) => {

@@ -181,9 +181,20 @@ export function usePrescription() {
    * User clicked "Add More Activities" from motivational popup
    */
   const handleMotivationalAddMore = () => {
+    console.log('[usePrescription] 🎯 handleMotivationalAddMore called');
+    console.log('[usePrescription] Before:', { 
+      showMotivationalPopup: showMotivationalPopup.value, 
+      showProblemSelector: showProblemSelector.value 
+    });
+    
     showMotivationalPopup.value = false;
     showProblemSelector.value = true;
-    console.log('[usePrescription] User wants to add more activities');
+    
+    console.log('[usePrescription] After:', { 
+      showMotivationalPopup: showMotivationalPopup.value, 
+      showProblemSelector: showProblemSelector.value 
+    });
+    console.log('[usePrescription] ✅ Problem selector should now show');
   };
   
   /**
