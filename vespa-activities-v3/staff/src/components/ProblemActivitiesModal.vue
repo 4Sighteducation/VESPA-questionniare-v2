@@ -29,7 +29,7 @@
             <div
               v-for="activity in activities"
               :key="activity.id"
-              :class="['activity-card-select', vespa_category.toLowerCase(), { 'selected': selectedIds.has(activity.id) }]"
+              :class="['activity-card-select', (activity.vespa_category || '').toLowerCase(), { 'selected': selectedIds.has(activity.id) }]"
               @click="toggleActivity(activity.id)"
             >
               <input
@@ -40,10 +40,10 @@
               <div class="activity-info">
                 <div class="activity-name">{{ activity.name }}</div>
                 <div class="activity-meta">
-                  <span :class="['category-badge', activity.vespa_category.toLowerCase()]">
-                    {{ activity.vespa_category }}
+                  <span :class="['category-badge', (activity.vespa_category || '').toLowerCase()]">
+                    {{ activity.vespa_category || 'General' }}
                   </span>
-                  <span class="level-badge">{{ activity.level }}</span>
+                  <span class="level-badge">{{ activity.level || 'Level 2' }}</span>
                   <span v-if="activity.time_minutes" class="time-badge">
                     {{ activity.time_minutes }} min
                   </span>
