@@ -218,7 +218,8 @@ const initialize = async () => {
     console.log('[VESPA Activities] ✅ Initialization complete');
     
     // Initialize prescription flow (check if welcome modal should show)
-    initializePrescriptionFlow(vespaScores.value, myActivities.value);
+    // Pass currentCycle so localStorage is cycle-aware
+    initializePrescriptionFlow(vespaScores.value, myActivities.value, currentCycle.value);
     
   } catch (err) {
     console.error('[VESPA Activities] Initialization error:', err);
@@ -427,8 +428,8 @@ const handleWelcomeContinue = async (prescribedActivities) => {
       }
     }
     
-    // Mark welcome as handled
-    handleContinue();
+    // Mark welcome as handled (pass currentCycle for cycle-aware localStorage)
+    handleContinue(currentCycle.value);
     
     // Refresh activities
     await fetchMyActivities(currentCycle.value);
@@ -442,7 +443,8 @@ const handleWelcomeContinue = async (prescribedActivities) => {
 };
 
 const handleWelcomeChooseOwn = () => {
-  handleChooseOwn();
+  // Pass currentCycle for cycle-aware localStorage
+  handleChooseOwn(currentCycle.value);
 };
 
 const handleProblemSelection = (data) => {
