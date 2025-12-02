@@ -7,7 +7,7 @@
           Choose Activities by Problem
         </h2>
         <p class="modal-subtitle">
-          Select challenges you're facing to get targeted activity recommendations
+          Select up to 3 challenges you're facing ({{ selectedProblems.size }}/3 selected)
         </p>
         <button class="modal-close" @click="$emit('close')">
           <i class="fas fa-times"></i>
@@ -34,15 +34,65 @@
               <div
                 v-for="problem in getProblemsForCategory(category)"
                 :key="problem.id"
-                class="problem-item"
-                @click="selectProblem(problem)"
+                :class="['problem-item', { selected: selectedProblems.has(problem.id) }]"
+                @click="toggleProblem(problem)"
+                @mouseenter="showPreview(problem)"
+                @mouseleave="hidePreview"
               >
+                <input 
+                  type="checkbox" 
+                  :checked="selectedProblems.has(problem.id)"
+                  @click.stop
+                  class="problem-checkbox"
+                />
                 <span class="problem-text">{{ problem.text }}</span>
                 <span class="problem-count">({{ problem.activityCount }} activities)</span>
                 <span class="problem-arrow">→</span>
               </div>
             </div>
           </div>
+        </div>
+        
+        <!-- Hover Preview Panel -->
+        <div v-if="hoveredProblem" class="preview-panel">
+          <h5>
+            <i class="fas fa-eye"></i>
+            Activities Preview
+          </h5>
+          <p class="preview-problem">"{{ hoveredProblem.text }}"</p>
+          <div class="preview-activities">
+            <div 
+              v-for="activityName in hoveredProblem.recommendedActivityNames.slice(0, 6)"
+              :key="activityName"
+              class="preview-activity-chip"
+            >
+              {{ activityName }}
+            </div>
+            <span v-if="hoveredProblem.recommendedActivityNames.length > 6" class="preview-more">
+              +{{ hoveredProblem.recommendedActivityNames.length - 6 }} more
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      <div v-if="selectedProblems.size > 0" class="modal-footer">
+        <div class="footer-left">
+          <span class="selection-summary">
+            {{ selectedProblems.size }} problem{{ selectedProblems.size > 1 ? 's' : '' }} selected
+          </span>
+        </div>
+        <div class="footer-right">
+          <button class="btn btn-secondary" @click="clearSelection">
+            Clear Selection
+          </button>
+          <button 
+            class="btn btn-primary" 
+            @click="loadActivitiesForSelectedProblems"
+            :disabled="isLoadingActivities"
+          >
+            <i class="fas fa-arrow-right"></i>
+            {{ isLoadingActivities ? 'Loading...' : 'View Activities' }}
+          </button>
         </div>
       </div>
     </div>

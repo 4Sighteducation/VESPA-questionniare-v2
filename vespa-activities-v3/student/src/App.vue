@@ -34,7 +34,7 @@
       @show-problem-selector="showProblemSelector = true"
     />
     
-    <!-- Welcome Modal (Initial Prescription Flow) -->
+    <!-- Welcome Modal (Initial Prescription Flow - First Time Per Cycle) -->
     <WelcomeModal
       v-if="showWelcomeModal"
       :vespa-scores="vespaScores"
@@ -42,6 +42,14 @@
       @continue="handleWelcomeContinue"
       @choose-own="handleWelcomeChooseOwn"
       @close="showWelcomeModal = false"
+    />
+    
+    <!-- Motivational Popup (Returning Users - Every Login) -->
+    <MotivationalPopup
+      v-if="showMotivationalPopup"
+      :stats="motivationalStats"
+      @dismiss="handleMotivationalDismiss"
+      @add-more="handleMotivationalAddMore"
     />
     
     <!-- Problem Selector Modal -->
@@ -87,6 +95,7 @@ import ActivityDashboard from './components/ActivityDashboard.vue';
 import ActivityModal from './components/ActivityModal.vue';
 import AchievementPanel from './components/AchievementPanel.vue';
 import WelcomeModal from './components/WelcomeModal.vue';
+import MotivationalPopup from './components/MotivationalPopup.vue';
 import ProblemSelector from './components/ProblemSelector.vue';
 import SelectedActivitiesModal from './components/SelectedActivitiesModal.vue';
 import { useActivities } from './composables/useActivities';
@@ -151,15 +160,25 @@ const {
 // Prescription Flow
 const {
   showWelcomeModal,
+  showMotivationalPopup,
   showProblemSelector,
   selectedProblem,
   selectedProblemActivities,
   initializePrescriptionFlow,
   handleContinue,
   handleChooseOwn,
+  handleMotivationalDismiss,
+  handleMotivationalAddMore,
   handleProblemSelected,
   closeProblemSelector
 } = usePrescription();
+
+// Stats for motivational popup
+const motivationalStats = computed(() => ({
+  completed: myActivities.value.filter(a => a.status === 'completed').length,
+  inProgress: myActivities.value.filter(a => a.status === 'in_progress').length,
+  points: totalPoints.value
+}));
 
 // Methods
 const initialize = async () => {
@@ -217,9 +236,14 @@ const initialize = async () => {
     
     console.log('[VESPA Activities] ✅ Initialization complete');
     
-    // Initialize prescription flow (check if welcome modal should show)
-    // Pass currentCycle so localStorage is cycle-aware
-    initializePrescriptionFlow(vespaScores.value, myActivities.value, currentCycle.value);
+    // Initialize prescription flow (check if welcome modal OR motivational popup should show)
+    // Pass currentCycle and studentEmail for Supabase tracking
+    await initializePrescriptionFlow(
+      vespaScores.value, 
+      myActivities.value, 
+      currentCycle.value,
+      studentEmail.value
+    );
     
   } catch (err) {
     console.error('[VESPA Activities] Initialization error:', err);
@@ -428,8 +452,8 @@ const handleWelcomeContinue = async (prescribedActivities) => {
       }
     }
     
-    // Mark welcome as handled (pass currentCycle for cycle-aware localStorage)
-    handleContinue(currentCycle.value);
+    // Mark welcome as handled (save to Supabase for cross-device sync)
+    await handleContinue(currentCycle.value, studentEmail.value);
     
     // Refresh activities
     await fetchMyActivities(currentCycle.value);
@@ -442,9 +466,9 @@ const handleWelcomeContinue = async (prescribedActivities) => {
   }
 };
 
-const handleWelcomeChooseOwn = () => {
-  // Pass currentCycle for cycle-aware localStorage
-  handleChooseOwn(currentCycle.value);
+const handleWelcomeChooseOwn = async () => {
+  // Save to Supabase for cross-device sync
+  await handleChooseOwn(currentCycle.value, studentEmail.value);
 };
 
 const handleProblemSelection = (data) => {
