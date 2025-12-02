@@ -127,37 +127,48 @@ export function useActivities() {
   };
 
   /**
-   * Assign activity to student (uses Flask API to create notifications)
+   * Assign activity to student (uses RPC for reliable assignment + API for notification)
    */
   const assignActivity = async (studentEmail, activityId, staffEmail, cycleNumber = 1, schoolId) => {
     try {
       console.log('📝 Assigning activity:', { studentEmail, activityId, staffEmail, schoolId, cycleNumber });
       
-      // Use Flask API endpoint (creates notifications!)
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://vespa-dashboard-9a1f84ee5341.herokuapp.com';
-      
-      const response = await fetch(`${API_BASE_URL}/api/staff/assign-activity`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          staffEmail: staffEmail,
-          studentEmail: studentEmail,
-          activityIds: [activityId],
-          cycle: cycleNumber,
-          reason: 'Staff assigned'
-        })
+      // Step 1: Use RPC function to assign (reliable, bypasses RLS)
+      const { data, error } = await supabase.rpc('assign_activity_to_student', {
+        p_student_email: studentEmail,
+        p_activity_id: activityId,
+        p_staff_email: staffEmail,
+        p_school_id: schoolId,
+        p_cycle_number: cycleNumber
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to assign activity');
+      if (error) {
+        console.error('❌ RPC Error:', error);
+        throw error;
       }
 
-      const data = await response.json();
-      console.log('✅ Activity assigned successfully (via API):', data);
+      console.log('✅ Activity assigned via RPC:', data);
       
-      // Return the first assigned activity
-      return data.assigned?.[0] || data;
+      // Step 2: Create notification via API (fire-and-forget, don't block on failure)
+      try {
+        const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://vespa-dashboard-9a1f84ee5341.herokuapp.com';
+        fetch(`${API_BASE_URL}/api/notifications/create`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            recipientEmail: studentEmail,
+            notificationType: 'activity_assigned',
+            title: '📚 New Activity Assigned',
+            message: `Your tutor assigned you a new activity`,
+            relatedActivityId: activityId,
+            staffEmail: staffEmail
+          })
+        }).catch(e => console.warn('Notification creation failed (non-blocking):', e));
+      } catch (notifError) {
+        console.warn('Failed to send notification (non-blocking):', notifError);
+      }
+
+      return data;
 
     } catch (err) {
       console.error('❌ Failed to assign activity:', err);
