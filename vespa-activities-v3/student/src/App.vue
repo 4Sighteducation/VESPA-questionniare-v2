@@ -26,9 +26,38 @@
       :my-activities="myActivities"
       :achievements="achievements"
       :total-points="totalPoints"
+      :show-welcome-modal="showWelcomeModal"
+      :show-problem-selector="showProblemSelector"
       @start-activity="openActivityModal"
       @add-activity="addActivityToDashboard"
       @remove-activity="removeActivityFromDashboard"
+      @show-problem-selector="showProblemSelector = true"
+    />
+    
+    <!-- Welcome Modal (Initial Prescription Flow) -->
+    <WelcomeModal
+      v-if="showWelcomeModal"
+      :vespa-scores="vespaScores"
+      :prescribed-activities="recommendedActivities"
+      @continue="handleWelcomeContinue"
+      @choose-own="handleWelcomeChooseOwn"
+      @close="showWelcomeModal = false"
+    />
+    
+    <!-- Problem Selector Modal -->
+    <ProblemSelector
+      v-if="showProblemSelector"
+      @problem-selected="handleProblemSelection"
+      @close="closeProblemSelector"
+    />
+    
+    <!-- Selected Activities Modal (after problem selection) -->
+    <SelectedActivitiesModal
+      v-if="selectedProblem && selectedProblemActivities.length > 0"
+      :problem="selectedProblem"
+      :activities="selectedProblemActivities"
+      @add-activities="handleAddSelectedActivities"
+      @close="closeProblemSelector"
     />
     
     <!-- Activity Modal (full-screen) -->
@@ -57,10 +86,14 @@ import { ref, onMounted, computed } from 'vue';
 import ActivityDashboard from './components/ActivityDashboard.vue';
 import ActivityModal from './components/ActivityModal.vue';
 import AchievementPanel from './components/AchievementPanel.vue';
+import WelcomeModal from './components/WelcomeModal.vue';
+import ProblemSelector from './components/ProblemSelector.vue';
+import SelectedActivitiesModal from './components/SelectedActivitiesModal.vue';
 import { useActivities } from './composables/useActivities';
 import { useVESPAScores } from './composables/useVESPAScores';
 import { useNotifications } from './composables/useNotifications';
 import { useAchievements } from './composables/useAchievements';
+import { usePrescription } from './composables/usePrescription';
 import supabase from '../shared/supabaseClient';
 
 // Props from KnackAppLoader config
@@ -114,6 +147,19 @@ const {
   fetchAchievements,
   checkNewAchievements
 } = useAchievements(studentEmail.value);
+
+// Prescription Flow
+const {
+  showWelcomeModal,
+  showProblemSelector,
+  selectedProblem,
+  selectedProblemActivities,
+  initializePrescriptionFlow,
+  handleContinue,
+  handleChooseOwn,
+  handleProblemSelected,
+  closeProblemSelector
+} = usePrescription();
 
 // Methods
 const initialize = async () => {
@@ -170,6 +216,9 @@ const initialize = async () => {
     }
     
     console.log('[VESPA Activities] ✅ Initialization complete');
+    
+    // Initialize prescription flow (check if welcome modal should show)
+    initializePrescriptionFlow(vespaScores.value, myActivities.value);
     
   } catch (err) {
     console.error('[VESPA Activities] Initialization error:', err);
@@ -274,6 +323,12 @@ const saveActivityProgress = async (saveData) => {
 
 const completeActivity = async (completeData) => {
   try {
+    // Calculate points based on level (stub implementation)
+    const activityLevel = activeActivity.value?.level || 'Level 2';
+    const pointsEarned = activityLevel === 'Level 3' ? 15 : 10;
+    
+    console.log(`[VESPA Activities] 💎 Activity completion - awarding ${pointsEarned} points`);
+    
     const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://vespa-dashboard-9a1f84ee5341.herokuapp.com'}/api/activities/complete`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -284,7 +339,8 @@ const completeActivity = async (completeData) => {
         reflection: completeData.reflection,
         timeMinutes: completeData.timeMinutes,
         wordCount: completeData.wordCount,
-        cycle: currentCycle.value
+        cycle: currentCycle.value,
+        pointsEarned: pointsEarned  // Send points to backend
       })
     });
     
@@ -306,12 +362,117 @@ const completeActivity = async (completeData) => {
       // Refresh my activities (with correct cycle)
       await fetchMyActivities(currentCycle.value);
       
-      // Refresh achievements
+      // Refresh achievements (to update points)
       await fetchAchievements();
+      
+      // Show success message with points
+      showSuccessNotification(pointsEarned);
     }
   } catch (err) {
     console.error('[VESPA Activities] Error completing activity:', err);
     alert('Failed to complete activity. Please try again.');
+  }
+};
+
+const showSuccessNotification = (points) => {
+  // Create success notification overlay
+  const notification = document.createElement('div');
+  notification.className = 'success-notification';
+  notification.style.cssText = `
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    padding: 20px 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(40, 167, 69, 0.3);
+    z-index: 10000;
+    animation: slideInRight 0.5s ease-out;
+    font-size: 16px;
+    font-weight: 600;
+  `;
+  
+  notification.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <span style="font-size: 32px;">🎉</span>
+      <div>
+        <div>Activity Completed!</div>
+        <div style="font-size: 20px; margin-top: 4px;">+${points} points</div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  // Auto-remove after 5 seconds
+  setTimeout(() => {
+    notification.style.animation = 'fadeOut 0.5s ease-in';
+    setTimeout(() => notification.remove(), 500);
+  }, 5000);
+};
+
+// Prescription Flow Handlers
+const handleWelcomeContinue = async (prescribedActivities) => {
+  try {
+    console.log('[VESPA Activities] 📝 Auto-assigning prescribed activities:', prescribedActivities.length);
+    
+    // Add all prescribed activities
+    for (const activity of prescribedActivities) {
+      try {
+        await addActivity(activity.id, 'questionnaire', currentCycle.value);
+        console.log(`✅ Added: ${activity.name}`);
+      } catch (err) {
+        console.error(`❌ Failed to add ${activity.name}:`, err);
+      }
+    }
+    
+    // Mark welcome as handled
+    handleContinue();
+    
+    // Refresh activities
+    await fetchMyActivities(currentCycle.value);
+    
+    console.log('[VESPA Activities] ✅ All prescribed activities added');
+    
+  } catch (err) {
+    console.error('[VESPA Activities] Error in handleWelcomeContinue:', err);
+    alert('Failed to add activities. Please try again.');
+  }
+};
+
+const handleWelcomeChooseOwn = () => {
+  handleChooseOwn();
+};
+
+const handleProblemSelection = (data) => {
+  handleProblemSelected(data);
+};
+
+const handleAddSelectedActivities = async (selectedActivities) => {
+  try {
+    console.log('[VESPA Activities] 📝 Adding selected activities:', selectedActivities.length);
+    
+    for (const activity of selectedActivities) {
+      try {
+        await addActivity(activity.id, 'student_choice', currentCycle.value);
+        console.log(`✅ Added: ${activity.name}`);
+      } catch (err) {
+        console.error(`❌ Failed to add ${activity.name}:`, err);
+      }
+    }
+    
+    // Close modals
+    closeProblemSelector();
+    
+    // Refresh activities
+    await fetchMyActivities(currentCycle.value);
+    
+    console.log('[VESPA Activities] ✅ Selected activities added');
+    
+  } catch (err) {
+    console.error('[VESPA Activities] Error adding selected activities:', err);
+    alert('Failed to add activities. Please try again.');
   }
 };
 
@@ -403,6 +564,27 @@ onMounted(() => {
 
 .retry-btn:hover {
   background: #007a8a;
+}
+
+/* Success Notification Animation */
+@keyframes slideInRight {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 </style>
 

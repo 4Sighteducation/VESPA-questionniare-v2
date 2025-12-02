@@ -182,6 +182,27 @@ export class ActivityService {
     if (error) throw error;
     return data;
   }
+  
+  /**
+   * Remove an activity (soft delete - marks as 'removed')
+   */
+  static async removeActivity(studentEmail, activityId, cycle = 1) {
+    const response = await fetch(`${API_BASE_URL}/api/activities/remove`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        studentEmail,
+        activityId,
+        cycle
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to remove activity');
+    }
+    
+    return await response.json();
+  }
 }
 
 export default ActivityService;

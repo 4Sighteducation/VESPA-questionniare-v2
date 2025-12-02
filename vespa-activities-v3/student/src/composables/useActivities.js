@@ -106,8 +106,8 @@ export function useActivities(studentEmail) {
     try {
       console.log('[useActivities] Removing activity from dashboard:', activityId);
       
-      // Call API to mark as removed
-      // TODO: Implement remove endpoint call
+      // Call API to mark as removed (soft delete)
+      await ActivityService.removeActivity(studentEmail, activityId, cycle);
       
       // Refresh my activities
       await fetchMyActivities(cycle);

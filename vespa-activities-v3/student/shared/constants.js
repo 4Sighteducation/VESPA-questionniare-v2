@@ -70,7 +70,7 @@ export const STAFF_ROLES = {
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://vespa-dashboard-9a1f84ee5341.herokuapp.com';
 
 export const API_ENDPOINTS = {
-  // Activities
+  // Student Activities
   RECOMMENDED_ACTIVITIES: '/api/activities/recommended',
   ACTIVITIES_BY_PROBLEM: '/api/activities/by-problem',
   ASSIGNED_ACTIVITIES: '/api/activities/assigned',
@@ -78,13 +78,14 @@ export const API_ENDPOINTS = {
   START_ACTIVITY: '/api/activities/start',
   SAVE_PROGRESS: '/api/activities/save',
   COMPLETE_ACTIVITY: '/api/activities/complete',
+  REMOVE_ACTIVITY: '/api/activities/remove',  // Student remove endpoint
   
   // Staff
   STAFF_STUDENTS: '/api/staff/students',
   STUDENT_ACTIVITIES: '/api/staff/student-activities',
   ASSIGN_ACTIVITY: '/api/staff/assign-activity',
   GIVE_FEEDBACK: '/api/staff/feedback',
-  REMOVE_ACTIVITY: '/api/staff/remove-activity',
+  STAFF_REMOVE_ACTIVITY: '/api/staff/remove-activity',
   AWARD_ACHIEVEMENT: '/api/staff/award-achievement',
   
   // Notifications

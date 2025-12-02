@@ -95,10 +95,16 @@
 
     <!-- Recommended Activities -->
     <section class="recommended-section" v-if="recommendedActivities.length > 0">
-      <h2 class="section-title">
-        <span class="title-icon">📊</span>
-        Recommended for Your Scores
-      </h2>
+      <div class="section-header-with-action">
+        <h2 class="section-title">
+          <span class="title-icon">📊</span>
+          Recommended for Your Scores
+        </h2>
+        <button @click="emit('show-problem-selector')" class="btn-select-by-problem">
+          <i class="fas fa-hand-pointer"></i>
+          Or Choose by Problem
+        </button>
+      </div>
       <div class="activity-grid">
         <ActivityCard
           v-for="activity in recommendedActivities"
@@ -153,7 +159,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import ActivityCard from './ActivityCard.vue';
 import { CATEGORY_COLORS, VESPA_CATEGORIES } from '../../shared/constants';
 
@@ -181,10 +187,25 @@ const props = defineProps({
   totalPoints: {
     type: Number,
     default: 0
+  },
+  showWelcomeModal: {
+    type: Boolean,
+    default: false
+  },
+  showProblemSelector: {
+    type: Boolean,
+    default: false
   }
 });
 
-const emit = defineEmits(['start-activity', 'add-activity', 'remove-activity', 'show-achievements']);
+const emit = defineEmits([
+  'start-activity', 
+  'add-activity', 
+  'remove-activity', 
+  'show-achievements',
+  'show-welcome-modal',
+  'show-problem-selector'
+]);
 
 const filterCategory = ref(null);
 const categories = VESPA_CATEGORIES;
@@ -281,6 +302,12 @@ const handleRemoveActivity = (activityId) => {
 };
 
 const handleImproveCategory = (category) => {
+  // If user has no activities, show problem selector for this category
+  if (props.myActivities.length === 0) {
+    emit('show-problem-selector');
+    return;
+  }
+  
   // Filter activities by category
   filterCategory.value = category;
   // Scroll to activities section
@@ -598,6 +625,35 @@ const handleImproveCategory = (category) => {
 .my-activities {
   padding: 0 2rem;
   margin-bottom: 2rem;
+}
+
+.section-header-with-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.btn-select-by-problem {
+  background: white;
+  border: 2px solid #079baa;
+  color: #079baa;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-select-by-problem:hover {
+  background: #079baa;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(7, 155, 170, 0.2);
 }
 
 /* Category Groups */
