@@ -100,7 +100,7 @@
           <span class="title-icon">📊</span>
           Recommended for Your Scores
         </h2>
-        <button @click="emit('show-problem-selector')" class="btn-select-by-problem">
+        <button @click="handleChooseByProblemClick" class="btn-select-by-problem">
           <i class="fas fa-hand-pointer"></i>
           Or Choose by Problem
         </button>
@@ -301,14 +301,24 @@ const handleRemoveActivity = (activityId) => {
   emit('remove-activity', activityId);
 };
 
+const handleChooseByProblemClick = () => {
+  console.log('[ActivityDashboard] 🎯 Choose by Problem button clicked');
+  emit('show-problem-selector');
+  console.log('[ActivityDashboard] 📤 Emitted show-problem-selector event');
+};
+
 const handleImproveCategory = (category) => {
+  console.log('[ActivityDashboard] 🎯 Improve button clicked for category:', category);
+  
   // If user has no activities, show problem selector for this category
   if (props.myActivities.length === 0) {
+    console.log('[ActivityDashboard] 📤 Emitting show-problem-selector (no activities)');
     emit('show-problem-selector');
     return;
   }
   
   // Filter activities by category
+  console.log('[ActivityDashboard] Filtering by category:', category);
   filterCategory.value = category;
   // Scroll to activities section
   const section = document.querySelector('.my-activities');

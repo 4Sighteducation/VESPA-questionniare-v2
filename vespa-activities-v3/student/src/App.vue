@@ -31,7 +31,7 @@
       @start-activity="openActivityModal"
       @add-activity="addActivityToDashboard"
       @remove-activity="removeActivityFromDashboard"
-      @show-problem-selector="showProblemSelector = true"
+      @show-problem-selector="handleShowProblemSelector"
     />
     
     <!-- Welcome Modal (Initial Prescription Flow - First Time Per Cycle) -->
@@ -474,6 +474,21 @@ const handleWelcomeChooseOwn = async () => {
 const handleProblemSelection = (data) => {
   console.log('[App] 📥 Problem selected event received:', data);
   handleProblemSelected(data);
+};
+
+const handleShowProblemSelector = () => {
+  console.log('[App] 🎯 Show Problem Selector event received');
+  console.log('[App] Before:', { showProblemSelector: showProblemSelector.value, showWelcomeModal: showWelcomeModal.value, showMotivationalPopup: showMotivationalPopup.value });
+  
+  // Close other modals
+  showWelcomeModal.value = false;
+  showMotivationalPopup.value = false;
+  
+  // Open problem selector
+  showProblemSelector.value = true;
+  
+  console.log('[App] After:', { showProblemSelector: showProblemSelector.value });
+  console.log('[App] ✅ Problem selector should now render');
 };
 
 const handleMotivationalAddMoreClick = () => {

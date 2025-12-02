@@ -476,16 +476,48 @@ const viewActivityDetail = (activity) => {
 const quickAddActivity = async (activity) => {
   try {
     const activityId = activity.id || activity.activity_id;
+    const currentCycle = props.student.current_cycle || 1;
+    
+    // Determine target cycle from dropdown selection
+    let targetCycle = currentCycle; // Default to current
+    if (selectedCycleFilter.value !== 'current' && selectedCycleFilter.value !== 'all') {
+      targetCycle = parseInt(selectedCycleFilter.value);
+    }
+    
+    // Validate cycle assignment
+    if (targetCycle < currentCycle) {
+      // Block assignment to PAST cycles
+      alert(`❌ Cannot assign to Cycle ${targetCycle}\n\nStudent is currently on Cycle ${currentCycle}.\nYou cannot assign activities to past cycles.`);
+      draggedActivity.value = null;
+      return;
+    }
+    
+    // Warning for FUTURE cycles
+    if (targetCycle > currentCycle) {
+      const confirmed = confirm(
+        `⚠️ Assigning to FUTURE Cycle ${targetCycle}\n\n` +
+        `Student is currently on Cycle ${currentCycle}.\n` +
+        `They won't see this activity until they complete the Cycle ${targetCycle} questionnaire.\n\n` +
+        `Continue?`
+      );
+      if (!confirmed) {
+        draggedActivity.value = null;
+        return;
+      }
+    }
+    
+    console.log(`📝 Assigning to Cycle ${targetCycle} (Current: ${currentCycle})`);
+    
     await assignActivity(
       props.student.email,
       activityId,
       getStaffEmail(),
-      props.student.current_cycle || 1,
+      targetCycle,  // Use target cycle from dropdown/logic
       props.staffContext.schoolId
     );
 
     emit('refresh');
-    console.log('✅ Activity added:', activityId);
+    console.log(`✅ Activity added to Cycle ${targetCycle}:`, activityId);
   } catch (error) {
     console.error('Failed to add activity:', error);
     alert('Failed to add activity. Please try again.');
