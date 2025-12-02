@@ -8,7 +8,7 @@
  */
 
 import { ref, computed } from 'vue';
-import supabase from '../../shared/supabaseClient';
+import { API_BASE_URL } from '../../shared/constants';
 
 export function usePrescription() {
   // State
@@ -44,22 +44,25 @@ export function usePrescription() {
       const hasScores = vespaScores && Object.keys(vespaScores).length > 0;
       const hasNoActivities = !myActivities || myActivities.length === 0;
       
-      // Check Supabase to see if user has seen welcome modal for this cycle
-      const fieldName = `has_seen_welcome_cycle_${currentCycle}`;
-      const { data, error } = await supabase
-        .from('vespa_students')
-        .select(fieldName)
-        .eq('email', studentEmail)
-        .single();
-      
-      if (error) {
-        console.warn('[usePrescription] Error checking Supabase, falling back to localStorage:', error);
-        // Fallback to localStorage if Supabase query fails
+      // Check via API (bypasses RLS)
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/students/welcome-status?email=${encodeURIComponent(studentEmail)}&cycle=${currentCycle}`
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          hasSeenWelcomeModal.value = data.has_seen || false;
+          console.log(`[usePrescription] API check Cycle ${currentCycle}: has_seen =`, hasSeenWelcomeModal.value);
+        } else {
+          console.warn('[usePrescription] API check failed, using localStorage fallback');
+          const storageKey = `vespa-welcome-modal-seen-cycle-${currentCycle}`;
+          hasSeenWelcomeModal.value = localStorage.getItem(storageKey) === 'true';
+        }
+      } catch (apiError) {
+        console.warn('[usePrescription] API error, using localStorage fallback:', apiError);
         const storageKey = `vespa-welcome-modal-seen-cycle-${currentCycle}`;
         hasSeenWelcomeModal.value = localStorage.getItem(storageKey) === 'true';
-      } else {
-        hasSeenWelcomeModal.value = data?.[fieldName] === true;
-        console.log(`[usePrescription] Supabase check: ${fieldName} =`, hasSeenWelcomeModal.value);
       }
       
       // Decision logic
@@ -101,21 +104,21 @@ export function usePrescription() {
    */
   const handleContinue = async (currentCycle = 1, studentEmail) => {
     try {
-      // Mark as seen in Supabase FOR THIS CYCLE (cross-device sync)
-      const fieldName = `has_seen_welcome_cycle_${currentCycle}`;
-      const updateData = { [fieldName]: true };
+      // Mark as seen via API (cross-device sync, bypasses RLS)
+      const response = await fetch(`${API_BASE_URL}/api/students/welcome-seen`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: studentEmail,
+          cycle: currentCycle
+        })
+      });
       
-      const { error } = await supabase
-        .from('vespa_students')
-        .update(updateData)
-        .eq('email', studentEmail);
-      
-      if (error) {
-        console.warn('[usePrescription] Error saving to Supabase, using localStorage fallback:', error);
-        // Fallback to localStorage
-        localStorage.setItem(`vespa-welcome-modal-seen-cycle-${currentCycle}`, 'true');
+      if (response.ok) {
+        console.log(`[usePrescription] ✅ Saved to Supabase via API: Cycle ${currentCycle} = seen`);
       } else {
-        console.log(`[usePrescription] ✅ Saved to Supabase: ${fieldName} = true`);
+        console.warn('[usePrescription] API save failed, using localStorage fallback');
+        localStorage.setItem(`vespa-welcome-modal-seen-cycle-${currentCycle}`, 'true');
       }
       
       hasSeenWelcomeModal.value = true;
@@ -124,7 +127,7 @@ export function usePrescription() {
       console.log(`[usePrescription] User selected: Continue with prescribed activities (Cycle ${currentCycle})`);
     } catch (err) {
       console.error('[usePrescription] Error in handleContinue:', err);
-      // Continue anyway, just use localStorage
+      // Continue anyway, use localStorage fallback
       localStorage.setItem(`vespa-welcome-modal-seen-cycle-${currentCycle}`, 'true');
       hasSeenWelcomeModal.value = true;
       showWelcomeModal.value = false;
@@ -137,20 +140,21 @@ export function usePrescription() {
    */
   const handleChooseOwn = async (currentCycle = 1, studentEmail) => {
     try {
-      // Mark as seen in Supabase FOR THIS CYCLE (cross-device sync)
-      const fieldName = `has_seen_welcome_cycle_${currentCycle}`;
-      const updateData = { [fieldName]: true };
+      // Mark as seen via API (cross-device sync, bypasses RLS)
+      const response = await fetch(`${API_BASE_URL}/api/students/welcome-seen`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: studentEmail,
+          cycle: currentCycle
+        })
+      });
       
-      const { error } = await supabase
-        .from('vespa_students')
-        .update(updateData)
-        .eq('email', studentEmail);
-      
-      if (error) {
-        console.warn('[usePrescription] Error saving to Supabase, using localStorage fallback:', error);
-        localStorage.setItem(`vespa-welcome-modal-seen-cycle-${currentCycle}`, 'true');
+      if (response.ok) {
+        console.log(`[usePrescription] ✅ Saved to Supabase via API: Cycle ${currentCycle} = seen`);
       } else {
-        console.log(`[usePrescription] ✅ Saved to Supabase: ${fieldName} = true`);
+        console.warn('[usePrescription] API save failed, using localStorage fallback');
+        localStorage.setItem(`vespa-welcome-modal-seen-cycle-${currentCycle}`, 'true');
       }
       
       hasSeenWelcomeModal.value = true;
