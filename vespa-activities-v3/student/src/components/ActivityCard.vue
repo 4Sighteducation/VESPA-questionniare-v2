@@ -73,9 +73,9 @@
       <button 
         v-else-if="progress.status === 'completed'"
         @click.stop="$emit('start-activity', activity)"
-        class="redo-activity-btn"
+        class="review-activity-btn"
       >
-        Redo Activity <span class="arrow">↻</span>
+        Review Work <span class="arrow">👁️</span>
       </button>
     </div>
     
@@ -191,8 +191,25 @@ const progressStatusText = computed(() => {
 
 .activity-card.completed {
   position: relative;
-  opacity: 0.7;
-  background: #f8f9fa;
+  background: linear-gradient(135deg, #f0f9eb 0%, #e8f5e0 100%);
+  border: 2px solid #72cb44;
+  box-shadow: 0 2px 8px rgba(114, 203, 68, 0.15);
+}
+
+.activity-card.completed:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(114, 203, 68, 0.2);
+}
+
+.activity-card.completed::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #72cb44 0%, #5cb030 100%);
+  border-radius: 18px 18px 0 0;
 }
 
 .activity-card.completed::after {
@@ -200,13 +217,14 @@ const progressStatusText = computed(() => {
   position: absolute;
   top: 12px;
   right: 12px;
-  background: #72cb44;
+  background: linear-gradient(135deg, #72cb44 0%, #5cb030 100%);
   color: white;
-  padding: 4px 12px;
+  padding: 6px 14px;
   border-radius: 20px;
   font-size: 0.75rem;
   font-weight: 700;
   z-index: 10;
+  box-shadow: 0 2px 6px rgba(114, 203, 68, 0.3);
 }
 
 .card-glow {
@@ -432,12 +450,12 @@ const progressStatusText = computed(() => {
   transform: translateX(5px);
 }
 
-.redo-activity-btn {
+.review-activity-btn {
   padding: 0.75rem 1.5rem;
-  border: 2px solid #dee2e6;
-  background: var(--white);
+  border: 2px solid #72cb44;
+  background: linear-gradient(135deg, #f8fff5 0%, #e8f5e0 100%);
   border-radius: 12px;
-  color: #495057;
+  color: #3d8c21;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -449,19 +467,16 @@ const progressStatusText = computed(() => {
   justify-content: center;
 }
 
-.redo-activity-btn:hover {
-  background: #f8f9fa;
-  border-color: #adb5bd;
-  transform: translateX(3px);
+.review-activity-btn:hover {
+  background: linear-gradient(135deg, #e8f5e0 0%, #d4edc8 100%);
+  border-color: #5cb030;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(114, 203, 68, 0.2);
 }
 
-.redo-activity-btn .arrow {
-  font-size: 1.2rem;
+.review-activity-btn .arrow {
+  font-size: 1.1rem;
   transition: transform 0.3s;
-}
-
-.redo-activity-btn:hover .arrow {
-  transform: rotate(180deg);
 }
 
 .card-hover-effect {

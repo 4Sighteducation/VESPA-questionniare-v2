@@ -52,10 +52,12 @@ const getIcon = (type) => {
 };
 
 const dismissNotification = (id) => {
+  console.log('[NotificationBanner] 📤 Dismiss button clicked for id:', id);
   emit('dismiss', id);
 };
 
 const dismissAll = () => {
+  console.log('[NotificationBanner] 📤 Dismiss All button clicked');
   emit('dismiss-all');
 };
 </script>

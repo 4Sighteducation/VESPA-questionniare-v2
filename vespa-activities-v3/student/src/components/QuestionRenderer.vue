@@ -17,7 +17,9 @@
       :value="modelValue"
       @input="updateValue($event.target.value)"
       class="input-text"
+      :class="{ 'readonly': readonly }"
       :required="question.answer_required"
+      :readonly="readonly"
     />
     
     <!-- Paragraph Text -->
@@ -26,8 +28,10 @@
       :value="modelValue"
       @input="updateValue($event.target.value)"
       class="input-textarea"
+      :class="{ 'readonly': readonly }"
       rows="5"
       :required="question.answer_required"
+      :readonly="readonly"
     ></textarea>
     
     <!-- Dropdown -->
@@ -36,7 +40,9 @@
       :value="modelValue"
       @change="updateValue($event.target.value)"
       class="input-select"
+      :class="{ 'readonly': readonly }"
       :required="question.answer_required"
+      :disabled="readonly"
     >
       <option value="">Select an option...</option>
       <option
@@ -52,6 +58,7 @@
     <div
       v-else-if="question.question_type === 'Checkboxes'"
       class="checkbox-group"
+      :class="{ 'readonly': readonly }"
     >
       <label
         v-for="option in dropdownOptions"
@@ -63,6 +70,7 @@
           :value="option"
           :checked="isChecked(option)"
           @change="toggleCheckbox(option)"
+          :disabled="readonly"
         />
         <span>{{ option }}</span>
       </label>
@@ -72,11 +80,13 @@
     <label
       v-else-if="question.question_type === 'Single Checkbox'"
       class="checkbox-label"
+      :class="{ 'readonly': readonly }"
     >
       <input
         type="checkbox"
         :checked="modelValue === true || modelValue === 'true'"
         @change="updateValue($event.target.checked)"
+        :disabled="readonly"
       />
       <span>{{ question.question_title }}</span>
     </label>
@@ -88,7 +98,9 @@
       :value="modelValue"
       @input="updateValue($event.target.value)"
       class="input-date"
+      :class="{ 'readonly': readonly }"
       :required="question.answer_required"
+      :readonly="readonly"
     />
   </div>
 </template>
@@ -104,6 +116,10 @@ const props = defineProps({
   modelValue: {
     type: [String, Number, Boolean, Array],
     default: null
+  },
+  readonly: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -222,6 +238,29 @@ const toggleCheckbox = (option) => {
   width: 18px;
   height: 18px;
   cursor: pointer;
+}
+
+/* Readonly styles */
+.input-text.readonly,
+.input-textarea.readonly,
+.input-select.readonly,
+.input-date.readonly {
+  background: #f8fff5;
+  border-color: #d4edc8;
+  color: #3d8c21;
+  cursor: not-allowed;
+}
+
+.checkbox-group.readonly,
+.checkbox-label.readonly {
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.checkbox-group.readonly input:checked + span,
+.checkbox-label.readonly input:checked + span {
+  color: #3d8c21;
+  font-weight: 600;
 }
 </style>
 

@@ -1,6 +1,12 @@
 <template>
   <div class="activity-modal-fullpage">
     <div class="activity-modal-container">
+      <!-- Review Mode Banner -->
+      <div v-if="isReviewMode" class="review-mode-banner">
+        <span class="review-icon">👁️</span>
+        <span class="review-text">You've completed this activity! Reviewing your previous work.</span>
+      </div>
+
       <!-- Beautiful Colored Header -->
       <header class="activity-header" :style="{ background: `linear-gradient(135deg, ${categoryColor.primary}, ${categoryColor.light})` }">
         <div class="activity-header-content">
@@ -10,14 +16,15 @@
               {{ getCategoryEmoji() }} {{ activity.vespa_category }}
             </span>
             <span class="activity-level-badge">{{ activity.level }}</span>
+            <span v-if="isReviewMode" class="completed-badge">✓ Completed</span>
           </div>
           <button @click="handleClose" class="activity-exit-btn">
             <span class="exit-icon">✕</span>
-            <span class="exit-text">Save & Exit</span>
+            <span class="exit-text">{{ isReviewMode ? 'Close' : 'Save & Exit' }}</span>
           </button>
         </div>
         <div class="activity-progress-bar">
-          <div class="progress-fill" :style="{ width: progressPercentage + '%' }"></div>
+          <div class="progress-fill" :style="{ width: isReviewMode ? '100%' : progressPercentage + '%' }"></div>
         </div>
       </header>
 
@@ -118,7 +125,7 @@
             </div>
             
             <!-- Questions (non-reflection) -->
-            <div v-if="doQuestions.length > 0" class="activity-questions">
+            <div v-if="doQuestions.length > 0" class="activity-questions" :class="{ 'review-mode': isReviewMode }">
               <div 
                 v-for="(question, index) in paginatedDoQuestions" 
                 :key="question.id"
@@ -128,6 +135,7 @@
                 <QuestionRenderer
                   :question="question"
                   :model-value="responses[question.id] || getExistingResponse(question.id)"
+                  :readonly="isReviewMode"
                   @update:model-value="updateResponse(question.id, $event)"
                 />
               </div>
@@ -189,7 +197,7 @@
             </div>
             
             <!-- Reflection Questions (show_in_final_questions) -->
-            <div v-if="reflectionQuestions.length > 0" class="reflection-questions">
+            <div v-if="reflectionQuestions.length > 0" class="reflection-questions" :class="{ 'review-mode': isReviewMode }">
               <div 
                 v-for="question in reflectionQuestions" 
                 :key="question.id"
@@ -199,6 +207,7 @@
                 <QuestionRenderer
                   :question="question"
                   :model-value="responses[question.id] || getExistingResponse(question.id)"
+                  :readonly="isReviewMode"
                   @update:model-value="updateResponse(question.id, $event)"
                 />
               </div>
@@ -209,11 +218,19 @@
                 <span class="btn-arrow">←</span> Back to Activities
               </button>
               <button 
+                v-if="!isReviewMode"
                 class="primary-btn complete-btn" 
                 @click="handleComplete"
                 :disabled="!canComplete"
               >
                 Complete Activity! <span class="btn-arrow">🎉</span>
+              </button>
+              <button 
+                v-else
+                class="secondary-btn close-review-btn" 
+                @click="handleClose"
+              >
+                Close Review <span class="btn-arrow">✕</span>
               </button>
             </div>
           </div>
@@ -276,6 +293,11 @@ const currentQuestionPage = ref(0);
 const questionsPerPage = 2;
 let autoSaveIntervalId = null;
 let timeInterval = null;
+
+// Check if this is a completed activity being reviewed (read-only mode)
+const isReviewMode = computed(() => {
+  return props.existingResponses?.status === 'completed';
+});
 
 // Stages
 const stages = [
@@ -616,6 +638,65 @@ onUnmounted(() => {
   font-weight: 600;
   margin-right: 0.5rem;
   backdrop-filter: blur(10px);
+}
+
+.completed-badge {
+  display: inline-block;
+  background: rgba(114, 203, 68, 0.9);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-left: 0.5rem;
+  box-shadow: 0 2px 8px rgba(114, 203, 68, 0.4);
+}
+
+/* ===== Review Mode Banner ===== */
+.review-mode-banner {
+  background: linear-gradient(135deg, #72cb44 0%, #5cb030 100%);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  box-shadow: 0 2px 8px rgba(114, 203, 68, 0.3);
+}
+
+.review-icon {
+  font-size: 1.25rem;
+}
+
+/* Review mode styling for questions */
+.activity-questions.review-mode,
+.reflection-questions.review-mode {
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+.activity-questions.review-mode .question-block,
+.reflection-questions.review-mode .question-block {
+  background: #f8fff5;
+  border: 1px solid #d4edc8;
+}
+
+.close-review-btn {
+  background: linear-gradient(135deg, #72cb44 0%, #5cb030 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.close-review-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(114, 203, 68, 0.3);
 }
 
 .activity-exit-btn {

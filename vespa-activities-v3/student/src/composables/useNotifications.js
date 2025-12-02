@@ -142,6 +142,8 @@ export function useNotifications(userEmail) {
   
   const dismissNotification = async (notificationId) => {
     try {
+      console.log('[useNotifications] 📤 Attempting to dismiss notification:', notificationId);
+      
       // Use API to dismiss (bypasses RLS)
       const response = await fetch(`${API_BASE_URL}/api/notifications/dismiss`, {
         method: 'POST',
@@ -149,19 +151,39 @@ export function useNotifications(userEmail) {
         body: JSON.stringify({ notificationId })
       });
       
+      const data = await response.json();
+      console.log('[useNotifications] 📥 Dismiss API response:', response.status, data);
+      
       if (!response.ok) {
-        throw new Error('API dismiss failed');
+        console.error('[useNotifications] ❌ API dismiss failed:', response.status, data);
+        throw new Error(`API dismiss failed: ${data.error || response.status}`);
       }
       
       // Remove from local state immediately
       notifications.value = notifications.value.filter(n => n.id !== notificationId);
       
-      console.log('[useNotifications] ✅ Dismissed:', notificationId);
+      console.log('[useNotifications] ✅ Dismissed successfully:', notificationId);
       
     } catch (err) {
-      console.error('[useNotifications] Error dismissing:', err);
+      console.error('[useNotifications] ❌ Error dismissing notification:', err);
       // Still remove from local state for UX
       notifications.value = notifications.value.filter(n => n.id !== notificationId);
+    }
+  };
+  
+  const dismissAllNotifications = async () => {
+    try {
+      console.log('[useNotifications] 📤 Dismissing all notifications:', notifications.value.length);
+      
+      // Dismiss each notification
+      for (const notification of notifications.value) {
+        await dismissNotification(notification.id);
+      }
+      
+      console.log('[useNotifications] ✅ All notifications dismissed');
+      
+    } catch (err) {
+      console.error('[useNotifications] ❌ Error dismissing all:', err);
     }
   };
   
@@ -286,6 +308,7 @@ export function useNotifications(userEmail) {
     markRead,
     markAllRead,
     dismissNotification,
+    dismissAllNotifications,
     toggleNotifications,
     subscribeToRealtime,
     unsubscribeFromRealtime

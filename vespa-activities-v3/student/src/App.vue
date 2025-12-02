@@ -650,11 +650,16 @@ const handleAddCategoryActivities = async (selectedActivities) => {
 
 // Notification handlers
 const handleDismissNotification = async (notificationId) => {
+  console.log('[App] Dismissing notification:', notificationId);
   await dismissNotification(notificationId);
 };
 
 const handleDismissAllNotifications = async () => {
-  await markAllRead();
+  console.log('[App] Dismissing ALL notifications');
+  // Dismiss each notification (not just mark as read)
+  for (const notification of recentUnreadNotifications.value) {
+    await dismissNotification(notification.id);
+  }
 };
 
 const handleMotivationalAddMoreClick = () => {
