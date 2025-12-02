@@ -81,6 +81,7 @@ const studentEmail = computed(() => {
 
 // State
 const loading = ref(true);
+const currentCycle = ref(1); // Will be fetched from Supabase
 const error = ref(null);
 const activeActivity = ref(null);
 const activityQuestions = ref([]);
@@ -126,11 +127,36 @@ const initialize = async () => {
     
     console.log('[VESPA Activities] Initializing for:', studentEmail.value);
     
-    // Fetch all data in parallel
+    // FIRST: Fetch current cycle from Supabase (vespa_students table)
+    try {
+      const { data: studentData } = await supabase
+        .from('vespa_students')
+        .select('current_cycle, latest_vespa_scores')
+        .eq('email', studentEmail.value)
+        .single();
+      
+      if (studentData) {
+        // Get cycle from column OR from cached scores JSONB
+        currentCycle.value = studentData.current_cycle || 
+                            studentData.latest_vespa_scores?.cycle || 
+                            1;
+        console.log('[VESPA Activities] ✅ Current cycle from Supabase:', currentCycle.value);
+      } else {
+        console.warn('[VESPA Activities] Student not found in vespa_students, using default cycle 1');
+        currentCycle.value = 1;
+      }
+    } catch (cycleErr) {
+      console.error('[VESPA Activities] Error fetching cycle from Supabase:', cycleErr);
+      currentCycle.value = 1; // Fallback to cycle 1
+    }
+    
+    console.log('[VESPA Activities] Using cycle:', currentCycle.value);
+    
+    // Fetch all data in parallel with correct cycle
     await Promise.all([
-      fetchVESPAScores(),
-      fetchRecommendedActivities(),
-      fetchMyActivities(),
+      fetchVESPAScores(currentCycle.value),
+      fetchRecommendedActivities(currentCycle.value),
+      fetchMyActivities(currentCycle.value),
       fetchNotifications(),
       fetchAchievements()
     ]);
@@ -163,13 +189,13 @@ const openActivityModal = async (activity) => {
       activityQuestions.value = data.questions || [];
     }
     
-    // Fetch existing response if any
+    // Fetch existing response if any (use current cycle)
     const { data } = await supabase
       .from('activity_responses')
       .select('*')
       .eq('student_email', studentEmail.value)
       .eq('activity_id', activity.id)
-      .eq('cycle_number', 1)
+      .eq('cycle_number', currentCycle.value)
       .maybeSingle();
     
     existingResponses.value = data || {};
@@ -183,7 +209,7 @@ const openActivityModal = async (activity) => {
           studentEmail: studentEmail.value,
           activityId: activity.id,
           selectedVia: 'student_choice',
-          cycle: 1
+          cycle: currentCycle.value
         })
       });
     }
@@ -229,7 +255,7 @@ const saveActivityProgress = async (saveData) => {
         activityId: activeActivity.value.id,
         responses: saveData.responses,
         timeMinutes: saveData.timeMinutes,
-        cycle: 1
+        cycle: currentCycle.value
       })
     });
     console.log('[VESPA Activities] ✅ Progress saved');
@@ -250,7 +276,7 @@ const completeActivity = async (completeData) => {
         reflection: completeData.reflection,
         timeMinutes: completeData.timeMinutes,
         wordCount: completeData.wordCount,
-        cycle: 1
+        cycle: currentCycle.value
       })
     });
     
@@ -269,8 +295,8 @@ const completeActivity = async (completeData) => {
       // Close modal
       closeActivityModal();
       
-      // Refresh my activities
-      await fetchMyActivities();
+      // Refresh my activities (with correct cycle)
+      await fetchMyActivities(currentCycle.value);
       
       // Refresh achievements
       await fetchAchievements();

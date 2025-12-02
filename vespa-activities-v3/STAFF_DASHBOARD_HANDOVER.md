@@ -1554,3 +1554,5 @@ GRANT EXECUTE ON FUNCTION assign_activity_to_student TO authenticated;
 For database-level details, see: `COMPLETE_SUPABASE_ACTIVITIES_HANDOVER.md`  
 For schema reference, see: `ACTIVITIES_V3_SCHEMA_COMPLETE.md`
 
+
+

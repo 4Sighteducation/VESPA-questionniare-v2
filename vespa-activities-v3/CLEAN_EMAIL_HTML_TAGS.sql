@@ -364,3 +364,5 @@ SELECT
   'Cleaned emails' as status,
   NOW() as completed_at;
 
+
+
