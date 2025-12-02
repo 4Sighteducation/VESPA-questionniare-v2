@@ -29,12 +29,16 @@
             <div
               v-for="activity in activities"
               :key="activity.id"
-              :class="['activity-card-select', (activity.vespa_category || '').toLowerCase(), { 'selected': selectedIds.has(activity.id) }]"
+              :class="['activity-card-select', (activity.vespa_category || '').toLowerCase(), { 
+                'selected': selectedIds.has(activity.id),
+                'disabled': isDisabled(activity.id)
+              }]"
               @click="toggleActivity(activity.id)"
             >
               <input
                 type="checkbox"
                 :checked="selectedIds.has(activity.id)"
+                :disabled="isDisabled(activity.id)"
                 @click.stop="toggleActivity(activity.id)"
               />
               <div class="activity-info">
@@ -48,6 +52,8 @@
                     {{ activity.time_minutes }} min
                   </span>
                 </div>
+                <div v-if="isCompleted(activity.id)" class="status-badge completed">✓ Completed</div>
+                <div v-else-if="isAssigned(activity.id)" class="status-badge assigned">📋 Already Added</div>
               </div>
             </div>
           </div>
@@ -82,7 +88,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 
 const props = defineProps({
   problem: {
@@ -92,19 +98,52 @@ const props = defineProps({
   activities: {
     type: Array,
     required: true
+  },
+  assignedActivityIds: {
+    type: Array,
+    default: () => []
+  },
+  completedActivityIds: {
+    type: Array,
+    default: () => []
   }
 });
 
 const emit = defineEmits(['close', 'add-activities']);
 
-const selectedIds = ref(new Set(props.activities.map(a => a.id))); // Select all by default
+// Only select unassigned activities by default
+const getSelectableActivities = () => {
+  return props.activities.filter(a => 
+    !props.assignedActivityIds.includes(a.id) && 
+    !props.completedActivityIds.includes(a.id)
+  );
+};
+
+const selectedIds = ref(new Set(getSelectableActivities().map(a => a.id)));
 const isAdding = ref(false);
 
+const isAssigned = (activityId) => {
+  return props.assignedActivityIds.includes(activityId);
+};
+
+const isCompleted = (activityId) => {
+  return props.completedActivityIds.includes(activityId);
+};
+
+const isDisabled = (activityId) => {
+  return isAssigned(activityId) || isCompleted(activityId);
+};
+
+const selectableActivities = computed(() => getSelectableActivities());
+
 const allSelected = computed(() => {
-  return props.activities.length > 0 && selectedIds.value.size === props.activities.length;
+  return selectableActivities.value.length > 0 && 
+    selectableActivities.value.every(a => selectedIds.value.has(a.id));
 });
 
 const toggleActivity = (activityId) => {
+  if (isDisabled(activityId)) return;
+  
   if (selectedIds.value.has(activityId)) {
     selectedIds.value.delete(activityId);
   } else {
@@ -118,7 +157,7 @@ const toggleSelectAll = () => {
   if (allSelected.value) {
     selectedIds.value.clear();
   } else {
-    selectedIds.value = new Set(props.activities.map(a => a.id));
+    selectedIds.value = new Set(selectableActivities.value.map(a => a.id));
   }
   selectedIds.value = new Set(selectedIds.value);
 };
@@ -234,11 +273,45 @@ const addActivities = () => {
   color: white;
 }
 
-.category-badge.vision { background: #ff8f00; }
-.category-badge.effort { background: #86b4f0; }
-.category-badge.systems { background: #84cc16; }
-.category-badge.practice { background: #7f31a4; }
-.category-badge.attitude { background: #f032e6; }
+/* VESPA Category Colors */
+.category-badge.vision { background: #fc8900; }
+.category-badge.effort { background: #78aced; }
+.category-badge.systems { background: #7bc114; }
+.category-badge.practice { background: #792e9c; }
+.category-badge.attitude { background: #eb2de3; }
+
+/* Disabled state for already assigned/completed */
+.activity-card-select.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #f5f5f5;
+  border-color: #e0e0e0;
+}
+
+.activity-card-select.disabled:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: #e0e0e0;
+}
+
+.status-badge {
+  margin-top: 6px;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.status-badge.completed {
+  background: #72cb44;
+  color: white;
+}
+
+.status-badge.assigned {
+  background: #2196f3;
+  color: white;
+}
 
 .level-badge {
   background: #e9ecef;

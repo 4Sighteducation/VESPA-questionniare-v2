@@ -32,15 +32,19 @@
           <div
             v-for="activity in activities"
             :key="activity.id"
-            :class="['activity-item', { selected: selectedActivities.has(activity.id), completed: isCompleted(activity.id) }]"
+            :class="['activity-item', { 
+              selected: isSelected(activity.id), 
+              completed: isCompleted(activity.id),
+              assigned: isAssigned(activity.id) && !isCompleted(activity.id)
+            }]"
             @click="toggleActivity(activity)"
           >
             <div class="activity-checkbox">
               <input 
                 type="checkbox" 
-                :checked="selectedActivities.has(activity.id)"
+                :checked="isSelected(activity.id)"
                 @click.stop
-                :disabled="isCompleted(activity.id)"
+                :disabled="isCompleted(activity.id) || isAssigned(activity.id)"
               />
             </div>
             <div class="activity-info">
@@ -54,6 +58,9 @@
             <div v-if="isCompleted(activity.id)" class="completed-badge">
               ✓ Done
             </div>
+            <div v-else-if="isAssigned(activity.id)" class="assigned-badge">
+              📋 Added
+            </div>
           </div>
         </div>
       </div>
@@ -61,7 +68,7 @@
       <div class="modal-footer">
         <div class="footer-left">
           <span class="selection-count">
-            {{ selectedActivities.size }} activit{{ selectedActivities.size === 1 ? 'y' : 'ies' }} selected
+            {{ selectionCount }} activit{{ selectionCount === 1 ? 'y' : 'ies' }} selected
           </span>
         </div>
         <div class="footer-right">
@@ -72,10 +79,10 @@
             class="btn btn-primary" 
             :style="{ background: categoryColor }"
             @click="addSelectedToMyActivities"
-            :disabled="selectedActivities.size === 0"
+            :disabled="selectionCount === 0"
           >
             <i class="fas fa-plus"></i>
-            Add {{ selectedActivities.size || '' }} to My Activities
+            Add {{ selectionCount || '' }} to My Activities
           </button>
         </div>
       </div>
@@ -152,15 +159,26 @@ const isAssigned = (activityId) => {
   return props.assignedActivityIds.includes(activityId);
 };
 
+// Use computed for reactive check
+const isSelected = (activityId) => {
+  return selectedActivities.value.has(activityId);
+};
+
+// Computed property for selection count (ensures reactivity)
+const selectionCount = computed(() => {
+  return selectedActivities.value.size;
+});
+
 const toggleActivity = (activity) => {
-  if (isCompleted(activity.id)) return; // Don't toggle completed activities
+  // Don't toggle completed or already assigned activities
+  if (isCompleted(activity.id) || isAssigned(activity.id)) return;
   
   if (selectedActivities.value.has(activity.id)) {
     selectedActivities.value.delete(activity.id);
   } else {
     selectedActivities.value.add(activity.id);
   }
-  // Trigger reactivity
+  // Trigger reactivity by creating new Set
   selectedActivities.value = new Set(selectedActivities.value);
 };
 
@@ -333,6 +351,22 @@ onMounted(async () => {
   opacity: 0.6;
   cursor: not-allowed;
   background: #f8f9fa;
+}
+
+.activity-item.assigned {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background: #e3f2fd;
+  border-color: #90caf9;
+}
+
+.assigned-badge {
+  background: #2196f3;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .activity-checkbox input {

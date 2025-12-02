@@ -75,6 +75,8 @@
       v-if="selectedProblem && selectedProblemActivities.length > 0"
       :problem="selectedProblem"
       :activities="selectedProblemActivities"
+      :assigned-activity-ids="assignedActivityIds"
+      :completed-activity-ids="completedActivityIds"
       @add-activities="handleAddSelectedActivities"
       @close="closeProblemSelector"
     />

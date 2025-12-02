@@ -354,13 +354,11 @@ const handleChooseByProblemClick = () => {
 const handleImproveCategory = (category) => {
   console.log('[ActivityDashboard] 🎯 Improve button clicked for category:', category);
   
-  // Always open Problem Selector with the category pre-filtered
-  // This allows students to add activities for their weak areas
+  // Emit improve-category to open the CategoryActivitiesModal (category-specific)
+  // This is DIFFERENT from the Problem Selector which shows problems across all categories
   console.log('[ActivityDashboard] 📤 Emitting improve-category with:', category);
   emit('improve-category', category);
-  
-  // Also emit show-problem-selector to trigger modal open
-  emit('show-problem-selector', { category });
+  // NOTE: Don't emit show-problem-selector here - that's a different modal!
 };
 </script>
 
