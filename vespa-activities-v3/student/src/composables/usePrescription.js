@@ -65,20 +65,27 @@ export function usePrescription() {
         hasSeenWelcomeModal.value = localStorage.getItem(storageKey) === 'true';
       }
       
-      // Decision logic
+      // Decision logic (updated: motivational shows if user has activities)
       if (hasScores && !hasSeenWelcomeModal.value && hasNoActivities) {
-        // First-time per cycle: Show welcome modal
-        console.log(`[usePrescription] 🎯 Showing WELCOME modal for Cycle ${currentCycle} (first-time or new cycle)`);
+        // First-time per cycle with NO activities: Show welcome modal
+        console.log(`[usePrescription] 🎯 Showing WELCOME modal for Cycle ${currentCycle} (first-time, no activities)`);
         showWelcomeModal.value = true;
         showMotivationalPopup.value = false;
-      } else if (hasScores && hasSeenWelcomeModal.value && !hasNoActivities) {
-        // Returning user with activities: Show motivational popup
-        console.log(`[usePrescription] 💪 Showing MOTIVATIONAL popup for Cycle ${currentCycle} (returning user)`);
+      } else if (hasScores && !hasNoActivities) {
+        // User HAS activities (regardless of seen status): Show motivational popup
+        // This handles edge case where user has activities but hasn't "seen" welcome
+        console.log(`[usePrescription] 💪 Showing MOTIVATIONAL popup for Cycle ${currentCycle} (has ${myActivities?.length || 0} activities)`);
         showWelcomeModal.value = false;
         showMotivationalPopup.value = true;
+        
+        // If they haven't seen welcome for this cycle, mark it as seen
+        if (!hasSeenWelcomeModal.value) {
+          console.log(`[usePrescription] Auto-marking welcome as seen (user already has activities)`);
+          hasSeenWelcomeModal.value = true;
+        }
       } else {
-        // Edge cases: No scores, or seen but no activities (weird state)
-        console.log('[usePrescription] Skipping both modals:', {
+        // Edge case: No scores
+        console.log('[usePrescription] Skipping modals - no VESPA scores:', {
           cycle: currentCycle,
           hasScores,
           hasSeenBefore: hasSeenWelcomeModal.value,
