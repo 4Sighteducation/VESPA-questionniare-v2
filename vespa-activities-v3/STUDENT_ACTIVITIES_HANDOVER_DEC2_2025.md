@@ -1,74 +1,193 @@
 # 🎓 VESPA Student Activities - Handover Document
 
-**Date**: December 2, 2025 (Updated Late Night Session 3)  
-**Current Version**: Student v1x, Staff v3j  
-**Status**: 🟡 85% Complete - CRITICAL BUGS REMAINING  
-**Next Phase**: Fix Save/Notification Persistence, Then Polish
+**Date**: December 2, 2025 (Updated Session 4 - Late Night)  
+**Current Version**: Student v1y, Staff v3j  
+**Status**: 🟢 95% Complete - ACTIVITY SAVE FIXED! One issue remaining  
+**Next Phase**: Fix Notification Dismiss, Then Production
 
 ---
 
-## 🚨 CRITICAL UNRESOLVED ISSUES (December 2, 2025 - Late Night)
+## 🎉 SESSION 4 ACHIEVEMENTS (December 2, 2025 - Very Late Night)
 
-### ❌ ISSUE 1: Activity Progress NOT SAVING
-**Severity**: 🔴 CRITICAL - Blocks all activity functionality
+### ✅ CRITICAL BUG FIXED: Activity Progress Now Saves!
 
-**Symptoms**:
-- User fills in activity answers
-- Console shows `[VESPA Activities] ✅ Progress saved`
-- User reopens activity → ALL answers are GONE
-- Activity completion never triggers (no points, no achievements)
-
-**Investigation Done**:
-- API endpoint `/api/activities/save` was doing UPDATE (not UPSERT)
-- Changed to UPSERT but still not working
-- The `activity_responses` record may not exist when save is called
-
-**Suspected Root Cause**:
-- `activity_responses` table might have missing records
-- Or UPSERT conflict constraint `student_email,activity_id,cycle_number` may not exist
-- Or RLS might be blocking the UPSERT silently
-
-**Files Involved**:
-- `DASHBOARD/DASHBOARD/activities_api.py` - `/api/activities/save` endpoint (lines 366-420)
-- `VESPAQuestionnaireV2/vespa-activities-v3/student/src/App.vue` - `saveActivityProgress` function
-
-**Action Required**:
-1. Check Supabase for `activity_responses` unique constraint on `(student_email, activity_id, cycle_number)`
-2. Check Heroku logs for actual errors from save endpoint
-3. Test direct insert via Supabase dashboard
-4. Consider bypassing RLS with RPC function for save
+The core blocker has been resolved. Activities now save, complete, award points, and trigger achievements correctly.
 
 ---
 
-### ❌ ISSUE 2: Notifications NOT Dismissing Persistently
-**Severity**: 🟠 HIGH - Poor UX, notifications reappear every page load
+### 🔴 Root Cause 1: Frontend Logging Success When API Failed
+
+**Problem**: The `fetch()` API in JavaScript does NOT throw an error for HTTP 400/500 responses - only for network failures. The frontend was doing:
+
+```javascript
+// OLD CODE - WRONG!
+const response = await fetch(url, options);
+const data = await response.json();
+console.log('✅ Progress saved'); // Always ran, even if API returned 500!
+```
+
+**Fix Applied** (`App.vue` - `saveActivityProgress` function):
+
+```javascript
+// NEW CODE - CORRECT!
+const response = await fetch(url, options);
+const data = await response.json();
+if (!response.ok) {
+  console.error('❌ Save failed:', data);
+  return; // Exit early on failure
+}
+console.log('✅ Progress saved:', data);
+```
+
+**Files Changed**:
+- `VESPAQuestionnaireV2/vespa-activities-v3/student/src/App.vue` - `saveActivityProgress()` and `completeActivity()` functions
+
+---
+
+### 🔴 Root Cause 2: Backend UPSERT Was Unreliable
+
+**Problem**: The Supabase Python client's `upsert()` method with `on_conflict` wasn't consistently working. Sometimes it would silently fail or not update the record.
+
+**Fix Applied** (`activities_api.py` - `save_activity_progress` endpoint):
+
+Changed from unreliable UPSERT:
+```python
+# OLD CODE - UNRELIABLE
+result = supabase.table('activity_responses').upsert(
+    {...},
+    on_conflict='student_email,activity_id,cycle_number'
+).execute()
+```
+
+To explicit SELECT + UPDATE/INSERT pattern:
+```python
+# NEW CODE - RELIABLE
+# Step 1: Check if record exists
+existing = supabase.table('activity_responses').select('id').eq('student_email', student_email).eq('activity_id', activity_id).eq('cycle_number', cycle).execute()
+
+# Step 2: Update or Insert
+if existing.data and len(existing.data) > 0:
+    result = supabase.table('activity_responses').update({...}).eq('id', existing.data[0]['id']).execute()
+else:
+    result = supabase.table('activity_responses').insert({...}).execute()
+```
+
+**Files Changed**:
+- `DASHBOARD/DASHBOARD/activities_api.py` - `save_activity_progress` endpoint (lines ~366-420)
+
+---
+
+### 🔴 Root Cause 3: RLS Blocking Direct Supabase Queries
+
+**Problem**: The `openActivityModal` function was directly querying Supabase to load existing responses:
+```javascript
+const { data } = await supabase.from('activity_responses').select('*')...
+```
+This was blocked by RLS policies for anonymous users, returning empty results.
+
+**Fix Applied** (`App.vue` - `openActivityModal` function):
+
+Changed to use the `/api/activities/start` endpoint which uses RPC to bypass RLS:
+```javascript
+// NEW CODE - Uses API (bypasses RLS)
+const response = await fetch(`${API_BASE}/api/activities/start`, {
+  method: 'POST',
+  body: JSON.stringify({ studentEmail, activityId, cycle })
+});
+const data = await response.json();
+if (data.record?.responses) {
+  existingResponses.value = data.record.responses;
+}
+```
+
+**Files Changed**:
+- `VESPAQuestionnaireV2/vespa-activities-v3/student/src/App.vue` - `openActivityModal()` function
+
+---
+
+### 🔴 Root Cause 4: `points_earned` Column Didn't Exist
+
+**Problem**: The `complete_activity` endpoint was trying to update a `points_earned` field in `activity_responses`, but this column doesn't exist in the table. This caused a PostgreSQL error `PGRST204`.
+
+**Fix Applied** (`activities_api.py` - `complete_activity` endpoint):
+
+Removed `points_earned` from the update data:
+```python
+# OLD CODE
+update_data = {
+    'status': 'completed',
+    'completed_at': completed_at,
+    'time_spent_minutes': time_minutes,
+    'points_earned': points,  # ❌ Column doesn't exist!
+    ...
+}
+
+# NEW CODE  
+update_data = {
+    'status': 'completed',
+    'completed_at': completed_at,
+    'time_spent_minutes': time_minutes,
+    # points_earned removed - stored in vespa_students.total_points instead
+    ...
+}
+```
+
+**Files Changed**:
+- `DASHBOARD/DASHBOARD/activities_api.py` - `complete_activity` endpoint
+
+---
+
+### ✅ Verified Working (Tested with cali@vespa.academy)
+
+| Feature | Status | Evidence |
+|---------|--------|----------|
+| Activity Save | ✅ Working | Responses persist to database |
+| Activity Complete | ✅ Working | Status changes to 'completed' |
+| Points Awarded | ✅ Working | 30 points in vespa_students |
+| Achievements | ✅ Working | 2 achievements unlocked |
+| Streak | ✅ Working | Shows 2-day streak |
+| Activity Greyed Out | ✅ Working | Completed shows differently |
+| Staff Sees Completion | ✅ Working | Staff dashboard updated |
+
+---
+
+### 🔴 Browser Caching Issues
+
+**Problem**: After deploying fixes, the frontend still showed old behavior due to aggressive caching of CDN assets.
+
+**Fix Applied**:
+1. Version bumped frontend: `student-activities1x.js` → `student-activities1y.js`
+2. Updated `KnackAppLoader(copy).js` with new CDN URLs
+3. Instructed user to do "Empty Cache and Hard Reload"
+
+**Files Changed**:
+- `VESPAQuestionnaireV2/vespa-activities-v3/student/vite.config.js` - Version bump to 1y
+- `Homepage/KnackAppLoader(copy).js` - Updated CDN URLs to 1y
+
+---
+
+## 🟡 REMAINING ISSUE: Notifications NOT Dismissing
+
+**Severity**: 🟠 MEDIUM - Poor UX, notifications reappear every page load
 
 **Symptoms**:
 - User clicks dismiss on notification banner
 - Notification disappears temporarily
 - User refreshes page → Same 5 notifications appear again
-- `[useNotifications] Fetched notifications via API: 5` every time
 
-**Investigation Done**:
-- Added `/api/notifications/dismiss` endpoint to set `is_dismissed=true`
-- Added filter in `/api/notifications` to exclude `is_dismissed=true`
-- Frontend filters dismissed notifications client-side too
-- But they still come back on reload
+**Status**: Not yet debugged - was not the critical path.
 
-**Suspected Root Cause**:
-- The dismiss API might be failing (RLS blocking update?)
-- Or the `is_dismissed` column might not exist/be wrong type
-- Or API is not actually being called (check network tab)
+**Next Steps to Debug**:
+1. Open browser Network tab
+2. Click dismiss button on a notification
+3. Check if `/api/notifications/dismiss` API call appears
+4. Check response code and body
+5. Check Supabase `notifications` table for `is_dismissed` column
+6. Check Heroku logs for errors
 
 **Files Involved**:
-- `DASHBOARD/DASHBOARD/activities_api.py` - `/api/notifications/dismiss` endpoint
+- `DASHBOARD/DASHBOARD/activities_api.py` - `/api/notifications/dismiss` endpoint (~lines 1125-1146)
 - `VESPAQuestionnaireV2/vespa-activities-v3/student/src/composables/useNotifications.js` - `dismissNotification` function
-
-**Action Required**:
-1. Check network tab for dismiss API call when clicking X
-2. Check Supabase `notifications` table schema for `is_dismissed` column
-3. Test direct update via Supabase dashboard
-4. Check Heroku logs for errors
 
 ---
 
@@ -1672,9 +1791,9 @@ DASHBOARD repo:
 
 ---
 
-**Last Updated**: December 2, 2025 (Late Night Session 3)
-**Version**: Student v1x, Staff v3j  
-**Status**: 🔴 ACTIVITY SAVE BROKEN | 🔴 NOTIFICATIONS BROKEN | ✅ UI/Colors Fixed | ✅ Modals Working
+**Last Updated**: December 2, 2025 (Session 4 - Very Late Night)
+**Version**: Student v1y, Staff v3j  
+**Status**: 🟢 ACTIVITY SAVE FIXED! | 🟡 NOTIFICATIONS DISMISS PENDING | ✅ Ready for Production Testing
 
 ---
 
@@ -1682,10 +1801,10 @@ DASHBOARD repo:
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| **Backend API** | 🟡 Partial | Save endpoint not persisting! |
+| **Backend API** | ✅ Complete | All endpoints working |
 | **Cycle Detection** | ✅ Complete | Reads from Supabase cache |
 | **VESPA Scores Display** | ✅ Complete | Shows correct scores |
-| **Activity Loading** | ✅ Fixed | Now uses activity_responses table |
+| **Activity Loading** | ✅ Fixed | Uses activity_responses table |
 | **Prescription Flow** | ✅ Complete | Welcome + Motivational modals |
 | **Problem Selector** | ✅ Complete | Shows all activities for problems |
 | **Theme Colors** | ✅ Fixed | All VESPA brand colors applied |
@@ -1695,94 +1814,128 @@ DASHBOARD repo:
 | **Selection Counter** | ✅ Fixed | Uses Array for Vue reactivity |
 | **Grey Out Assigned** | ✅ Fixed | Shows which activities already added |
 | **CSV Import** | ✅ Complete | 146 records imported |
-| **Activity Saving** | 🔴 BROKEN | Progress not persisting to DB! |
-| **Activity Completion** | 🔴 BROKEN | Depends on save working |
-| **Points Calculation** | 🔴 BLOCKED | Needs completion to work |
-| **Achievements** | 🔴 BLOCKED | Needs completion to work |
-| **Streaks** | 🔴 BLOCKED | Needs completion to work |
-| **Notification Dismiss** | 🔴 BROKEN | Dismissed notifications reappear |
-| **Staff Completion Notify** | 🟡 Unknown | Code added, can't test without save |
+| **Activity Saving** | ✅ FIXED | Uses SELECT + UPDATE/INSERT pattern |
+| **Activity Completion** | ✅ FIXED | Status, points, achievements all work |
+| **Points Calculation** | ✅ WORKING | 30 points confirmed for test user |
+| **Achievements** | ✅ WORKING | 2 achievements unlocked |
+| **Streaks** | ✅ WORKING | 2-day streak showing |
+| **Notification Dismiss** | 🟡 PENDING | Need to debug - not critical path |
+| **Staff Completion Notify** | ✅ Working | Staff sees completed activities |
 
 ---
 
-## 🎯 IMMEDIATE NEXT ACTIONS (PRIORITY ORDER)
+## 🎯 IMMEDIATE NEXT ACTIONS
 
-### 🔴 MUST FIX FIRST:
-1. **Activity Save Persistence** - Debug why UPSERT not working
-   - Check Supabase unique constraint exists
-   - Check Heroku logs for actual errors
-   - Test with direct SQL insert
-   - Consider RPC function for save
+### 🟡 REMAINING:
+1. **Notification Dismiss** - Debug why is_dismissed not persisting
+   - Check network tab for API calls when clicking dismiss
+   - Check Supabase `notifications` table for `is_dismissed` column
+   - Check Heroku logs for errors
 
-2. **Notification Dismiss** - Debug why is_dismissed not persisting
-   - Check network tab for API calls
-   - Check Supabase column exists
-   - Check Heroku logs
-
-### 🟡 THEN:
-3. **Test Activity Completion** - Once save works, test full flow
-4. **Test Points/Achievements** - Should work once completion works
-5. **Test Staff Notifications** - Should work once completion works
+### 🟢 READY FOR:
+2. **Production Testing** - Core functionality works!
+3. **User Acceptance Testing** - Have students try the full flow
 
 ---
 
-## 📁 FILES CHANGED SESSION 3
+## 📁 FILES CHANGED SESSION 4
 
 ### Backend (DASHBOARD repo):
 ```
 activities_api.py
-├── Lines 366-420: Changed save to UPSERT (still not working)
-├── Lines 1011-1040: Added is_dismissed filter to notifications GET
-├── Lines 1063-1082: Added /api/notifications/dismiss endpoint
-├── Lines 1095-1130: Added /api/notifications/create endpoint
-├── Lines 626-670: Added staff notification on activity completion
-└── Deployed: Multiple Heroku pushes
+├── Lines 366-420: Changed save from UPSERT to SELECT+UPDATE/INSERT
+├── Lines 554-600: Removed points_earned from complete_activity (column doesn't exist)
+├── Lines 1125-1146: Added logging to dismiss_notification endpoint
+└── Deployed: Heroku auto-deploy
 ```
 
 ### Frontend (VESPAQuestionnaireV2 repo):
 ```
 vespa-activities-v3/student/
-├── shared/constants.js - Fixed CATEGORY_COLORS
-├── src/style.css - Fixed CSS variables
-├── src/components/ActivityModal.vue - Fixed colors + completion logging
-├── src/components/ProblemSelector.vue - Fixed colors
-├── src/components/CategoryActivitiesModal.vue - Fixed colors + counter
-├── src/composables/useNotifications.js - Added dismiss API call
-└── dist/ → student-activities1x.js/css
-
-vespa-activities-v3/staff/
-├── src/composables/useActivities.js - RPC + notification fire-and-forget
-├── src/composables/useStudents.js - Map vespa_scores
-├── src/components/StudentListView.vue - Badge visibility fix
-└── dist/ → activity-dashboard-3j.js/css
+├── src/App.vue
+│   ├── saveActivityProgress() - Added response.ok check
+│   ├── completeActivity() - Added response.ok check  
+│   └── openActivityModal() - Changed to use /api/activities/start (bypasses RLS)
+├── vite.config.js - Version bump 1x → 1y
+└── dist/ → student-activities1y.js/css
 ```
 
-### SQL Scripts:
+### Integration (Homepage repo):
 ```
-DASHBOARD/UPDATE_RPC_ADD_VESPA_SCORES.sql - Staff RPC returns vespa_scores
+KnackAppLoader(copy).js
+└── Lines 1535-1536: Updated CDN URLs to v1y
 ```
 
 ---
 
-## 🔍 DEBUGGING CHECKLIST FOR NEXT SESSION
+## 🔍 DEBUGGING CHECKLIST FOR NOTIFICATION DISMISS
 
-### For Activity Save Issue:
-- [ ] Open browser Network tab
-- [ ] Fill in activity, wait 30 sec for auto-save
-- [ ] Check if `/api/activities/save` call appears
-- [ ] Check response code (200? 500?)
-- [ ] Check response body for error
-- [ ] Check Heroku logs: `heroku logs --tail -a vespa-dashboard`
-- [ ] Check Supabase: Does unique constraint exist on `activity_responses(student_email, activity_id, cycle_number)`?
-
-### For Notification Dismiss Issue:
-- [ ] Click dismiss button
+- [ ] Click dismiss button on a notification
 - [ ] Check Network tab for `/api/notifications/dismiss` call
-- [ ] Check response code
-- [ ] Check Supabase: `SELECT * FROM notifications WHERE recipient_email = 'cali@vespa.academy'`
+- [ ] Check response code (200? 400? 500?)
+- [ ] Check response body
+- [ ] Check Supabase: `SELECT id, is_dismissed FROM notifications WHERE recipient_email = 'cali@vespa.academy'`
 - [ ] Is `is_dismissed` column TRUE for dismissed ones?
+- [ ] Check Heroku logs: `heroku logs --tail -a vespa-dashboard`
 
 ---
 
-⚠️ **BLOCKER**: Until activity save works, cannot test completion, points, achievements, or staff notifications. This is the critical path!**
+## 🧪 TEST ACCOUNTS
+
+| Account | Purpose |
+|---------|---------|
+| `cali@vespa.academy` | Student testing - Cycle 2, has completed activities |
+| `aramsey@vespa.academy` | Student testing - Cycle 3, test data only |
+
+---
+
+## 🚀 DEPLOYMENT NOTES
+
+### Current Live Versions:
+- **Student Frontend**: `student-activities1y.js` / `student-activities1y.css`
+- **Staff Frontend**: `activity-dashboard-3j.js` / `activity-dashboard-3j.css`
+- **Backend**: Heroku auto-deployed from DASHBOARD repo
+
+### CDN URLs (jsDelivr):
+```
+https://cdn.jsdelivr.net/gh/4Sighteducation/VESPA-questionniare-v2@main/vespa-activities-v3/student/dist/student-activities1y.js
+https://cdn.jsdelivr.net/gh/4Sighteducation/VESPA-questionniare-v2@main/vespa-activities-v3/student/dist/student-activities1y.css
+```
+
+### Important: Browser Caching
+After any frontend deployment, users may need to do "Empty Cache and Hard Reload" (Ctrl+Shift+R on Windows, Cmd+Shift+R on Mac) or wait for CDN cache to expire (~2-5 minutes).
+
+---
+
+## 🎓 KEY LEARNINGS FROM SESSION 4
+
+### 1. JavaScript fetch() Doesn't Throw on HTTP Errors
+The `fetch()` API only throws on network failures, NOT on 400/500 responses. Always check `response.ok`:
+```javascript
+const response = await fetch(url);
+if (!response.ok) {
+  console.error('Request failed:', response.status);
+  return;
+}
+```
+
+### 2. Supabase Python UPSERT Can Be Unreliable
+The `upsert(..., on_conflict='...')` method sometimes silently fails. Use explicit SELECT + UPDATE/INSERT for reliability:
+```python
+existing = supabase.table('x').select('id').eq('field', val).execute()
+if existing.data:
+    supabase.table('x').update({...}).eq('id', existing.data[0]['id']).execute()
+else:
+    supabase.table('x').insert({...}).execute()
+```
+
+### 3. RLS Blocks Anonymous Direct Queries
+Direct Supabase queries from frontend using anon key get blocked by RLS. Route through API endpoints that use RPC with SECURITY DEFINER.
+
+### 4. Browser Caching Can Hide Fixes
+After deploying fixes, always version-bump frontend assets and do hard refresh to verify changes.
+
+---
+
+✅ **MAJOR MILESTONE**: The activity save/complete functionality is now working! This was the critical blocker. The app is nearly production-ready.
 
