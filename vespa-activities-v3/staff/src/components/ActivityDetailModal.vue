@@ -52,27 +52,65 @@
           </button>
         </div>
 
-        <!-- Tab: Student Responses -->
+        <!-- Tab: Student Responses with Inline Feedback -->
         <div v-show="activeTab === 'responses'" class="tab-content">
-          <div v-if="isCompleted && parsedResponses.length > 0" class="responses-section">
-            <div class="response-context">
-              <h4><i class="fas fa-comments"></i> Student Responses</h4>
-              <p>Review the student's answers below</p>
-            </div>
-            <div
-              v-for="(resp, index) in parsedResponses"
-              :key="index"
-              class="response-item"
-            >
-              <div class="response-question">
-                <strong>Q{{ resp.questionNumber }}:</strong> {{ resp.question }}
-                <span v-if="!resp.found" class="question-note" title="Question text not available in database">
-                  (migrated from old system)
-                </span>
+          <div v-if="isCompleted && parsedResponses.length > 0" class="responses-with-feedback-layout">
+            <!-- Left: Student Responses -->
+            <div class="responses-section">
+              <div class="response-context">
+                <h4><i class="fas fa-comments"></i> Student Responses</h4>
+                <p>Review the student's answers below</p>
               </div>
-              <div class="response-answer">
-                <strong style="color: #495057; font-size: 13px; display: block; margin-bottom: 8px;">Answer:</strong>
-                {{ resp.answer }}
+              <div
+                v-for="(resp, index) in parsedResponses"
+                :key="index"
+                class="response-item"
+              >
+                <div class="response-question">
+                  <strong>Q{{ resp.questionNumber }}:</strong> {{ resp.question }}
+                  <span v-if="!resp.found" class="question-note" title="Question text not available in database">
+                    (migrated from old system)
+                  </span>
+                </div>
+                <div class="response-answer">
+                  <strong style="color: #495057; font-size: 13px; display: block; margin-bottom: 8px;">Answer:</strong>
+                  {{ resp.answer }}
+                </div>
+              </div>
+            </div>
+            
+            <!-- Right: Quick Feedback Panel -->
+            <div class="inline-feedback-panel">
+              <div class="feedback-panel-header">
+                <i class="fas fa-comment-dots"></i>
+                <h5>Give Feedback</h5>
+              </div>
+              
+              <div v-if="activity.staff_feedback && activity.staff_feedback_by === getStaffEmail()" class="your-previous-feedback">
+                <div class="previous-badge">Your previous feedback:</div>
+                <div class="previous-text">{{ activity.staff_feedback }}</div>
+                <div class="previous-meta">{{ formatDate(activity.staff_feedback_at) }}</div>
+              </div>
+              
+              <textarea
+                v-model="feedbackText"
+                placeholder="Enter feedback for the student..."
+                rows="8"
+                class="feedback-textarea-inline"
+              ></textarea>
+              
+              <button
+                class="btn btn-primary btn-block"
+                @click="saveFeedback"
+                :disabled="!feedbackText.trim() || isSaving"
+              >
+                <i class="fas fa-paper-plane"></i>
+                {{ isSaving ? 'Saving...' : 'Send Feedback to Student' }}
+              </button>
+              
+              <div class="feedback-hint-inline">
+                <i class="fas fa-bell"></i>
+                Student will be notified
               </div>
             </div>
           </div>
@@ -675,15 +713,31 @@ const formatDate = (dateString) => {
   to { opacity: 1; }
 }
 
+/* Two-column layout for responses + feedback */
+.responses-with-feedback-layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;  /* 2/3 responses, 1/3 feedback */
+  gap: 20px;
+  min-height: 400px;
+}
+
+@media (max-width: 1200px) {
+  .responses-with-feedback-layout {
+    grid-template-columns: 1fr;  /* Stack on smaller screens */
+  }
+}
+
 /* Response Display - Enhanced from V2 */
 .responses-section {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   background: #e8f4fd;
   padding: 20px;
   border-radius: 8px;
   border-left: 4px solid #17a2b8;
+  overflow-y: auto;
+  max-height: 600px;
 }
 
 .response-context {
@@ -723,9 +777,107 @@ const formatDate = (dateString) => {
 }
 
 .response-item:not(:last-child) {
-  margin-bottom: 16px;
-  padding-bottom: 16px;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
   border-bottom: 1px solid #b8daff;
+}
+
+/* Inline Feedback Panel */
+.inline-feedback-panel {
+  background: white;
+  border: 2px solid #079baa;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: sticky;
+  top: 20px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.feedback-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e9ecef;
+  color: #079baa;
+}
+
+.feedback-panel-header i {
+  font-size: 22px;
+}
+
+.feedback-panel-header h5 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #23356f;
+}
+
+.your-previous-feedback {
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 6px;
+  border-left: 3px solid #079baa;
+}
+
+.previous-badge {
+  font-size: 11px;
+  color: #6c757d;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.previous-text {
+  color: #495057;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 6px;
+  white-space: pre-wrap;
+}
+
+.previous-meta {
+  font-size: 11px;
+  color: #6c757d;
+}
+
+.feedback-textarea-inline {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 150px;
+  transition: border-color 0.2s;
+}
+
+.feedback-textarea-inline:focus {
+  outline: none;
+  border-color: #079baa;
+  box-shadow: 0 0 0 3px rgba(7, 155, 170, 0.1);
+}
+
+.btn-block {
+  width: 100%;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.feedback-hint-inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #6c757d;
+  text-align: center;
+  justify-content: center;
 }
 
 .response-item:hover {
