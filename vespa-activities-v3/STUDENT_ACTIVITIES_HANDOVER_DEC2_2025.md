@@ -313,47 +313,467 @@ Logic:
 
 ## 📁 KEY FILES & LOCATIONS
 
-### Frontend (Vue 3):
+### Current Student Activities (V3 - Supabase Native)
+
+**Repository**: `VESPAQuestionnaireV2/vespa-activities-v3/student/`
+
 ```
-vespa-activities-v3/student/
-├── src/
-│   ├── App.vue ✅ (Main app, cycle detection)
-│   ├── components/
-│   │   ├── ActivityDashboard.vue ⚠️ (Needs prescription logic)
-│   │   ├── ActivityModal.vue ⚠️ (Activity renderer, needs completion flow)
-│   │   ├── ActivityCard.vue ⚠️ (Card component, needs status indicators)
-│   │   ├── ProblemSelector.vue ⚠️ (Select by problem, needs implementation)
-│   │   ├── CategoryFilter.vue ✅ (Working)
-│   │   ├── AchievementPanel.vue ⚠️ (Needs completion)
-│   │   └── QuestionRenderer.vue ⚠️ (Activity questions)
-│   ├── composables/
-│   │   ├── useActivities.js ⚠️ (Needs removal/swapping)
-│   │   ├── useVESPAScores.js ✅ (Working)
-│   │   ├── useAchievements.js ⚠️ (Needs implementation)
-│   │   └── useNotifications.js ⚠️ (Needs implementation)
+📂 VESPAQuestionnaireV2/vespa-activities-v3/student/
+├── 📂 src/ (Source files - Vue 3)
+│   ├── App.vue ✅ (Main app, cycle detection, initialization)
+│   ├── main.js ✅ (Entry point)
+│   ├── style.css ✅ (Global styles)
+│   │
+│   ├── 📂 components/
+│   │   ├── ActivityDashboard.vue ⚠️ (Main dashboard view, needs prescription logic)
+│   │   ├── ActivityModal.vue ⚠️ (Full-screen activity renderer, needs completion flow)
+│   │   ├── ActivityCard.vue ⚠️ (Activity card component, needs status indicators)
+│   │   ├── ProblemSelector.vue ⚠️ (Select by problem modal, needs implementation)
+│   │   ├── CategoryFilter.vue ✅ (Filter component, working)
+│   │   ├── AchievementPanel.vue ⚠️ (Achievements display, needs completion)
+│   │   └── QuestionRenderer.vue ⚠️ (Activity question display)
+│   │
+│   ├── 📂 composables/
+│   │   ├── useActivities.js ⚠️ (Activity state management, needs removal/swapping)
+│   │   ├── useVESPAScores.js ✅ (VESPA scores fetching, working)
+│   │   ├── useAchievements.js ⚠️ (Achievement system, needs implementation)
+│   │   └── useNotifications.js ⚠️ (Notifications, needs implementation)
+│   │
+│   ├── 📂 services/
+│   │   └── activityService.js ⚠️ (API calls, needs removal endpoint)
+│   │
+│   └── 📂 utils/ (Empty - may need)
+│
+├── 📂 shared/ (Shared with parent)
+│   ├── constants.js ✅ (API URLs, config)
+│   └── supabaseClient.js ✅ (Supabase instance)
+│
+├── 📂 dist/ (Built files - deployed to CDN)
+│   ├── student-activities1j.js ✅ (Current version: 275.65 KB)
+│   ├── student-activities1j.css ✅ (Current version: 28.24 KB)
+│   └── index.html (Build output)
+│
+├── vite.config.js ✅ (Build config, version numbers HERE!)
+├── package.json (Dependencies)
+└── index.html (Dev entry point)
+```
+
+---
+
+### Staff Dashboard (V3 - PRODUCTION READY ✅)
+
+**Repository**: `VESPAQuestionnaireV2/vespa-activities-v3/staff/`
+
+```
+📂 VESPAQuestionnaireV2/vespa-activities-v3/staff/
+├── 📂 src/
+│   ├── App.vue ✅ (Main app)
+│   │
+│   ├── 📂 components/
+│   │   ├── StudentListView.vue ✅ (Student table with bulk operations)
+│   │   ├── StudentWorkspace.vue ✅ (Individual student view, drag-drop)
+│   │   ├── ActivityDetailModal.vue ✅ (Activity details, feedback, responses)
+│   │   ├── ActivityCardCompact.vue ✅ (Compact activity cards)
+│   │   ├── AssignByProblemModal.vue ✅ (Problem selection - REUSABLE!)
+│   │   ├── ProblemActivitiesModal.vue ✅ (Activity selection - REUSABLE!)
+│   │   ├── StudentScorecard.vue ✅ (Progress card - REUSABLE!)
+│   │   ├── PdfModal.vue ✅ (PDF viewer - REUSABLE!)
+│   │   └── ConfirmModal.vue ✅ (Confirmation dialogs - REUSABLE!)
+│   │
+│   ├── 📂 composables/
+│   │   ├── useActivities.js ✅ (Activity operations with RPC)
+│   │   ├── useAuth.js ✅ (Auth via Account API)
+│   │   ├── useFeedback.js ✅ (Feedback RPC)
+│   │   └── useStudents.js ✅ (Student data RPC)
+│   │
+│   └── 📂 shared/
+│       └── supabaseClient.js ✅ (Supabase config)
+│
+├── 📂 dist/ (Current: v3c - PRODUCTION)
+│   ├── activity-dashboard-3c.js (328.10 KB)
+│   └── activity-dashboard-3c.css (51.39 KB)
+│
+└── HANDOVER_STAFF_DASHBOARD_V3C_COMPLETE.md ✅ (Full documentation)
+```
+
+**NOTE**: Staff dashboard is **COMPLETE** and can be used as reference for:
+- Drag-drop functionality
+- RPC pattern for RLS bypass
+- Problem selector implementation
+- Feedback system
+- Modal components
+- Beautiful UX patterns
+
+---
+
+### Old Student Activities (V2 - Knack Native, Reference Only)
+
+**Repository**: `vespa-activities-v2/student/`
+
+```
+📂 vespa-activities-v2/student/
+├── VESPAactivitiesStudent4q.js ⚠️ (7000+ lines - FULLY KNACK NATIVE)
+│   │
+│   ├── 📍 Lines 96-235: AchievementSystem class (REUSABLE!)
+│   ├── 📍 Lines 238-781: ResponseHandler class (Knack API)
+│   ├── 📍 Lines 784-2042: ActivityRenderer class (Modal system)
+│   ├── 📍 Lines 2893-3061: parseVESPAScores() (Knack view parsing)
+│   ├── 📍 Lines 3871-3881: getScoreRating() (Score labels)
+│   ├── 📍 Lines 5437-5542: calculatePrescribedActivities() (ALGORITHM!)
+│   ├── 📍 Lines 5876-6319: showWelcomeJourney() (Modal flow)
+│   └── 📍 Lines 6506-6552: renderProblemSelectors() (Problem UI)
+│
+└── VESPAactivitiesStudent4q.css ⚠️ (5626 lines - BEAUTIFUL STYLES)
+    │
+    ├── 📍 Lines 8-58: CSS Variables (colors, shadows, transitions)
+    ├── 📍 Lines 391-555: Beautiful header styles
+    ├── 📍 Lines 632-814: VESPA score cards with circular SVG
+    ├── 📍 Lines 869-1130: Activity cards with hover effects
+    ├── 📍 Lines 3907-4414: Welcome journey modal styles
+    └── 📍 Lines 1964-2431: Mobile responsive (Galaxy Fold!)
+```
+
+**Why Reference These Files**:
+- ✅ **UX is perfect** (gradient headers, smooth animations, beautiful cards)
+- ✅ **Prescription algorithm works** (score-based filtering)
+- ✅ **Welcome journey is polished** (4-step modal flow)
+- ✅ **Problem selector UI** (categorized, checkbox selection)
+- ❌ **But**: Fully Knack-native (buggy, slow, not scalable)
+
+**Migration Strategy**: 
+- Copy CSS wholesale (it's platform-agnostic)
+- Adapt JavaScript logic to Vue 3 + Supabase
+- Reuse component patterns from staff dashboard (Vue 3, already working)
+
+---
+
+### Backend API & Database
+
+**Repository**: `DASHBOARD/DASHBOARD/`
+
+```
+📂 DASHBOARD/DASHBOARD/
+├── app.py (Main Flask app, 11,000+ lines)
+│   ├── 📍 Lines 9276-9600: submit_questionnaire() (Writes to vespa_scores)
+│   ├── 📍 Lines 9833-10150: get_report_data() (Report API, multi-year fix)
+│   └── 📍 Lines 9460-9492: Calls RPC to sync cache
+│
+├── activities_api.py ✅ (Activities endpoints, 1300+ lines)
+│   ├── 📍 Lines 30-164: get_recommended_activities() (Score-based filtering)
+│   ├── 📍 Lines 167-190: get_activities_by_problem() (Problem mapping query)
+│   ├── 📍 Lines 193-248: get_assigned_activities() (Student's activities)
+│   ├── 📍 Lines 250-340: start_activity() (Assign to student)
+│   ├── 📍 Lines 342-420: save_progress() (Auto-save)
+│   └── 📍 Lines 422-520: complete_activity() (Completion flow)
+│
+├── 📂 SQL Scripts:
+│   ├── CREATE_REMOVE_RPC_FIXED.sql ✅ (Soft delete RPC)
+│   ├── CREATE_FEEDBACK_RPC.sql ✅ (Feedback & hard delete RPCs)
+│   ├── FIX_SYNC_RPC_UPDATE_CURRENT_CYCLE.sql ✅ (Cache sync RPC)
+│   ├── FIX_STATUS_CONSTRAINT_REQUIRED.sql ✅ (Added 'removed' status)
+│   └── FIX_ACTIVITY_HISTORY_RLS.sql ✅ (History logging policy)
+│
+├── backfill_vespa_scores_email.py ✅ (One-time fix script)
+├── sync_knack_to_supabase.py ⚠️ (Daily sync from Knack)
+└── INVESTIGATE_VESPA_SCORES_FOR_ACTIVITIES.sql ✅ (Diagnostic queries)
+```
+
+---
+
+### Integration & Deployment
+
+**Repository**: `Homepage/`
+
+```
+📂 Homepage/
+├── KnackAppLoader(copy).js ✅ (MAIN LOADER - Version 1j)
+│   ├── 📍 Lines 1535-1536: Student activities CDN URLs
+│   ├── 📍 Lines 1256-1600: Student activities config
+│   ├── 📍 Lines 700-900: Staff dashboard config (scene 1290)
+│   └── 📍 Lines 1800-2000: Report config
+│
+├── 📂 VESPAReportV2/
+│   └── individual-report/dist/
+│       ├── report1an.js ✅ (Report frontend)
+│       └── report1an.css ✅ (Report styles)
+│
+└── 📂 vespa-activities-v2/ (OLD - Reference Only)
+    └── student/
+        ├── VESPAactivitiesStudent4q.js ⚠️ (Old version, Knack native)
+        └── VESPAactivitiesStudent4q.css ⚠️ (Old styles - REUSE THESE!)
+```
+
+---
+
+### Supabase Database Schema
+
+**Database**: `qcdcdzfanrlvdcagmwmg.supabase.co`
+
+```
+📊 Key Tables:
+
+vespa_scores (49,067 rows)
+├── student_id (UUID) → students.id
+├── student_email (TEXT) ← NEW! For multi-year students
+├── cycle (INT) - 1, 2, or 3
+├── vision, effort, systems, practice, attitude, overall (INT)
+├── completion_date (DATE)
+└── academic_year (TEXT)
+
+vespa_students (36,566 rows, 24,850 with scores)
+├── email (TEXT, UNIQUE, PK)
+├── latest_vespa_scores (JSONB) ← CACHE! Fast lookup
+├── current_cycle (INT) ← Fixed today!
+├── current_level (TEXT)
+├── total_points (INT) ← For gamification
+├── total_activities_completed (INT)
+├── current_streak_days (INT)
+└── ... (more gamification fields)
+
+activities (75 rows, all active)
+├── id (UUID)
+├── name, vespa_category, level
+├── score_threshold_min, score_threshold_max (INT)
+├── problem_mappings (TEXT[]) ← Array of problem IDs
+├── do_section_html, learn_section_html, etc.
+└── is_active (BOOLEAN)
+
+activity_responses (Student submissions)
+├── id (UUID)
+├── student_email (TEXT)
+├── activity_id (UUID) → activities.id
+├── cycle_number (INT)
+├── status (TEXT) - 'assigned', 'in_progress', 'completed', 'removed'
+├── responses (JSONB) - Question answers
+├── staff_feedback (TEXT)
+├── feedback_read_by_student (BOOLEAN)
+├── completed_at, time_spent_minutes, word_count
+└── points_earned (INT)
+
+activity_questions (Questions for activities)
+├── id (UUID)
+├── activity_id (UUID) → activities.id
+├── question_title, question_type, display_order
+├── is_required, show_in_final_questions
+└── is_active (BOOLEAN)
+
+activity_history (Audit log)
+├── student_email, activity_id, action, cycle_number
+├── triggered_by ('staff' or 'student')
+└── triggered_by_email, metadata (JSONB)
+```
+
+---
+
+### RPC Functions (Supabase)
+
+```sql
+-- VESPA Scores Sync
+sync_latest_vespa_scores_to_student(p_student_email TEXT)
+  → Returns JSONB
+  → Updates vespa_students.latest_vespa_scores + current_cycle
+  → Called after questionnaire submission
+
+-- Staff Operations (Security Definer - Bypass RLS)
+assign_activity_to_student(p_student_email, p_activity_id, p_staff_email, p_school_id, p_cycle_number)
+remove_activity_from_student(p_student_email, p_activity_id, p_cycle_number, p_staff_email, p_school_id)
+delete_activity_permanently(p_student_email, p_activity_id, p_cycle_number, p_staff_email, p_school_id)
+save_staff_feedback(p_response_id, p_feedback_text, p_staff_email, p_school_id)
+
+-- Student Data Fetching
+get_student_activity_responses(student_email_param, staff_email_param, school_id_param)
+get_students_for_staff(staff_email_param, school_id_param)
+get_connected_students_for_staff(staff_email_param, school_id_param, connection_type_filter)
+```
+
+**Location**: Supabase SQL Editor or migration files in `vespa-activities-v3/`
+
+---
+
+### CDN Files (jsDelivr)
+
+**Student Activities** (V3 - Current):
+```
+https://cdn.jsdelivr.net/gh/4Sighteducation/VESPA-questionniare-v2@main/vespa-activities-v3/student/dist/student-activities1j.js
+https://cdn.jsdelivr.net/gh/4Sighteducation/VESPA-questionniare-v2@main/vespa-activities-v3/student/dist/student-activities1j.css
+```
+
+**Staff Dashboard** (V3 - PRODUCTION):
+```
+https://cdn.jsdelivr.net/gh/4Sighteducation/VESPA-questionniare-v2@main/vespa-activities-v3/staff/dist/activity-dashboard-3c.js
+https://cdn.jsdelivr.net/gh/4Sighteducation/VESPA-questionniare-v2@main/vespa-activities-v3/staff/dist/activity-dashboard-3c.css
+```
+
+**Problem Mappings JSON**:
+```
+https://cdn.jsdelivr.net/gh/4Sighteducation/vespa-activities-v2@main/shared/vespa-problem-activity-mappings1a.json
+```
+
+---
+
+### Questionnaire (Separate App)
+
+**Repository**: `VESPAQuestionnaireV2/`
+
+```
+📂 VESPAQuestionnaireV2/
+├── 📂 src/
+│   ├── App.vue (Questionnaire main)
+│   ├── components/ (Question cards, progress)
 │   └── services/
-│       └── activityService.js ⚠️ (Needs removal endpoint)
-└── dist/ (Built files)
-    ├── student-activities1j.js ✅ (Current version)
-    └── student-activities1j.css ✅ (Current version)
+│       ├── api.js (Backend calls)
+│       ├── knackAuth.js (Knack session)
+│       └── vespaCalculator.js ⭐ (VESPA score algorithm!)
+│
+├── 📂 dist/
+│   ├── questionnaire1Q.js ✅ (Current version)
+│   └── (Loaded on questionnaire scene in Knack)
+│
+└── backend_endpoints.py (API integration notes)
 ```
 
-### Backend (Flask):
+**Key File**: `vespaCalculator.js` - The algorithm that calculates Vision/Effort/etc scores from 29 Likert responses.
+
+---
+
+### Old V2 Code (Reference Only - DO NOT USE IN PRODUCTION)
+
+**Repository**: `vespa-activities-v2/student/`
+
 ```
-DASHBOARD/DASHBOARD/
-├── activities_api.py ✅ (All endpoints working)
-├── app.py ✅ (Questionnaire submission, RPC calls)
-└── SQL files:
-    ├── CREATE_REMOVE_RPC_FIXED.sql ✅ (Removal RPC)
-    ├── CREATE_FEEDBACK_RPC.sql ✅ (Feedback RPC)
-    └── FIX_SYNC_RPC_UPDATE_CURRENT_CYCLE.sql ✅ (Sync RPC with cycle)
+📂 vespa-activities-v2/student/
+├── VESPAactivitiesStudent4q.js ⚠️ (OLD - Knack native, buggy)
+│   │
+│   │ 🎨 COPY THESE PATTERNS (adapt to Vue 3 + Supabase):
+│   ├── 📍 Lines 96-235: AchievementSystem class
+│   ├── 📍 Lines 784-2042: ActivityRenderer (modal structure)
+│   ├── 📍 Lines 2893-3061: VESPA score parsing
+│   ├── 📍 Lines 3871-3881: Score rating labels
+│   ├── 📍 Lines 5437-5542: Prescription algorithm ⭐ IMPORTANT!
+│   ├── 📍 Lines 5876-6319: Welcome journey modal (4 steps)
+│   └── 📍 Lines 6506-6552: Problem selector rendering
+│
+└── VESPAactivitiesStudent4q.css ⚠️ (OLD - Platform agnostic)
+    │
+    │ ✅ COPY THESE WHOLESALE (they're beautiful!):
+    ├── 📍 Lines 8-58: CSS Variables (colors, shadows)
+    ├── 📍 Lines 391-555: Header styles (gradient, stats)
+    ├── 📍 Lines 632-814: Score cards (circular SVG progress)
+    ├── 📍 Lines 869-1130: Activity cards (hover, completed states)
+    ├── 📍 Lines 1240-1366: Problem categories
+    ├── 📍 Lines 2789-3685: Activity renderer (full-screen modal)
+    ├── 📍 Lines 3907-4414: Welcome modal
+    └── 📍 Lines 1964-2431: Mobile responsive
 ```
 
-### Integration:
+**Why These Files Are Important**:
+- Beautiful, polished UI (gradient headers, smooth animations)
+- Complete feature set (prescription, problems, achievements)
+- Mobile-first responsive design
+- BUT: Fully Knack-dependent (brittle, slow, buggy)
+
+**Migration Path**:
+1. Copy CSS to `student/src/style.css` (minimal changes needed)
+2. Copy JavaScript LOGIC (not Knack API calls) to Vue composables
+3. Replace Knack view parsing → Supabase API calls
+4. Replace Knack API → activities_api.py endpoints
+5. Keep the UX patterns (modals, flows, animations)
+
+---
+
+## 📚 RELATED DOCUMENTATION
+
+### Essential Reading:
+1. `STUDENT_ACTIVITIES_HANDOVER_DEC2_2025.md` ← This document
+2. `HANDOVER_STAFF_DASHBOARD_V3C_COMPLETE.md` ← Staff version (complete reference)
+3. `COMPLETE_SUPABASE_ACTIVITIES_HANDOVER.md` ← Architecture overview
+4. `API_ENDPOINTS_IMPLEMENTED.md` ← Backend API documentation
+5. `VESPA_SCORES_INVESTIGATION_FINDINGS.md` ← Database analysis
+
+### Quick References:
+- `QUICK_REFERENCE_CARD.md` - Common commands
+- `START_HERE.md` - Project overview
+- `ARCHITECTURE_DIAGRAMS_V3.md` - System architecture
+
+---
+
+## 🔗 GITHUB REPOSITORIES
+
+### Primary Repos:
+1. **Frontend**: `https://github.com/4Sighteducation/VESPA-questionniare-v2`
+   - Contains: Questionnaire, Activities V3 (student + staff), Report
+   - Branch: `main`
+   - CDN: jsDelivr (auto-updates from main)
+
+2. **Backend**: `https://github.com/4Sighteducation/DASHBOARD`
+   - Contains: Flask API, sync scripts, SQL files
+   - Branch: `main`
+   - Deployment: Heroku (auto-deploy enabled)
+
+3. **Homepage** (Integration): `https://github.com/4Sighteducation/Homepage`
+   - Contains: KnackAppLoader, various Knack integrations
+   - Branch: `master` (note: different from main!)
+   - Deployment: Manual copy into Knack custom code
+
+---
+
+## 🎯 FILE PATHS SUMMARY (Copy-Paste Ready)
+
+### To Edit Student Activities:
 ```
-Homepage/
-└── KnackAppLoader(copy).js ✅ (Loads v1j)
+C:\Users\tonyd\OneDrive - 4Sight Education Ltd\Apps\VESPAQuestionnaireV2\vespa-activities-v3\student\src\App.vue
+C:\Users\tonyd\OneDrive - 4Sight Education Ltd\Apps\VESPAQuestionnaireV2\vespa-activities-v3\student\src\components\ActivityDashboard.vue
+C:\Users\tonyd\OneDrive - 4Sight Education Ltd\Apps\VESPAQuestionnaireV2\vespa-activities-v3\student\src\composables\useActivities.js
 ```
+
+### To Reference Staff Dashboard (Working Examples):
+```
+C:\Users\tonyd\OneDrive - 4Sight Education Ltd\Apps\VESPAQuestionnaireV2\vespa-activities-v3\staff\src\components\AssignByProblemModal.vue
+C:\Users\tonyd\OneDrive - 4Sight Education Ltd\Apps\VESPAQuestionnaireV2\vespa-activities-v3\staff\src\components\ProblemActivitiesModal.vue
+C:\Users\tonyd\OneDrive - 4Sight Education Ltd\Apps\VESPAQuestionnaireV2\vespa-activities-v3\staff\src\composables\useActivities.js
+```
+
+### To Reference Old V2 (UX Patterns):
+```
+C:\Users\tonyd\OneDrive - 4Sight Education Ltd\Apps\Homepage\vespa-activities-v2\student\VESPAactivitiesStudent4q.js
+C:\Users\tonyd\OneDrive - 4Sight Education Ltd\Apps\Homepage\vespa-activities-v2\student\VESPAactivitiesStudent4q.css
+```
+
+### To Edit Backend:
+```
+C:\Users\tonyd\OneDrive - 4Sight Education Ltd\Apps\DASHBOARD\DASHBOARD\activities_api.py
+C:\Users\tonyd\OneDrive - 4Sight Education Ltd\Apps\DASHBOARD\DASHBOARD\app.py
+```
+
+### To Deploy:
+```
+C:\Users\tonyd\OneDrive - 4Sight Education Ltd\Apps\Homepage\KnackAppLoader(copy).js
+```
+
+---
+
+## 🎬 DEPLOYMENT CHECKLIST
+
+### Student Activities Deployment:
+- [ ] Edit source files in `vespa-activities-v3/student/src/`
+- [ ] Increment version in `vite.config.js` (1j → 1k)
+- [ ] Run `npm run build` in student folder
+- [ ] Commit and push to `VESPA-questionniare-v2` repo
+- [ ] Update `KnackAppLoader(copy).js` CDN URLs
+- [ ] Copy KnackAppLoader into Knack custom code
+- [ ] Wait 2-3 mins for jsDelivr CDN
+- [ ] Hard refresh (Ctrl+Shift+R)
+
+### Backend API Deployment:
+- [ ] Edit `activities_api.py` or `app.py`
+- [ ] Commit and push to `DASHBOARD` repo
+- [ ] Heroku auto-deploys (or manual restart)
+- [ ] Check Heroku logs for success
+- [ ] Test API endpoints
+
+---
+
+This comprehensive reference section is now part of the handover document!
 
 ---
 
