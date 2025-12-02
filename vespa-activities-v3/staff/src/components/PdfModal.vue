@@ -20,7 +20,7 @@
       </div>
       <div class="pdf-modal-body">
         <iframe
-          :src="pdfUrl"
+          :src="pdfUrl + '#view=FitH'"
           class="pdf-viewer"
           frameborder="0"
         ></iframe>

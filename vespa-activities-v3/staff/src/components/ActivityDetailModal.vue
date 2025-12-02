@@ -120,38 +120,26 @@
           </div>
         </div>
 
-        <!-- Tab: Activity Content -->
+        <!-- Tab: Activity Content - Clean Minimal Design -->
         <div v-show="activeTab === 'content'" class="tab-content">
-          <div class="activity-content-preview">
-            <div v-if="activity.activities?.do_section_html" class="content-section do-section">
-              <div class="section-icon-header">
-                <i class="fas fa-tasks"></i>
-                <h4>DO</h4>
-              </div>
+          <div class="activity-content-clean">
+            <!-- DO Section -->
+            <div v-if="activity.activities?.do_section_html" class="content-block">
               <div class="html-content" v-html="activity.activities.do_section_html"></div>
             </div>
             
-            <div v-if="activity.activities?.think_section_html" class="content-section think-section">
-              <div class="section-icon-header">
-                <i class="fas fa-lightbulb"></i>
-                <h4>THINK</h4>
-              </div>
+            <!-- THINK Section -->
+            <div v-if="activity.activities?.think_section_html" class="content-block">
               <div class="html-content" v-html="activity.activities.think_section_html"></div>
             </div>
             
-            <div v-if="activity.activities?.learn_section_html" class="content-section learn-section">
-              <div class="section-icon-header">
-                <i class="fas fa-graduation-cap"></i>
-                <h4>LEARN</h4>
-              </div>
+            <!-- LEARN Section -->
+            <div v-if="activity.activities?.learn_section_html" class="content-block">
               <div class="html-content" v-html="activity.activities.learn_section_html"></div>
             </div>
             
-            <div v-if="activity.activities?.reflect_section_html" class="content-section reflect-section">
-              <div class="section-icon-header">
-                <i class="fas fa-mirror"></i>
-                <h4>REFLECT</h4>
-              </div>
+            <!-- REFLECT Section -->
+            <div v-if="activity.activities?.reflect_section_html" class="content-block">
               <div class="html-content" v-html="activity.activities.reflect_section_html"></div>
             </div>
 
@@ -935,147 +923,89 @@ const formatDate = (dateString) => {
   filter: grayscale(0.3);
 }
 
-/* Activity Content Preview - Professional Student-Style Design */
-.activity-content-preview {
+/* Activity Content - Clean Minimal Design */
+.activity-content-clean {
   display: flex;
   flex-direction: column;
-  gap: 32px;
-  padding: 8px;
+  gap: 16px;  /* Much tighter spacing */
+  padding: 4px;
+  max-height: 650px;
+  overflow-y: auto;
 }
 
-.content-section {
+.content-block {
   background: white;
-  padding: 32px;
-  border-radius: 16px;
-  border: 2px solid #e9ecef;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  transition: all 0.3s;
-  position: relative;
-  overflow: hidden;
+  padding: 16px 20px;  /* Reduced from 32px */
+  border-radius: 8px;  /* Smaller radius */
+  border-left: 3px solid #079baa;  /* Subtle indicator */
+  transition: all 0.2s;
 }
 
-.content-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 6px;
-  height: 100%;
-  background: linear-gradient(180deg, #079baa, #00e5db);
+.content-block:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border-left-width: 4px;
 }
 
-.content-section:hover {
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-  transform: translateY(-2px);
-}
-
-/* Section-specific colors */
-.do-section::before {
-  background: linear-gradient(180deg, #84cc16, #65a30d);
-}
-
-.think-section::before {
-  background: linear-gradient(180deg, #3b82f6, #2563eb);
-}
-
-.learn-section::before {
-  background: linear-gradient(180deg, #f59e0b, #d97706);
-}
-
-.reflect-section::before {
-  background: linear-gradient(180deg, #8b5cf6, #7c3aed);
-}
-
-/* Section Headers - Centered & Professional */
-.section-icon-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 2px solid #e9ecef;
-}
-
-.section-icon-header i {
-  font-size: 28px;
-  color: #079baa;
-}
-
-.section-icon-header h4 {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 700;
-  color: #23356f;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.do-section .section-icon-header i { color: #84cc16; }
-.think-section .section-icon-header i { color: #3b82f6; }
-.learn-section .section-icon-header i { color: #f59e0b; }
-.reflect-section .section-icon-header i { color: #8b5cf6; }
-
-/* HTML Content - Professional Typography */
+/* HTML Content - Clean Compact Typography */
 .html-content {
-  line-height: 1.8;
+  line-height: 1.6;  /* Tighter line height */
   color: #495057;
-  font-size: 16px;
-  max-width: 750px;
-  margin: 0 auto;
+  font-size: 14px;  /* Smaller text */
+  max-width: 100%;  /* Full width */
+  margin: 0;
   text-align: left;
 }
 
-/* Rich Text Content Styling */
+/* Rich Text Content - Compact Styling */
 .html-content :deep(h1),
 .html-content :deep(h2),
 .html-content :deep(h3) {
   color: #23356f;
-  margin-top: 24px;
-  margin-bottom: 12px;
+  margin-top: 12px;  /* Reduced */
+  margin-bottom: 8px;  /* Reduced */
   font-weight: 600;
+  line-height: 1.3;
 }
 
 .html-content :deep(h1) {
-  font-size: 24px;
+  font-size: 20px;  /* Smaller */
 }
 
 .html-content :deep(h2) {
-  font-size: 20px;
+  font-size: 18px;  /* Smaller */
 }
 
 .html-content :deep(h3) {
-  font-size: 18px;
+  font-size: 16px;  /* Smaller */
 }
 
 .html-content :deep(p) {
-  margin-bottom: 16px;
-  line-height: 1.7;
+  margin-bottom: 10px;  /* Reduced */
+  line-height: 1.5;  /* Tighter */
 }
 
 .html-content :deep(ul),
 .html-content :deep(ol) {
-  margin: 16px 0 16px 24px;
+  margin: 10px 0 10px 20px;  /* Tighter */
 }
 
 .html-content :deep(li) {
-  margin-bottom: 8px;
+  margin-bottom: 4px;  /* Reduced */
 }
 
 .html-content :deep(img) {
   max-width: 100%;
-  max-height: 400px;
+  max-height: 300px;  /* Smaller */
   height: auto;
-  border-radius: 12px;
-  margin: 32px auto;
+  border-radius: 8px;
+  margin: 16px auto;  /* Less margin */
   display: block;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  transition: transform 0.3s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
 }
 
 .html-content :deep(img):hover {
-  transform: scale(1.02);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  transform: scale(1.01);  /* Subtle */
 }
 
 /* Centered Media Links - Professional Style */
@@ -1091,13 +1021,13 @@ const formatDate = (dateString) => {
   text-decoration: underline;
 }
 
-/* PDF & Video Links - Styled as Buttons */
+/* PDF & Video Links - Compact Button Style */
 .html-content :deep(p:has(a[href*=".pdf"])),
 .html-content :deep(p:has(a[href*="youtube"])),
 .html-content :deep(p:has(a[href*="vimeo"])),
 .html-content :deep(p:has(a[href*="docs.google.com"])) {
   text-align: center;
-  margin: 32px 0;
+  margin: 12px 0;  /* Much less margin */
 }
 
 .html-content :deep(a[href*=".pdf"]),
@@ -1106,63 +1036,71 @@ const formatDate = (dateString) => {
 .html-content :deep(a[href*="docs.google.com"]) {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 16px 32px;
-  background: linear-gradient(135deg, #079baa 0%, #00e5db 100%);
+  gap: 6px;
+  padding: 8px 16px;  /* Much smaller */
+  background: #079baa;
   color: white !important;
-  border-radius: 30px;
-  font-size: 16px;
+  border-radius: 6px;  /* Less rounded */
+  font-size: 13px;  /* Smaller text */
   font-weight: 600;
   text-decoration: none !important;
-  box-shadow: 0 4px 15px rgba(7, 155, 170, 0.3);
-  transition: all 0.3s;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  box-shadow: 0 2px 6px rgba(7, 155, 170, 0.2);
+  transition: all 0.2s;
 }
 
 .html-content :deep(a[href*=".pdf"])::before {
   content: '📄';
-  font-size: 20px;
+  font-size: 14px;
+}
+
+/* Change text via CSS */
+.html-content :deep(a[href*=".pdf"]) {
+  font-size: 0;  /* Hide original text */
+}
+
+.html-content :deep(a[href*=".pdf"])::after {
+  content: 'VIEW PDF';
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .html-content :deep(a[href*="youtube"])::before,
 .html-content :deep(a[href*="vimeo"])::before {
   content: '▶️';
-  font-size: 18px;
+  font-size: 14px;
 }
 
 .html-content :deep(a[href*=".pdf"]):hover,
 .html-content :deep(a[href*="youtube"]):hover,
 .html-content :deep(a[href*="vimeo"]):hover,
 .html-content :deep(a[href*="docs.google.com"]):hover {
-  background: linear-gradient(135deg, #00e5db 0%, #079baa 100%);
-  box-shadow: 0 6px 20px rgba(7, 155, 170, 0.4);
-  transform: translateY(-2px);
+  background: #006b77;
+  box-shadow: 0 4px 10px rgba(7, 155, 170, 0.3);
+  transform: translateY(-1px);
   color: white !important;
 }
 
-/* YouTube/Video Embeds - Responsive Container */
+/* YouTube/Video Embeds - Compact */
 .html-content :deep(iframe) {
   max-width: 100%;
   width: 100%;
-  height: 450px;
+  height: 350px;  /* Smaller */
   border: none;
-  border-radius: 12px;
-  margin: 32px auto;
+  border-radius: 8px;
+  margin: 16px auto;  /* Less margin */
   display: block;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .html-content :deep(blockquote) {
-  border-left: 4px solid #079baa;
-  padding: 20px;
-  padding-left: 24px;
-  margin: 24px 0;
+  border-left: 3px solid #079baa;
+  padding: 12px 16px;  /* Tighter */
+  margin: 12px 0;  /* Less margin */
   font-style: italic;
   color: #6c757d;
   background: #f8f9fa;
-  border-radius: 8px;
-  font-size: 17px;
+  border-radius: 6px;
+  font-size: 14px;  /* Smaller */
 }
 
 /* Special Text Formatting */
