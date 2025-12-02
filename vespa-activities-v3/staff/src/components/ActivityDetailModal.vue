@@ -242,6 +242,19 @@
       :title="pdfTitle"
       @close="pdfModalOpen = false"
     />
+
+    <!-- Confirm Modal -->
+    <ConfirmModal
+      v-if="confirmModalOpen"
+      :title="confirmModalConfig.title"
+      :message="confirmModalConfig.message"
+      :confirm-text="confirmModalConfig.confirmText"
+      :cancel-text="confirmModalConfig.cancelText"
+      :is-danger="confirmModalConfig.isDanger"
+      :icon="confirmModalConfig.icon"
+      @confirm="confirmModalConfig.onConfirm"
+      @cancel="confirmModalOpen = false"
+    />
   </div>
 </template>
 
@@ -251,6 +264,7 @@ import { useActivities } from '../composables/useActivities';
 import { useFeedback } from '../composables/useFeedback';
 import { useAuth } from '../composables/useAuth';
 import PdfModal from './PdfModal.vue';
+import ConfirmModal from './ConfirmModal.vue';
 
 const props = defineProps({
   activity: {
@@ -283,6 +297,15 @@ const isSaving = ref(false);
 const pdfModalOpen = ref(false);
 const pdfUrl = ref('');
 const pdfTitle = ref('');
+const confirmModalOpen = ref(false);
+const confirmModalConfig = ref({
+  title: '',
+  message: '',
+  confirmText: 'Confirm',
+  cancelText: 'Cancel',
+  isDanger: false,
+  onConfirm: () => {}
+});
 
 // Computed
 const isCompleted = computed(() => !!props.activity.completed_at);
@@ -486,54 +509,66 @@ const markIncomplete = async () => {
   }
 };
 
+const showConfirmModal = (config) => {
+  confirmModalConfig.value = config;
+  confirmModalOpen.value = true;
+};
+
 const clearAndRemove = async () => {
   const activityName = props.activity.activities?.name || 'this activity';
   const studentName = props.student.full_name;
   
-  // Strong warning about data loss
-  const confirmed = confirm(
-    `⚠️ CLEAR ALL ANSWERS for "${activityName}"?\n\n` +
-    `This will:\n` +
-    `• Remove the activity from ${studentName}\n` +
-    `• Clear ALL student responses\n` +
-    `• Delete any staff feedback\n\n` +
-    `This CANNOT be undone!\n\n` +
-    `(The activity can be reassigned later, but will start blank)\n\n` +
-    `Are you sure?`
-  );
-  
-  if (!confirmed) return;
+  // Show beautiful modal instead of browser confirm
+  showConfirmModal({
+    title: '⚠️ Clear All Answers?',
+    message: `Clear all answers for "${activityName}"?\n\nThis will:\n• Remove the activity from ${studentName}\n• Clear ALL student responses\n• Delete any staff feedback\n\nThis CANNOT be undone!\n\n(The activity can be reassigned later, but will start blank)`,
+    confirmText: 'Yes, Clear Answers',
+    cancelText: 'Cancel',
+    isDanger: true,
+    icon: 'fas fa-eraser',
+    onConfirm: async () => {
+      confirmModalOpen.value = false;
+      isSaving.value = true;
 
-  // Second confirmation
-  const doubleCheck = confirm(
-    `Final confirmation:\n\n` +
-    `Clear all answers and remove "${activityName}"?\n\n` +
-    `Student: ${studentName}\n\n` +
-    `This will erase their work permanently.`
-  );
-  
-  if (!doubleCheck) return;
+      try {
+        await deleteAPI(
+          props.activity.student_email,
+          props.activity.activity_id,
+          props.activity.cycle_number,
+          getStaffEmail(),
+          props.staffContext.schoolId
+        );
 
-  isSaving.value = true;
+        // Success modal
+        showConfirmModal({
+          title: 'Success',
+          message: `All answers cleared and "${activityName}" removed from ${studentName}`,
+          confirmText: 'OK',
+          isDanger: false,
+          icon: 'fas fa-check-circle',
+          onConfirm: () => {
+            confirmModalOpen.value = false;
+            emit('status-changed');
+          }
+        });
 
-  try {
-    await deleteAPI(
-      props.activity.student_email,
-      props.activity.activity_id,
-      props.activity.cycle_number,
-      getStaffEmail(),
-      props.staffContext.schoolId
-    );
-
-    alert(`All answers cleared and "${activityName}" removed from ${studentName}`);
-    emit('status-changed');
-
-  } catch (error) {
-    console.error('Failed to clear and remove:', error);
-    alert('Failed to clear answers. Please try again.');
-  } finally {
-    isSaving.value = false;
-  }
+      } catch (error) {
+        console.error('Failed to clear and remove:', error);
+        showConfirmModal({
+          title: 'Error',
+          message: 'Failed to clear answers. Please try again.',
+          confirmText: 'OK',
+          isDanger: true,
+          icon: 'fas fa-times-circle',
+          onConfirm: () => {
+            confirmModalOpen.value = false;
+          }
+        });
+      } finally {
+        isSaving.value = false;
+      }
+    }
+  });
 };
 
 const formatDate = (dateString) => {
@@ -948,12 +983,43 @@ const formatDate = (dateString) => {
 
 /* HTML Content - Clean Compact Typography */
 .html-content {
-  line-height: 1.6;  /* Tighter line height */
+  line-height: 1.6;
   color: #495057;
-  font-size: 14px;  /* Smaller text */
-  max-width: 100%;  /* Full width */
+  font-size: 14px;
+  max-width: 100%;
   margin: 0;
   text-align: left;
+}
+
+/* HIDE old Knack section titles from imported HTML */
+.html-content :deep(h1:contains("DO")),
+.html-content :deep(h2:contains("DO")),
+.html-content :deep(h3:contains("DO")),
+.html-content :deep(h1:contains("THINK")),
+.html-content :deep(h2:contains("THINK")),
+.html-content :deep(h3:contains("THINK")),
+.html-content :deep(h1:contains("LEARN")),
+.html-content :deep(h2:contains("LEARN")),
+.html-content :deep(h3:contains("LEARN")),
+.html-content :deep(h1:contains("REFLECT")),
+.html-content :deep(h2:contains("REFLECT")),
+.html-content :deep(h3:contains("REFLECT")) {
+  display: none !important;
+}
+
+/* Hide any heading that's JUST "DO", "THINK", etc. with no other text */
+.html-content :deep(h1),
+.html-content :deep(h2),
+.html-content :deep(h3),
+.html-content :deep(h4) {
+  /* Check if text is just section names */
+}
+
+/* Hide horizontal rules that separate sections */
+.html-content :deep(hr) {
+  margin: 8px 0;  /* Minimal */
+  border: none;
+  border-top: 1px solid #e9ecef;
 }
 
 /* Rich Text Content - Compact Styling */
