@@ -1,13 +1,204 @@
 # 🎓 VESPA Student Activities - Handover Document
 
-**Date**: December 2, 2025  
-**Current Version**: v1k  
-**Status**: 🟢 85% Complete - Prescription & Points System Working!  
-**Next Phase**: Gamification Polish & Testing
+**Date**: December 2, 2025 (Updated Evening Session)  
+**Current Version**: v1s  
+**Status**: 🟢 90% Complete - Core Functionality Working!  
+**Next Phase**: UI Polish, Gamification & Notifications
 
 ---
 
-## 🎉 WHAT WAS COMPLETED TODAY
+## 🎉 SESSION 2 ACHIEVEMENTS (December 2, 2025 - Evening)
+
+### ✅ CRITICAL BUG FIXES
+
+#### 1. **Activities Not Loading (Only 2/6 Showing)**
+**Problem**: Student activities API was querying wrong table
+- `student_activities` table had 2 records
+- `activity_responses` table had 6 records (correct!)
+
+**Root Cause**: 
+- `student_activities` = Legacy/audit table (not being populated by RPC)
+- `activity_responses` = Source of truth (where RPC writes)
+
+**Fix**: Changed `/api/activities/assigned` to query `activity_responses` instead
+**File**: `activities_api.py` (lines 206-239)
+
+#### 2. **Circular Reference Error (500 Error)**
+**Problem**: API crashed with "Circular reference detected"
+**Root Cause**: `assignment['progress'] = assignment` created infinite loop
+**Fix**: Build clean JSON objects without self-references
+**File**: `activities_api.py`
+
+#### 3. **Motivational Modal Not Showing**
+**Problem**: Neither welcome modal nor motivational popup appeared
+**Root Cause**: Logic gap - user had activities but `has_seen_welcome=false`
+- Welcome modal required: NO activities + not seen
+- Motivational required: HAS activities + HAS seen
+- Alena had activities but hadn't seen → neither showed!
+
+**Fix**: Show motivational popup if user HAS activities (regardless of seen status)
+**File**: `usePrescription.js` (lines 68-90)
+
+### ✅ KEY DISCOVERY: Table Architecture
+
+```
+┌─────────────────────────────────────────────────────┐
+│  activity_responses = THE SOURCE OF TRUTH           │
+│  ✅ Staff dashboard uses it                         │
+│  ✅ Student dashboard uses it                       │
+│  ✅ Assignment RPC inserts here                     │
+└─────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────┐
+│  student_activities = LEGACY TABLE (NOT USED)       │
+│  ❌ Not populated by assignment RPC                 │
+│  ❌ Contains stale/incomplete data                  │
+│  📝 Can be ignored or deprecated                    │
+└─────────────────────────────────────────────────────┘
+```
+
+**Conclusion**: No sync script needed! Both dashboards correctly use `activity_responses`.
+
+### ✅ VERSION DEPLOYED: v1s
+- Built and pushed to CDN
+- KnackAppLoader updated
+- Heroku backend deployed (v399)
+
+---
+
+## 🚀 NEXT STEPS (Priority Order)
+
+### Phase 1: Staff Platform Updates (Priority 1)
+
+#### 1a. Re-add VESPA Scores Toggle
+- Toggle button to show/hide VESPA scores on student list
+- Was removed during previous refactor
+- **File**: `staff/src/components/StudentListView.vue`
+
+#### 1b. UI Improvements - Progress Buttons on Group Page
+- Improve button styling on group/class view
+- Better visual hierarchy
+- **File**: `staff/src/components/StudentListView.vue`
+
+---
+
+### Phase 2: Student Platform Updates (Priority 2)
+
+#### 2a. Apply Matching Theme Colors to Activities
+- Activity cards should use VESPA category colors
+- Vision=Orange, Effort=Blue, Systems=Green, Practice=Purple, Attitude=Pink
+- **Files**: `ActivityCard.vue`, `ActivityDashboard.vue`
+
+#### 2b. Hide "Recommendations" Section
+- Add toggle/button to collapse "Recommended for Your Scores" section
+- User preference (localStorage or Supabase)
+- **File**: `ActivityDashboard.vue`
+
+#### 2c. Fix Non-Working Buttons
+**i) "Improve" Buttons**
+- Buttons on VESPA score cards don't navigate to activities
+- Should filter activities by that category
+- **File**: `ActivityDashboard.vue`
+
+**ii) "Choose by Problem" Function**
+- Button exists but may not trigger modal
+- Ensure ProblemSelector opens correctly
+- **Files**: `ActivityDashboard.vue`, `ProblemSelector.vue`
+
+**iii) Gamification Buttons**
+- Points/Achievements/Streak buttons non-functional
+- Need to open respective modals/panels
+- **Files**: `ActivityDashboard.vue`, `AchievementPanel.vue`
+
+**iv) Motivational Modal Button**
+- "Add More Activities" button in motivational popup
+- Should open ProblemSelector
+- **File**: `usePrescription.js` (handleMotivationalAddMore)
+
+---
+
+### Phase 3: Gamification System (Priority 3)
+
+#### 3a. Get Achievements Working
+- Unlock achievements based on completion count
+- Display achievement badges
+- Celebration animations
+- **Files**: `useAchievements.js`, `AchievementPanel.vue`
+
+#### 3b. Streaks System
+- Track consecutive days of activity
+- Display current streak
+- Streak loss warnings
+- **Files**: `useAchievements.js`, `ActivityDashboard.vue`
+
+#### 3c. Points Display
+- Show total points prominently
+- Points animation on earn
+- Leaderboard (optional)
+- **Files**: `ActivityDashboard.vue`, completion flow
+
+---
+
+### Phase 4: Notifications System (Priority 4)
+
+#### 4a. Visual Indicators
+- **Red dots/badges** on activities with:
+  - New feedback from staff
+  - Newly assigned activities
+  - Completed activities (for staff view)
+
+#### 4b. Notification Banner
+- Top banner showing:
+  - "You have 3 new activities assigned!"
+  - "Staff left feedback on 'Weekly Planner'"
+  - Dismissable
+
+#### 4c. Email Notifications
+- Email when:
+  - Staff assigns new activity
+  - Staff gives feedback
+  - Achievement unlocked
+- **Settings**: Toggle on/off per notification type
+- **Database**: `vespa_students.notification_preferences` (JSONB)
+
+#### 4d. Staff-Student Sync
+- Real-time or near-real-time updates
+- Staff sees when student completes activity
+- Student sees when staff assigns/reviews
+
+---
+
+## 📁 FILES CHANGED THIS SESSION
+
+### Backend (DASHBOARD repo):
+```
+activities_api.py
+├── Lines 206-239: Changed to query activity_responses (not student_activities)
+├── Lines 231-256: Build clean JSON (no circular references)
+└── Deployed: Heroku v399
+```
+
+### Frontend (VESPAQuestionnaireV2 repo):
+```
+vespa-activities-v3/student/
+├── src/composables/usePrescription.js
+│   └── Lines 68-90: Fixed modal display logic
+├── vite.config.js
+│   └── Version bump: 1r → 1s
+└── dist/
+    ├── student-activities1s.js ✅
+    └── student-activities1s.css ✅
+```
+
+### Integration (Homepage repo):
+```
+KnackAppLoader(copy).js
+└── Lines 1535-1536: Updated CDN URLs to v1s
+```
+
+---
+
+## 🎉 WHAT WAS COMPLETED EARLIER TODAY
 
 ### ✅ VERSION 1K - PRESCRIPTION FLOW & POINTS SYSTEM COMPLETE! 🚀
 
@@ -1352,10 +1543,43 @@ DASHBOARD repo:
 
 ---
 
-**Last Updated**: December 2, 2025 (Evening Session)
-**Version**: v1k  
-**Status**: Backend ✅ | Cycle Detection ✅ | Prescription Logic ✅ | Points System ✅ | Gamification 🟡  
-**Next**: Test v1k prescription flow, then polish achievements UI  
+**Last Updated**: December 2, 2025 (Evening Session 2)
+**Version**: v1s  
+**Status**: Backend ✅ | Cycle Detection ✅ | Prescription Logic ✅ | Points System ✅ | Activities Loading ✅ | Modals ✅ | Gamification 🟡 | Notifications 🔴  
 
-🚀 **MAJOR MILESTONE! Prescription flow complete, points working, ready for production testing!**
+---
+
+## 📊 CURRENT STATUS SUMMARY
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| **Backend API** | ✅ Complete | All endpoints working |
+| **Cycle Detection** | ✅ Complete | Reads from Supabase cache |
+| **VESPA Scores Display** | ✅ Complete | Shows correct scores |
+| **Activity Loading** | ✅ Fixed | Now uses activity_responses table |
+| **Prescription Flow** | ✅ Complete | Welcome + Motivational modals |
+| **Problem Selector** | ✅ Complete | 35 problems, 5 categories |
+| **Points Calculation** | ✅ Complete | 10pts L2, 15pts L3 |
+| **Activity Removal** | ✅ Complete | Soft delete preserves data |
+| **Staff-Student Sync** | ✅ Complete | Both use activity_responses |
+| **Theme Colors** | 🟡 Partial | Needs category-specific colors |
+| **Improve Buttons** | 🔴 Not Working | Need to filter by category |
+| **Gamification UI** | 🟡 Partial | Logic ready, UI needs polish |
+| **Achievements** | 🟡 Partial | System ready, display incomplete |
+| **Streaks** | 🔴 Not Working | Logic needed |
+| **Notifications** | 🔴 Not Started | Banners, dots, emails |
+
+---
+
+## 🎯 IMMEDIATE NEXT ACTIONS
+
+1. **Staff Dashboard**: Re-add VESPA scores toggle + progress button UI
+2. **Student Theme Colors**: Apply category colors to activity cards
+3. **Fix Buttons**: Improve, Choose by Problem, Gamification
+4. **Gamification**: Get achievements and streaks displaying
+5. **Notifications**: Build indicator system (dots, banners, emails)
+
+---
+
+🚀 **MAJOR PROGRESS! Core functionality complete, activities loading correctly, modals working. Ready for UI polish phase!**
 
