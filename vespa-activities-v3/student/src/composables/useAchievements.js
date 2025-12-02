@@ -11,6 +11,8 @@ export function useAchievements(studentEmail) {
   // State
   const achievements = ref([]);
   const totalPoints = ref(0);
+  const totalActivitiesCompleted = ref(0);
+  const currentStreak = ref(0);
   const loading = ref(false);
   const error = ref(null);
   
@@ -37,15 +39,52 @@ export function useAchievements(studentEmail) {
     return grouped;
   });
   
+  // Streak display with emoji
+  const streakDisplay = computed(() => {
+    if (currentStreak.value === 0) return '🔥 Start a streak!';
+    if (currentStreak.value === 1) return '🔥 1 day';
+    if (currentStreak.value < 7) return `🔥 ${currentStreak.value} days`;
+    if (currentStreak.value < 14) return `🔥🔥 ${currentStreak.value} days!`;
+    return `🔥🔥🔥 ${currentStreak.value} days!!`;
+  });
+  
   // Methods
   const fetchAchievements = async () => {
     try {
       loading.value = true;
       error.value = null;
       
-      console.log('[useAchievements] Fetching achievements for:', studentEmail);
+      console.log('[useAchievements] Fetching gamification data for:', studentEmail);
       
-      // Fetch achievements
+      // Fetch full gamification data from the new endpoint
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/students/gamification?email=${encodeURIComponent(studentEmail)}`
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Update all gamification state
+          totalPoints.value = data.total_points || 0;
+          totalActivitiesCompleted.value = data.total_activities_completed || 0;
+          currentStreak.value = data.current_streak || 0;
+          achievements.value = data.achievements || [];
+          
+          console.log('[useAchievements] ✅ Loaded gamification data:', {
+            points: totalPoints.value,
+            completed: totalActivitiesCompleted.value,
+            streak: currentStreak.value,
+            achievements: achievements.value.length
+          });
+          
+          return;
+        }
+      } catch (apiError) {
+        console.warn('[useAchievements] API error, falling back to direct queries:', apiError);
+      }
+      
+      // Fallback: Fetch achievements directly from Supabase
       const { data: achievementsData, error: achievementsError } = await supabase
         .from('student_achievements')
         .select('*')
@@ -59,27 +98,21 @@ export function useAchievements(studentEmail) {
       // Calculate total points from achievements
       totalPoints.value = achievements.value.reduce((sum, a) => sum + (a.points_value || 0), 0);
       
-      console.log('[useAchievements] ✅ Loaded achievements:', achievements.value.length, 'Total points:', totalPoints.value);
+      console.log('[useAchievements] ✅ Loaded achievements (fallback):', achievements.value.length);
       
-      // Fetch from API endpoint (cached totals from vespa_students table)
+      // Try to get stats from old endpoint
       try {
         const response = await fetch(
-          `${API_BASE_URL}/api/students/stats?email=${studentEmail}`
+          `${API_BASE_URL}/api/students/stats?email=${encodeURIComponent(studentEmail)}`
         );
         
         if (response.ok) {
           const data = await response.json();
-          if (data.total_points !== undefined) {
-            // Use API value if available (more accurate, includes all sources)
-            totalPoints.value = data.total_points || totalPoints.value;
-            console.log('[useAchievements] ✅ Updated total_points from API:', totalPoints.value);
-          }
-        } else {
-          console.warn('[useAchievements] Could not fetch student stats from API, using calculated total');
+          totalPoints.value = data.total_points || totalPoints.value;
+          totalActivitiesCompleted.value = data.total_activities_completed || 0;
         }
       } catch (err) {
-        console.warn('[useAchievements] Error fetching student stats:', err);
-        // Continue with calculated totalPoints from achievements
+        console.warn('[useAchievements] Error fetching stats:', err);
       }
       
     } catch (err) {
@@ -178,6 +211,8 @@ export function useAchievements(studentEmail) {
     // State
     achievements,
     totalPoints,
+    totalActivitiesCompleted,
+    currentStreak,
     loading,
     error,
     
@@ -185,6 +220,7 @@ export function useAchievements(studentEmail) {
     pinnedAchievements,
     recentAchievements,
     achievementsByType,
+    streakDisplay,
     
     // Methods
     fetchAchievements,

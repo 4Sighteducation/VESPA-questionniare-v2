@@ -54,8 +54,8 @@
         <option value="completed">Completed (100%)</option>
       </select>
 
-      <!-- Scores toggle disabled until VESPA scores synced from Knack -->
-      <!-- <div class="display-toggle">
+      <!-- VESPA Scores / Activities Toggle -->
+      <div class="display-toggle">
         <button
           :class="['toggle-btn', { active: displayMode === 'activities' }]"
           @click="displayMode = 'activities'"
@@ -66,9 +66,9 @@
           :class="['toggle-btn', { active: displayMode === 'scores' }]"
           @click="displayMode = 'scores'"
         >
-          <i class="fas fa-chart-bar"></i> Scores
+          <i class="fas fa-chart-bar"></i> VESPA Scores
         </button>
-      </div> -->
+      </div>
 
       <button class="btn btn-secondary" @click="clearFilters">
         <i class="fas fa-times"></i> Clear
@@ -692,31 +692,48 @@ watch([searchTerm, filterYearGroup, filterProgress], () => {
 }
 
 .btn-view {
-  width: 56px;
-  height: 56px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+  width: 70px;
+  height: 42px;
+  border-radius: 21px;
+  background: linear-gradient(135deg, #079baa 0%, #057a87 100%);
   color: white;
   border: none;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.25s ease;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  gap: 4px;
+  font-size: 12px;
   font-weight: 700;
-  box-shadow: 0 2px 6px rgba(8, 145, 178, 0.3);
+  box-shadow: 0 3px 8px rgba(7, 155, 170, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .btn-view:hover {
-  background: linear-gradient(135deg, #0e7490 0%, #164e63 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(8, 145, 178, 0.4);
+  background: linear-gradient(135deg, #068a99 0%, #046770 100%);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 6px 16px rgba(7, 155, 170, 0.45);
+}
+
+.btn-view:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 6px rgba(7, 155, 170, 0.3);
+}
+
+.btn-view i {
+  font-size: 10px;
+  transition: transform 0.2s;
+}
+
+.btn-view:hover i {
+  transform: translateX(2px);
 }
 
 .view-text {
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.5px;
 }
 
@@ -748,25 +765,25 @@ watch([searchTerm, filterYearGroup, filterProgress], () => {
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
-/* Category Colors - VESPA Brand Theme */
+/* Category Colors - VESPA Brand Theme (matching staff dashboard) */
 .vision {
-  background: linear-gradient(135deg, #ff8f00 0%, #f57c00 100%);
+  background: linear-gradient(135deg, #fc8900 0%, #e67a00 100%);
 }
 
 .effort {
-  background: linear-gradient(135deg, #86b4f0 0%, #5e9de8 100%);
+  background: linear-gradient(135deg, #78aced 0%, #5a9ce0 100%);
 }
 
 .systems {
-  background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%);
+  background: linear-gradient(135deg, #7bc114 0%, #68a611 100%);
 }
 
 .practice {
-  background: linear-gradient(135deg, #7f31a4 0%, #6b2589 100%);
+  background: linear-gradient(135deg, #792e9c 0%, #642480 100%);
 }
 
 .attitude {
-  background: linear-gradient(135deg, #f032e6 0%, #d91ad9 100%);
+  background: linear-gradient(135deg, #eb2de3 0%, #d11bc9 100%);
 }
 
 .vespa-column-header {
@@ -796,23 +813,23 @@ watch([searchTerm, filterYearGroup, filterProgress], () => {
 }
 
 .vespa-column.vision .category-letter {
-  background: linear-gradient(135deg, #ff8f00 0%, #f57c00 100%);
+  background: linear-gradient(135deg, #fc8900 0%, #e67a00 100%);
 }
 
 .vespa-column.effort .category-letter {
-  background: linear-gradient(135deg, #86b4f0 0%, #5e9de8 100%);
+  background: linear-gradient(135deg, #78aced 0%, #5a9ce0 100%);
 }
 
 .vespa-column.systems .category-letter {
-  background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%);
+  background: linear-gradient(135deg, #7bc114 0%, #68a611 100%);
 }
 
 .vespa-column.practice .category-letter {
-  background: linear-gradient(135deg, #7f31a4 0%, #6b2589 100%);
+  background: linear-gradient(135deg, #792e9c 0%, #642480 100%);
 }
 
 .vespa-column.attitude .category-letter {
-  background: linear-gradient(135deg, #f032e6 0%, #d91ad9 100%);
+  background: linear-gradient(135deg, #eb2de3 0%, #d11bc9 100%);
 }
 
 .pagination {

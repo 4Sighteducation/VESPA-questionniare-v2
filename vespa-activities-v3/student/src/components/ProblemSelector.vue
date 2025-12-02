@@ -100,13 +100,26 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import supabase from '../../shared/supabaseClient';
+
+const props = defineProps({
+  preSelectedCategory: {
+    type: String,
+    default: null
+  }
+});
 
 const emit = defineEmits(['close', 'problem-selected']);
 
 const loading = ref(false);
+const isLoadingActivities = ref(false);
 const problemMappings = ref({});
+const selectedProblems = ref(new Set());
+const hoveredProblem = ref(null);
+
+// Expand the pre-selected category by default
+const expandedCategories = ref(new Set());
 
 const categories = ['Vision', 'Effort', 'Systems', 'Practice', 'Attitude'];
 
@@ -197,6 +210,82 @@ const getProblemsForCategory = (category) => {
   }));
 };
 
+// Toggle problem selection (max 3)
+const toggleProblem = (problem) => {
+  if (selectedProblems.value.has(problem.id)) {
+    selectedProblems.value.delete(problem.id);
+    selectedProblems.value = new Set(selectedProblems.value); // Trigger reactivity
+  } else if (selectedProblems.value.size < 3) {
+    selectedProblems.value.add(problem.id);
+    selectedProblems.value = new Set(selectedProblems.value); // Trigger reactivity
+  } else {
+    // Already at max - give feedback
+    alert('You can select up to 3 problems. Please deselect one before adding another.');
+  }
+};
+
+const clearSelection = () => {
+  selectedProblems.value = new Set();
+};
+
+const showPreview = (problem) => {
+  hoveredProblem.value = problem;
+};
+
+const hidePreview = () => {
+  hoveredProblem.value = null;
+};
+
+// Get selected problems as objects
+const getSelectedProblems = () => {
+  const allProblems = [];
+  Object.values(problemMappings.value).forEach(categoryProblems => {
+    allProblems.push(...categoryProblems);
+  });
+  return allProblems.filter(p => selectedProblems.value.has(p.id));
+};
+
+// Load activities for all selected problems
+const loadActivitiesForSelectedProblems = async () => {
+  if (selectedProblems.value.size === 0) return;
+  
+  console.log('🎯 Loading activities for selected problems:', Array.from(selectedProblems.value));
+  
+  try {
+    isLoadingActivities.value = true;
+    
+    // Get all selected problem IDs
+    const problemIds = Array.from(selectedProblems.value);
+    
+    // Query for activities that match ANY of the selected problems
+    // Using OR logic with array overlap
+    const { data: activities, error: queryError } = await supabase
+      .from('activities')
+      .select('*')
+      .overlaps('problem_mappings', problemIds)
+      .eq('is_active', true)
+      .order('vespa_category, level, display_order');
+
+    if (queryError) throw queryError;
+
+    console.log(`✅ Found ${activities?.length || 0} activities for ${problemIds.length} problems`);
+    
+    // Emit event with all selected problems and matching activities
+    emit('problem-selected', {
+      problem: getSelectedProblems()[0], // Primary problem for display
+      problems: getSelectedProblems(),   // All selected problems
+      activities: activities || []
+    });
+
+  } catch (err) {
+    console.error('❌ Failed to load activities for problems:', err);
+    alert('Failed to load activities. Please try again.');
+  } finally {
+    isLoadingActivities.value = false;
+  }
+};
+
+// Legacy single-select function (keeping for backward compatibility)
 const selectProblem = async (problem) => {
   console.log('🎯 Problem selected:', problem);
   
@@ -227,6 +316,15 @@ const selectProblem = async (problem) => {
     loading.value = false;
   }
 };
+
+// Watch for pre-selected category
+watch(() => props.preSelectedCategory, (newCat) => {
+  if (newCat) {
+    // Expand this category
+    const categoryName = newCat.charAt(0).toUpperCase() + newCat.slice(1);
+    expandedCategories.value.add(categoryName);
+  }
+}, { immediate: true });
 </script>
 
 <style scoped>
@@ -349,9 +447,152 @@ const selectProblem = async (problem) => {
   transform: translateX(4px);
 }
 
+/* Selected State */
+.problem-item.selected {
+  background: #079baa;
+  color: white;
+  border-color: #079baa;
+  transform: translateX(4px);
+}
+
+.problem-item.selected .problem-count {
+  opacity: 1;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.problem-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: #079baa;
+  cursor: pointer;
+}
+
+/* Preview Panel */
+.preview-panel {
+  position: fixed;
+  right: 30px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  width: 280px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  border: 2px solid #079baa;
+  z-index: 1000;
+}
+
+.preview-panel h5 {
+  margin: 0 0 12px 0;
+  color: #079baa;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.preview-problem {
+  font-style: italic;
+  color: #495057;
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.preview-activities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.preview-activity-chip {
+  background: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  color: #475569;
+  font-weight: 500;
+}
+
+.preview-more {
+  color: #079baa;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px;
+}
+
+/* Modal Footer */
+.modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  border-radius: 0 0 16px 16px;
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+}
+
+.selection-summary {
+  font-weight: 600;
+  color: #079baa;
+  font-size: 14px;
+}
+
+.footer-right {
+  display: flex;
+  gap: 12px;
+}
+
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #079baa 0%, #057a87 100%);
+  color: white;
+  border: none;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(7, 155, 170, 0.3);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: white;
+  color: #079baa;
+  border: 2px solid #079baa;
+}
+
+.btn-secondary:hover {
+  background: #f0f9ff;
+}
+
 @media (max-width: 900px) {
   .problems-categories {
     grid-template-columns: 1fr;
+  }
+  
+  .preview-panel {
+    display: none;
   }
 }
 </style>

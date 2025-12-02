@@ -10,11 +10,18 @@
           <p class="subtitle">Ready to boost your VESPA scores today?</p>
         </div>
         <div class="header-stats">
-          <div class="stat-card">
+          <div class="stat-card clickable" @click="$emit('show-achievements')">
             <span class="stat-emoji">⭐</span>
             <div class="stat-content">
               <div class="stat-value">{{ totalPoints }}</div>
-              <div class="stat-label">Total Points</div>
+              <div class="stat-label">Points</div>
+            </div>
+          </div>
+          <div class="stat-card clickable" @click="$emit('show-achievements')">
+            <span class="stat-emoji">🔥</span>
+            <div class="stat-content">
+              <div class="stat-value">{{ currentStreak }}</div>
+              <div class="stat-label">Day Streak</div>
             </div>
           </div>
           <div class="stat-card">
@@ -31,20 +38,13 @@
               <div class="stat-label">In Progress</div>
             </div>
           </div>
-          <div class="stat-card">
-            <span class="stat-emoji">📚</span>
-            <div class="stat-content">
-              <div class="stat-value">{{ assignedCount }}</div>
-              <div class="stat-label">Assigned</div>
-            </div>
-          </div>
         </div>
       </div>
       
       <!-- Achievement Button (Top Right) -->
       <button @click="$emit('show-achievements')" class="achievements-button">
         <span class="trophy-icon">🏆</span>
-        <span class="achievement-text">Achievements ({{ totalPoints }} pts)</span>
+        <span class="achievement-text">{{ achievementCount }} Achievements</span>
       </button>
     </div>
 
@@ -93,27 +93,39 @@
       </div>
     </section>
 
-    <!-- Recommended Activities -->
+    <!-- Recommended Activities (Collapsible) -->
     <section class="recommended-section" v-if="recommendedActivities.length > 0">
       <div class="section-header-with-action">
-        <h2 class="section-title">
-          <span class="title-icon">📊</span>
-          Recommended for Your Scores
-        </h2>
+        <div class="section-title-group">
+          <h2 class="section-title">
+            <span class="title-icon">💡</span>
+            Recommended for Your Scores
+          </h2>
+          <button 
+            @click="toggleRecommendations" 
+            class="toggle-section-btn"
+            :title="showRecommendations ? 'Hide recommendations' : 'Show recommendations'"
+          >
+            <i :class="showRecommendations ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
+            {{ showRecommendations ? 'Hide' : 'Show' }}
+          </button>
+        </div>
         <button @click="handleChooseByProblemClick" class="btn-select-by-problem">
           <i class="fas fa-hand-pointer"></i>
           Or Choose by Problem
         </button>
       </div>
-      <div class="activity-grid">
-        <ActivityCard
-          v-for="activity in recommendedActivities"
-          :key="activity.id"
-          :activity="activity"
-          :progress="getProgressForActivity(activity.id)"
-          @start-activity="handleStartActivity"
-        />
-      </div>
+      <transition name="slide-fade">
+        <div v-show="showRecommendations" class="activity-grid">
+          <ActivityCard
+            v-for="activity in recommendedActivities"
+            :key="activity.id"
+            :activity="activity"
+            :progress="getProgressForActivity(activity.id)"
+            @start-activity="handleStartActivity"
+          />
+        </div>
+      </transition>
     </section>
 
     <!-- My Activities (Grouped by Category) -->
@@ -188,6 +200,10 @@ const props = defineProps({
     type: Number,
     default: 0
   },
+  currentStreak: {
+    type: Number,
+    default: 0
+  },
   showWelcomeModal: {
     type: Boolean,
     default: false
@@ -198,18 +214,32 @@ const props = defineProps({
   }
 });
 
+// Computed for achievement count
+const achievementCount = computed(() => {
+  return props.achievements?.length || 0;
+});
+
 const emit = defineEmits([
   'start-activity', 
   'add-activity', 
   'remove-activity', 
   'show-achievements',
   'show-welcome-modal',
-  'show-problem-selector'
+  'show-problem-selector',
+  'improve-category'
 ]);
 
 const filterCategory = ref(null);
 const categories = VESPA_CATEGORIES;
-const categoryColors = CATEGORY_COLORS;
+
+// Category Colors - matching staff dashboard
+const categoryColors = {
+  'Vision': '#fc8900',
+  'Effort': '#78aced',
+  'Systems': '#7bc114',
+  'Practice': '#792e9c',
+  'Attitude': '#eb2de3'
+};
 
 // Category Emojis
 const categoryEmojis = {
@@ -218,6 +248,20 @@ const categoryEmojis = {
   'Systems': '⚙️',
   'Practice': '🎯',
   'Attitude': '🧠'
+};
+
+// Recommendations visibility (persisted in localStorage)
+const showRecommendations = ref(true);
+
+// Load saved preference on mount
+const savedPref = localStorage.getItem('vespa-show-recommendations');
+if (savedPref !== null) {
+  showRecommendations.value = savedPref === 'true';
+}
+
+const toggleRecommendations = () => {
+  showRecommendations.value = !showRecommendations.value;
+  localStorage.setItem('vespa-show-recommendations', showRecommendations.value.toString());
 };
 
 // Get student first name
@@ -310,21 +354,13 @@ const handleChooseByProblemClick = () => {
 const handleImproveCategory = (category) => {
   console.log('[ActivityDashboard] 🎯 Improve button clicked for category:', category);
   
-  // If user has no activities, show problem selector for this category
-  if (props.myActivities.length === 0) {
-    console.log('[ActivityDashboard] 📤 Emitting show-problem-selector (no activities)');
-    emit('show-problem-selector');
-    return;
-  }
+  // Always open Problem Selector with the category pre-filtered
+  // This allows students to add activities for their weak areas
+  console.log('[ActivityDashboard] 📤 Emitting improve-category with:', category);
+  emit('improve-category', category);
   
-  // Filter activities by category
-  console.log('[ActivityDashboard] Filtering by category:', category);
-  filterCategory.value = category;
-  // Scroll to activities section
-  const section = document.querySelector('.my-activities');
-  if (section) {
-    section.scrollIntoView({ behavior: 'smooth' });
-  }
+  // Also emit show-problem-selector to trigger modal open
+  emit('show-problem-selector', { category });
 };
 </script>
 
@@ -420,6 +456,16 @@ const handleImproveCategory = (category) => {
 .stat-card:hover {
   background: rgba(255, 255, 255, 0.3);
   transform: translateY(-2px);
+}
+
+.stat-card.clickable {
+  cursor: pointer;
+}
+
+.stat-card.clickable:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .stat-emoji {
@@ -642,6 +688,62 @@ const handleImproveCategory = (category) => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.section-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.toggle-section-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggle-section-btn:hover {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.toggle-section-btn i {
+  font-size: 0.75rem;
+  transition: transform 0.2s;
+}
+
+/* Slide transition for collapsible sections */
+.slide-fade-enter-active {
+  transition: all 0.3s ease-out;
+}
+
+.slide-fade-leave-active {
+  transition: all 0.2s ease-in;
+}
+
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+  max-height: 0;
+  overflow: hidden;
+}
+
+.slide-fade-enter-to,
+.slide-fade-leave-from {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .btn-select-by-problem {

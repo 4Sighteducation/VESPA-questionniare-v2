@@ -11,6 +11,13 @@
   </div>
   
   <div v-else class="vespa-activities-app">
+    <!-- Notification Banner (Top) -->
+    <NotificationBanner
+      :notifications="recentUnreadNotifications"
+      @dismiss="handleDismissNotification"
+      @dismiss-all="handleDismissAllNotifications"
+    />
+    
     <!-- Notification Bell -->
     <div class="notification-bell" v-if="unreadNotifications > 0">
       <button @click="toggleNotifications" class="bell-button">
@@ -26,12 +33,15 @@
       :my-activities="myActivities"
       :achievements="achievements"
       :total-points="totalPoints"
+      :current-streak="currentStreak"
       :show-welcome-modal="showWelcomeModal"
       :show-problem-selector="showProblemSelector"
       @start-activity="openActivityModal"
       @add-activity="addActivityToDashboard"
       @remove-activity="removeActivityFromDashboard"
       @show-problem-selector="handleShowProblemSelector"
+      @show-achievements="showAchievements = true"
+      @improve-category="handleImproveCategory"
     />
     
     <!-- Welcome Modal (Initial Prescription Flow - First Time Per Cycle) -->
@@ -55,6 +65,7 @@
     <!-- Problem Selector Modal -->
     <ProblemSelector
       v-if="showProblemSelector"
+      :pre-selected-category="selectedCategory"
       @problem-selected="handleProblemSelection"
       @close="closeProblemSelector"
     />
@@ -98,6 +109,7 @@ import WelcomeModal from './components/WelcomeModal.vue';
 import MotivationalPopup from './components/MotivationalPopup.vue';
 import ProblemSelector from './components/ProblemSelector.vue';
 import SelectedActivitiesModal from './components/SelectedActivitiesModal.vue';
+import NotificationBanner from './components/NotificationBanner.vue';
 import { useActivities } from './composables/useActivities';
 import { useVESPAScores } from './composables/useVESPAScores';
 import { useNotifications } from './composables/useNotifications';
@@ -129,6 +141,7 @@ const activeActivity = ref(null);
 const activityQuestions = ref([]);
 const existingResponses = ref({});
 const showAchievements = ref(false);
+const selectedCategory = ref(null); // For improve button -> problem selector
 
 // Composables
 const {
@@ -145,14 +158,27 @@ const { vespaScores, fetchVESPAScores } = useVESPAScores(studentEmail.value);
 const { 
   notifications, 
   unreadNotifications, 
+  sortedNotifications,
   fetchNotifications,
   markRead,
+  markAllRead,
+  dismissNotification,
   toggleNotifications
 } = useNotifications(studentEmail.value);
+
+// Recent unread notifications for the banner (max 3)
+const recentUnreadNotifications = computed(() => {
+  return sortedNotifications.value
+    .filter(n => !n.is_read && !n.is_dismissed)
+    .slice(0, 3);
+});
 
 const {
   achievements,
   totalPoints,
+  totalActivitiesCompleted,
+  currentStreak,
+  streakDisplay,
   fetchAchievements,
   checkNewAchievements
 } = useAchievements(studentEmail.value);
@@ -476,19 +502,41 @@ const handleProblemSelection = (data) => {
   handleProblemSelected(data);
 };
 
-const handleShowProblemSelector = () => {
-  console.log('[App] 🎯 Show Problem Selector event received');
+const handleShowProblemSelector = (data) => {
+  console.log('[App] 🎯 Show Problem Selector event received', data);
   console.log('[App] Before:', { showProblemSelector: showProblemSelector.value, showWelcomeModal: showWelcomeModal.value, showMotivationalPopup: showMotivationalPopup.value });
   
   // Close other modals
   showWelcomeModal.value = false;
   showMotivationalPopup.value = false;
   
+  // Set category filter if provided
+  if (data?.category) {
+    selectedCategory.value = data.category;
+  } else {
+    selectedCategory.value = null;
+  }
+  
   // Open problem selector
   showProblemSelector.value = true;
   
-  console.log('[App] After:', { showProblemSelector: showProblemSelector.value });
+  console.log('[App] After:', { showProblemSelector: showProblemSelector.value, selectedCategory: selectedCategory.value });
   console.log('[App] ✅ Problem selector should now render');
+};
+
+const handleImproveCategory = (category) => {
+  console.log('[App] 🎯 Improve category event received:', category);
+  selectedCategory.value = category;
+  // The show-problem-selector event will be emitted right after this
+};
+
+// Notification handlers
+const handleDismissNotification = async (notificationId) => {
+  await dismissNotification(notificationId);
+};
+
+const handleDismissAllNotifications = async () => {
+  await markAllRead();
 };
 
 const handleMotivationalAddMoreClick = () => {

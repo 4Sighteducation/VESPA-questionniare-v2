@@ -1,10 +1,23 @@
 <template>
   <div 
     class="activity-card" 
-    :class="{ 'completed': isCompleted, 'prescribed': isAssigned }"
+    :class="{ 
+      'completed': isCompleted, 
+      'prescribed': isAssigned,
+      'has-notification': hasUnreadFeedback || isNewlyAssigned 
+    }"
     :data-activity-id="activity.id"
   >
     <div class="card-glow" :style="{ background: categoryColor }"></div>
+    
+    <!-- Notification Indicators -->
+    <div v-if="hasUnreadFeedback" class="notification-badge feedback-badge" title="You have new feedback!">
+      <span class="badge-icon">💬</span>
+      <span class="badge-pulse"></span>
+    </div>
+    <div v-else-if="isNewlyAssigned" class="notification-badge new-badge" title="Newly assigned!">
+      <span class="badge-icon">✨</span>
+    </div>
     
     <!-- Delete Button (only for assigned activities) -->
     <button 
@@ -86,10 +99,23 @@ const props = defineProps({
   isAssigned: {
     type: Boolean,
     default: false
+  },
+  hasFeedback: {
+    type: Boolean,
+    default: false
+  },
+  isNewlyAssigned: {
+    type: Boolean,
+    default: false
   }
 });
 
 defineEmits(['start-activity', 'remove-activity', 'view-feedback']);
+
+// Check for unread feedback
+const hasUnreadFeedback = computed(() => {
+  return props.progress?.staff_feedback && !props.progress?.feedback_read_by_student;
+});
 
 const categoryColor = computed(() => {
   return CATEGORY_COLORS[props.activity.vespa_category] || '#079baa';
@@ -232,6 +258,64 @@ const progressStatusText = computed(() => {
   background: #dc3545;
   color: white;
   transform: scale(1.1);
+}
+
+/* Notification Badges */
+.notification-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 15;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.feedback-badge {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+.new-badge {
+  background: linear-gradient(135deg, #079baa 0%, #057a87 100%);
+}
+
+.badge-icon {
+  font-size: 16px;
+  z-index: 2;
+}
+
+.badge-pulse {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50%;
+  background: inherit;
+  animation: pulse-ring 1.5s infinite;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+.activity-card.has-notification {
+  border: 2px solid #dc3545;
 }
 
 .card-header {

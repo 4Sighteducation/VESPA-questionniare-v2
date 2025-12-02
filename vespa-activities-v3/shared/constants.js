@@ -11,13 +11,13 @@ export const VESPA_CATEGORIES = [
   'Attitude'
 ];
 
-// Category Colors (matching VESPA theme palette)
+// Category Colors (matching Staff Dashboard palette)
 export const CATEGORY_COLORS = {
-  Vision: '#ff8f00',      // Orange (from questionnaire)
-  Effort: '#5899a8',      // Blue from palette
-  Systems: '#7bd8d0',     // Turquoise from palette
-  Practice: '#8b72be',    // Purple
-  Attitude: '#ff769c'     // Rose/Pink
+  Vision: '#fc8900',      // Orange
+  Effort: '#78aced',      // Blue
+  Systems: '#7bc114',     // Green
+  Practice: '#792e9c',    // Purple
+  Attitude: '#eb2de3'     // Pink/Magenta
 };
 
 // Activity Status
