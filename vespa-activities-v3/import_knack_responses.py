@@ -172,7 +172,7 @@ def import_csv(csv_path: str, dry_run: bool = False):
             # Parse date
             completed_at = parse_knack_date(date_str) if is_completed else None
             
-            # Build response record
+            # Build response record (only columns that exist in activity_responses)
             response_record = {
                 'student_email': student_email,
                 'activity_id': activity_id,
@@ -181,9 +181,7 @@ def import_csv(csv_path: str, dry_run: bool = False):
                 'responses': responses if responses else None,
                 'staff_feedback': feedback,
                 'feedback_read_by_student': feedback_read,
-                'completed_at': completed_at,
-                'created_at': completed_at or datetime.utcnow().isoformat(),
-                'selection_method': 'knack_import'  # Track import source
+                'completed_at': completed_at
             }
             
             # Calculate word count from responses
