@@ -30,7 +30,7 @@
             placeholder="Search activities..."
             class="search-input-compact"
           />
-          <button class="btn btn-primary" @click="showAssignModal = true">
+          <button class="btn btn-primary" @click="showAssignByProblemModal = true">
             <i class="fas fa-user-md"></i> Assign by Problem
           </button>
           <button class="btn btn-warning" @click="clearAllActivities" title="Remove all activities (preserves data)">
@@ -214,12 +214,23 @@
       </div>
     </div>
 
-    <!-- Assign Activities Modal -->
-    <AssignModal
-      v-if="showAssignModal"
+    <!-- Assign by Problem Modal -->
+    <AssignByProblemModal
+      v-if="showAssignByProblemModal"
       :student="student"
       :staff-context="staffContext"
-      @close="showAssignModal = false"
+      @close="showAssignByProblemModal = false"
+      @problem-selected="handleProblemSelected"
+    />
+
+    <!-- Problem Activities Selection Modal -->
+    <ProblemActivitiesModal
+      v-if="showProblemActivitiesModal"
+      :problem="selectedProblem"
+      :activities="problemActivities"
+      :student="student"
+      :staff-context="staffContext"
+      @close="showProblemActivitiesModal = false"
       @assigned="handleAssigned"
     />
 
@@ -239,7 +250,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import ActivityCardCompact from './ActivityCardCompact.vue';
-import AssignModal from './AssignModal.vue';
+import AssignByProblemModal from './AssignByProblemModal.vue';
+import ProblemActivitiesModal from './ProblemActivitiesModal.vue';
 import ActivityDetailModal from './ActivityDetailModal.vue';
 import StudentScorecard from './StudentScorecard.vue';
 import { useActivities } from '../composables/useActivities';
@@ -271,7 +283,10 @@ const { getStaffEmail } = useAuth();
 
 // State
 const searchTerm = ref('');
-const showAssignModal = ref('');
+const showAssignByProblemModal = ref(false);
+const showProblemActivitiesModal = ref(false);
+const selectedProblem = ref(null);
+const problemActivities = ref([]);
 const selectedActivity = ref(null);
 const draggedActivity = ref(null);
 
@@ -480,8 +495,21 @@ const removeActivity = async (activity) => {
   }
 };
 
+const handleProblemSelected = ({ problem, activities }) => {
+  console.log('🎯 Problem selected:', problem);
+  console.log('📚 Activities found:', activities.length);
+  
+  selectedProblem.value = problem;
+  problemActivities.value = activities;
+  
+  // Close problem selection, open activity selection
+  showAssignByProblemModal.value = false;
+  showProblemActivitiesModal.value = true;
+};
+
 const handleAssigned = () => {
-  showAssignModal.value = false;
+  showAssignByProblemModal.value = false;
+  showProblemActivitiesModal.value = false;
   emit('refresh');
 };
 
