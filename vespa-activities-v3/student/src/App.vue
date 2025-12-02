@@ -127,39 +127,47 @@ const initialize = async () => {
     
     console.log('[VESPA Activities] Initializing for:', studentEmail.value);
     
-    // FIRST: Fetch current cycle from Supabase (vespa_students table)
+    // FIRST: Get current cycle from API (which uses RPC to bypass RLS)
     try {
-      const { data: studentData } = await supabase
-        .from('vespa_students')
-        .select('current_cycle, latest_vespa_scores')
-        .eq('email', studentEmail.value)
-        .single();
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://vespa-dashboard-9a1f84ee5341.herokuapp.com';
+      const response = await fetch(
+        `${API_BASE_URL}/api/activities/recommended?email=${encodeURIComponent(studentEmail.value)}&cycle=1`
+      );
       
-      if (studentData) {
-        // Get cycle from column OR from cached scores JSONB
-        currentCycle.value = studentData.current_cycle || 
-                            studentData.latest_vespa_scores?.cycle || 
-                            1;
-        console.log('[VESPA Activities] ✅ Current cycle from Supabase:', currentCycle.value);
+      if (response.ok) {
+        const data = await response.json();
+        // The API returns the actual cycle from vespa_students cache
+        currentCycle.value = data.cycle || data.vespaScores?.cycle_number || 1;
+        console.log('[VESPA Activities] ✅ Current cycle from API:', currentCycle.value);
       } else {
-        console.warn('[VESPA Activities] Student not found in vespa_students, using default cycle 1');
+        console.warn('[VESPA Activities] API call failed, using default cycle 1');
         currentCycle.value = 1;
       }
     } catch (cycleErr) {
-      console.error('[VESPA Activities] Error fetching cycle from Supabase:', cycleErr);
+      console.error('[VESPA Activities] Error fetching cycle from API:', cycleErr);
       currentCycle.value = 1; // Fallback to cycle 1
     }
     
     console.log('[VESPA Activities] Using cycle:', currentCycle.value);
     
-    // Fetch all data in parallel with correct cycle
-    await Promise.all([
-      fetchVESPAScores(currentCycle.value),
-      fetchRecommendedActivities(currentCycle.value),
-      fetchMyActivities(currentCycle.value),
-      fetchNotifications(),
-      fetchAchievements()
-    ]);
+    // Fetch all data with correct cycle (re-fetch with actual cycle if it changed)
+    if (currentCycle.value > 1) {
+      // Re-fetch with correct cycle
+      await Promise.all([
+        fetchVESPAScores(currentCycle.value),
+        fetchRecommendedActivities(currentCycle.value),
+        fetchMyActivities(currentCycle.value),
+        fetchNotifications(),
+        fetchAchievements()
+      ]);
+    } else {
+      // Already fetched cycle 1 above, just fetch remaining data
+      await Promise.all([
+        fetchMyActivities(currentCycle.value),
+        fetchNotifications(),
+        fetchAchievements()
+      ]);
+    }
     
     console.log('[VESPA Activities] ✅ Initialization complete');
     
