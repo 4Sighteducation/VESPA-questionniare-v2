@@ -54,7 +54,8 @@
         <option value="completed">Completed (100%)</option>
       </select>
 
-      <div class="display-toggle">
+      <!-- Scores toggle disabled until VESPA scores synced from Knack -->
+      <!-- <div class="display-toggle">
         <button
           :class="['toggle-btn', { active: displayMode === 'activities' }]"
           @click="displayMode = 'activities'"
@@ -67,7 +68,7 @@
         >
           <i class="fas fa-chart-bar"></i> Scores
         </button>
-      </div>
+      </div> -->
 
       <button class="btn btn-secondary" @click="clearFilters">
         <i class="fas fa-times"></i> Clear
@@ -484,15 +485,17 @@ watch([searchTerm, filterYearGroup, filterProgress], () => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  background: #f8f9fa;
+  padding: 8px 14px;
+  background: rgba(7, 155, 170, 0.15);
   border-radius: 20px;
   font-size: 14px;
-  color: #495057;
+  color: white;  /* White text */
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .info-badge i {
-  color: #079baa;
+  color: white;  /* White icons */
 }
 
 .filter-bar {
