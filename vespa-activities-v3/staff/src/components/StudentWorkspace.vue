@@ -8,7 +8,11 @@
       
       <div class="student-info-compact">
         <h3>{{ student.full_name }}</h3>
-        <span>{{ assignedActivities.length }} activities assigned</span>
+        <StudentScorecard 
+          :activities="student.activity_responses" 
+          :compact="true"
+          :show-weekly="true"
+        />
       </div>
       
       <div class="header-actions">
@@ -19,7 +23,10 @@
           class="search-input-compact"
         />
         <button class="btn btn-primary" @click="showAssignModal = true">
-          <i class="fas fa-plus"></i> Assign
+          <i class="fas fa-user-md"></i> Assign by Problem
+        </button>
+        <button class="btn btn-warning" @click="clearAllActivities" title="Remove all activities (preserves data)">
+          <i class="fas fa-broom"></i> Clear All
         </button>
         <button class="btn btn-secondary" @click="$emit('refresh')">
           <i class="fas fa-sync"></i>
@@ -228,6 +235,7 @@ import { ref, computed, onMounted } from 'vue';
 import ActivityCardCompact from './ActivityCardCompact.vue';
 import AssignModal from './AssignModal.vue';
 import ActivityDetailModal from './ActivityDetailModal.vue';
+import StudentScorecard from './StudentScorecard.vue';
 import { useActivities } from '../composables/useActivities';
 import { useAuth } from '../composables/useAuth';
 
@@ -479,6 +487,44 @@ const handleFeedbackSaved = () => {
 const handleStatusChanged = () => {
   selectedActivity.value = null;
   emit('refresh');
+};
+
+const clearAllActivities = async () => {
+  const count = assignedActivities.value.length;
+  
+  if (!confirm(
+    `⚠️ Remove ALL ${count} activities from ${props.student.full_name}?\n\n` +
+    `This will mark all activities as 'removed' (data preserved).\n\n` +
+    `They can be reassigned later.\n\n` +
+    `Continue?`
+  )) {
+    return;
+  }
+
+  try {
+    let removed = 0;
+    for (const activity of assignedActivities.value) {
+      try {
+        await removeActivityAPI(
+          activity.student_email,
+          activity.activity_id,
+          activity.cycle_number,
+          getStaffEmail(),
+          props.staffContext.schoolId
+        );
+        removed++;
+      } catch (error) {
+        console.error('Failed to remove activity:', activity.activities?.name, error);
+      }
+    }
+
+    alert(`Successfully removed ${removed} of ${count} activities`);
+    emit('refresh');
+
+  } catch (error) {
+    console.error('Clear all failed:', error);
+    alert('Failed to clear activities. Please try again.');
+  }
 };
 </script>
 
