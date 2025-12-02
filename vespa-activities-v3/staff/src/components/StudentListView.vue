@@ -788,6 +788,13 @@ watch([searchTerm, filterYearGroup, filterProgress], () => {
   font-size: 12px;
 }
 
+.category-name {
+  color: white !important;  /* White text for VISION, EFFORT, etc. */
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
 .vespa-column.vision .category-letter {
   background: linear-gradient(135deg, #ff8f00 0%, #f57c00 100%);
 }
