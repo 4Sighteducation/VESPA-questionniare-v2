@@ -19,11 +19,20 @@
       <!-- Row 2: Scorecard and Actions -->
       <div class="header-row-2">
         <StudentScorecard 
-          :activities="student.activity_responses" 
+          :activities="filteredActivitiesBySelectedCycle" 
           :compact="true"
           :show-period-filter="true"
         />
         <div class="header-actions-row2">
+          <!-- Cycle Filter Dropdown -->
+          <select v-model="selectedCycleFilter" class="cycle-filter-dropdown">
+            <option value="current">Current Cycle Only ({{ student.current_cycle || 1 }})</option>
+            <option value="all">All Cycles</option>
+            <option value="1">Cycle 1</option>
+            <option value="2">Cycle 2</option>
+            <option value="3">Cycle 3</option>
+          </select>
+          
           <input
             type="search"
             v-model="searchTerm"
@@ -283,6 +292,7 @@ const { getStaffEmail } = useAuth();
 
 // State
 const searchTerm = ref('');
+const selectedCycleFilter = ref('current'); // 'current', 'all', '1', '2', '3'
 const showAssignByProblemModal = ref(false);
 const showProblemActivitiesModal = ref(false);
 const selectedProblem = ref(null);
@@ -298,11 +308,29 @@ onMounted(async () => {
   await loadAllActivities();
 });
 
+// Computed - Filter by Selected Cycle
+const filteredActivitiesBySelectedCycle = computed(() => {
+  const allResponses = props.student.activity_responses || [];
+  const activeResponses = allResponses.filter(r => r.status !== 'removed');
+  
+  if (selectedCycleFilter.value === 'all') {
+    return activeResponses; // Show all cycles
+  }
+  
+  const targetCycle = selectedCycleFilter.value === 'current' 
+    ? (props.student.current_cycle || 1) 
+    : parseInt(selectedCycleFilter.value);
+  
+  const filtered = activeResponses.filter(r => r.cycle_number === targetCycle);
+  
+  console.log(`🔍 Cycle filter: ${selectedCycleFilter.value} (${targetCycle}) → ${filtered.length} activities`);
+  return filtered;
+});
+
 // Computed
 const assignedActivities = computed(() => {
-  const assigned = props.student.activity_responses?.filter(r => r.status !== 'removed') || [];
-  console.log(`📊 Assigned activities for ${props.student.full_name}:`, assigned.length);
-  return assigned;
+  // Use filtered activities based on cycle selection
+  return filteredActivitiesBySelectedCycle.value;
 });
 
 const assignedActivityIds = computed(() => {
@@ -633,6 +661,29 @@ const clearAllActivities = async () => {
   gap: 10px !important;
   flex: 1 !important;
   justify-content: flex-end !important;
+}
+
+.cycle-filter-dropdown {
+  padding: 8px 12px;
+  border: 2px solid #079baa;
+  border-radius: 6px;
+  background: white;
+  color: #079baa;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 180px;
+}
+
+.cycle-filter-dropdown:hover {
+  background: #e0f7fa;
+  border-color: #006b77;
+}
+
+.cycle-filter-dropdown:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(7, 155, 170, 0.2);
 }
 
 /* Adjust for pages without breadcrumb */

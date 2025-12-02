@@ -32,11 +32,11 @@ export default defineConfig(({ mode }) => {
         output: {
           format: 'iife',  // Back to IIFE for Knack
           name: 'VESPAStaffActivities',
-          entryFileNames: 'activity-dashboard-3c.js',  // Version 3c - White text theme, disabled Scores toggle
-          chunkFileNames: 'activity-dashboard-3c-[hash].js',
+          entryFileNames: 'activity-dashboard-3d.js',  // Version 3d - Added cycle filter dropdown
+          chunkFileNames: 'activity-dashboard-3d-[hash].js',
           assetFileNames: (assetInfo) => {
             if (assetInfo.name.endsWith('.css')) {
-              return 'activity-dashboard-3c.css';
+              return 'activity-dashboard-3d.css';
             }
             return 'assets/[name]-[hash][extname]';
           }
