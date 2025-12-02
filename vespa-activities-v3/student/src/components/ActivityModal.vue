@@ -288,11 +288,11 @@ const stages = [
 
 // Category colors with light variant
 const categoryColors = {
-  'Vision': { primary: '#ff8f00', light: '#ffb347' },
-  'Effort': { primary: '#86b4f0', light: '#a8c8f5' },
-  'Systems': { primary: '#72cb44', light: '#8ed666' },
-  'Practice': { primary: '#7f31a4', light: '#a155c7' },
-  'Attitude': { primary: '#f032e6', light: '#ff5eef' }
+  'Vision': { primary: '#fc8900', light: '#ffa940' },
+  'Effort': { primary: '#78aced', light: '#a3c4f3' },
+  'Systems': { primary: '#7bc114', light: '#9ad43a' },
+  'Practice': { primary: '#792e9c', light: '#9c4fc6' },
+  'Attitude': { primary: '#eb2de3', light: '#f460ea' }
 };
 
 const categoryColor = computed(() => {

@@ -114,7 +114,8 @@ const emit = defineEmits(['close', 'add-activities']);
 
 const loading = ref(false);
 const activities = ref([]);
-const selectedActivities = ref(new Set());
+// Use array instead of Set for better Vue reactivity
+const selectedActivityIds = ref([]);
 
 const categoryName = computed(() => {
   return props.category.charAt(0).toUpperCase() + props.category.slice(1);
@@ -161,29 +162,30 @@ const isAssigned = (activityId) => {
 
 // Use computed for reactive check
 const isSelected = (activityId) => {
-  return selectedActivities.value.has(activityId);
+  return selectedActivityIds.value.includes(activityId);
 };
 
 // Computed property for selection count (ensures reactivity)
 const selectionCount = computed(() => {
-  return selectedActivities.value.size;
+  return selectedActivityIds.value.length;
 });
 
 const toggleActivity = (activity) => {
   // Don't toggle completed or already assigned activities
   if (isCompleted(activity.id) || isAssigned(activity.id)) return;
   
-  if (selectedActivities.value.has(activity.id)) {
-    selectedActivities.value.delete(activity.id);
+  const index = selectedActivityIds.value.indexOf(activity.id);
+  if (index > -1) {
+    // Remove from selection
+    selectedActivityIds.value.splice(index, 1);
   } else {
-    selectedActivities.value.add(activity.id);
+    // Add to selection
+    selectedActivityIds.value.push(activity.id);
   }
-  // Trigger reactivity by creating new Set
-  selectedActivities.value = new Set(selectedActivities.value);
 };
 
 const addSelectedToMyActivities = () => {
-  const selected = activities.value.filter(a => selectedActivities.value.has(a.id));
+  const selected = activities.value.filter(a => selectedActivityIds.value.includes(a.id));
   emit('add-activities', selected);
 };
 

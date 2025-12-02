@@ -410,11 +410,11 @@ watch(() => props.preSelectedCategory, (newCat) => {
   font-size: 24px;
 }
 
-.category-header.vision { color: #ff8f00; border-bottom-color: #ff8f00; }
-.category-header.effort { color: #86b4f0; border-bottom-color: #86b4f0; }
-.category-header.systems { color: #84cc16; border-bottom-color: #84cc16; }
-.category-header.practice { color: #7f31a4; border-bottom-color: #7f31a4; }
-.category-header.attitude { color: #f032e6; border-bottom-color: #f032e6; }
+.category-header.vision { color: #fc8900; border-bottom-color: #fc8900; }
+.category-header.effort { color: #78aced; border-bottom-color: #78aced; }
+.category-header.systems { color: #7bc114; border-bottom-color: #7bc114; }
+.category-header.practice { color: #792e9c; border-bottom-color: #792e9c; }
+.category-header.attitude { color: #eb2de3; border-bottom-color: #eb2de3; }
 
 .problems-list {
   display: flex;

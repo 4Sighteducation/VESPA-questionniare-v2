@@ -127,28 +127,37 @@ export function useActivities() {
   };
 
   /**
-   * Assign activity to student (uses RPC to bypass RLS)
+   * Assign activity to student (uses Flask API to create notifications)
    */
   const assignActivity = async (studentEmail, activityId, staffEmail, cycleNumber = 1, schoolId) => {
     try {
       console.log('📝 Assigning activity:', { studentEmail, activityId, staffEmail, schoolId, cycleNumber });
       
-      // Use RPC function to assign (bypasses RLS)
-      const { data, error } = await supabase.rpc('assign_activity_to_student', {
-        p_student_email: studentEmail,
-        p_activity_id: activityId,
-        p_staff_email: staffEmail,
-        p_school_id: schoolId,
-        p_cycle_number: cycleNumber
+      // Use Flask API endpoint (creates notifications!)
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://vespa-dashboard-9a1f84ee5341.herokuapp.com';
+      
+      const response = await fetch(`${API_BASE_URL}/api/staff/assign-activity`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          staffEmail: staffEmail,
+          studentEmail: studentEmail,
+          activityIds: [activityId],
+          cycle: cycleNumber,
+          reason: 'Staff assigned'
+        })
       });
 
-      if (error) {
-        console.error('❌ RPC Error:', error);
-        throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to assign activity');
       }
 
-      console.log('✅ Activity assigned successfully:', data);
-      return data;
+      const data = await response.json();
+      console.log('✅ Activity assigned successfully (via API):', data);
+      
+      // Return the first assigned activity
+      return data.assigned?.[0] || data;
 
     } catch (err) {
       console.error('❌ Failed to assign activity:', err);
