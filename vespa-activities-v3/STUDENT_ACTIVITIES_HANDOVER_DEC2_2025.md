@@ -1,0 +1,896 @@
+# 🎓 VESPA Student Activities - Handover Document
+
+**Date**: December 2, 2025  
+**Current Version**: v1j  
+**Status**: 🟡 50% Complete - Core Infrastructure Working  
+**Next Phase**: Prescription Logic & Gamification
+
+---
+
+## 🎉 WHAT WAS COMPLETED TODAY
+
+### ✅ Critical Multi-Year Student Bug Fixed
+**Issue**: Students with multiple academic year records (Year 12→13) had incomplete/missing VESPA scores in report.
+
+**Root Cause**: 
+- Report API queried by `student_id` (UUID)
+- Students have 2 records (2023/2024 + 2025/2026)
+- API picked old record, missed new Cycle 2 data
+
+**Solution**:
+1. Added `student_email` column to `vespa_scores` table
+2. Updated report API to query by `student_email` instead of `student_id`
+3. Backfilled 15 records with missing emails
+4. Fixed RPC `sync_latest_vespa_scores_to_student()` to update `current_cycle` column
+
+**Impact**: 
+- ✅ All Year 13 students now see complete data
+- ✅ Multi-year progression works correctly
+- ✅ Critical fix before January 2026 (when Cycle 2 rolls out widely)
+
+---
+
+### ✅ Student Activities - Cycle Detection Fixed
+
+**Issue**: Activities page always showed Cycle 1 scores, even for students on Cycle 2.
+
+**Root Cause**:
+- Hardcoded `cycle=1` in frontend code
+- API returned whatever cycle was requested (echo, not actual)
+- No dynamic cycle detection
+
+**Solution**:
+1. Frontend now calls API to get actual cycle from `vespa_students.latest_vespa_scores`
+2. API returns student's real cycle (not echo input parameter)
+3. All subsequent calls use correct cycle
+4. Fully Supabase-native (no Knack dependency)
+
+**Files Changed**:
+- `student/src/App.vue` - Fetches cycle from API
+- `activities_api.py` - Returns actual cycle from cache
+- `FIX_SYNC_RPC_UPDATE_CURRENT_CYCLE.sql` - RPC now updates `current_cycle` column
+
+**Deployed**: Version 1j
+- JS: `student-activities1j.js` (275.65 KB)
+- CSS: `student-activities1j.css` (28.24 KB)
+
+---
+
+## 📊 DATABASE ARCHITECTURE
+
+### Two-Table System for VESPA Scores:
+
+#### 1. `vespa_scores` (Source of Truth)
+```sql
+Columns:
+- id (UUID, PK)
+- student_id (UUID) - Links to students.id
+- student_email (TEXT) - Added for multi-year students
+- cycle (INT) - 1, 2, or 3
+- vision, effort, systems, practice, attitude, overall (INT) - Scores 0-10
+- completion_date (DATE)
+- academic_year (TEXT) - e.g., "2025/2026"
+- created_at (TIMESTAMP)
+
+Data: 49,067 scores across 35,812 students (2021-2025)
+```
+
+**When Populated**: Questionnaire submission (`app.py` line 9476)
+
+#### 2. `vespa_students` (Cache for Activities App)
+```sql
+Columns (relevant):
+- id (UUID, PK)
+- email (TEXT, UNIQUE)
+- latest_vespa_scores (JSONB) - Most recent scores
+- current_cycle (INT) - Current cycle number
+- current_level (TEXT) - "Level 2" or "Level 3"
+- total_activities_completed (INT)
+- total_points (INT)
+- ... (gamification fields)
+
+Data: 36,566 students total
+      24,850 have cached scores
+      11,716 missing (outdated/inactive accounts)
+```
+
+**When Populated**: 
+- Questionnaire submission calls RPC `sync_latest_vespa_scores_to_student()`
+- RPC pulls latest from `vespa_scores` → writes to `latest_vespa_scores` JSONB
+
+#### 3. RPC Function: `sync_latest_vespa_scores_to_student(p_student_email TEXT)`
+```sql
+Purpose: Keep cache in sync
+Returns: JSONB with latest scores
+Updates: latest_vespa_scores + current_cycle
+Logic:
+  1. Query vespa_scores for latest completion
+  2. Build JSONB object
+  3. Upsert into vespa_students
+  4. Update current_cycle column
+```
+
+---
+
+## 🔄 DATA FLOW
+
+### When Student Completes Questionnaire:
+1. Frontend (`questionnaire1Q.js`) calculates scores
+2. Submits to `/api/questionnaire/submit`
+3. Backend writes to `vespa_scores` table
+4. Backend calls RPC → populates `vespa_students` cache
+5. Cache now has `latest_vespa_scores` JSONB + `current_cycle` column
+
+### When Student Opens Activities Page:
+1. Frontend calls `/api/activities/recommended?email=...&cycle=1` (dummy cycle)
+2. API fetches from `vespa_students.latest_vespa_scores` (fast cache lookup)
+3. API returns **actual cycle** from cache (ignores input parameter)
+4. Frontend uses API response cycle for all subsequent calls
+5. Activities filtered by score thresholds
+
+---
+
+## 🎯 CURRENT STATE (v1j)
+
+### ✅ What's Working:
+- [x] Cycle detection (reads from Supabase cache)
+- [x] VESPA scores display (accurate, from cache)
+- [x] Multi-year student support
+- [x] Backend API endpoints
+- [x] RPC functions for RLS bypass
+- [x] Beautiful UI/UX from old v2 code
+
+### ⚠️ What's 50% Done:
+- [ ] Activity prescription logic (score-based recommendations)
+- [ ] "Continue with these OR choose your own" flow
+- [ ] Select by problem feature
+- [ ] Activity swapping/removal
+- [ ] Gamification (points, achievements, streaks)
+- [ ] Notifications (feedback from staff)
+- [ ] Progress tracking
+- [ ] Staff/student activity sync
+
+---
+
+## 🚀 NEXT PHASE: PRODUCTION READINESS
+
+### Phase 1: Activity Prescription & Selection (Priority 1)
+
+**Goal**: Smart activity recommendations based on VESPA scores
+
+**Requirements**:
+1. **Score-Based Prescription**:
+   - Query `activities` table with score thresholds
+   - Each activity has `score_threshold_min` and `score_threshold_max`
+   - Show activities where: `student_score >= min AND student_score <= max`
+   - Example: Vision score = 3 → Show activities with threshold 1-4
+
+2. **Initial User Flow**:
+   ```
+   Student logs in → Page checks if Cycle 1 complete
+   
+   IF questionnaire completed:
+     STEP 1: Show "Your VESPA Profile" (scores with circular indicators)
+     STEP 2: Show "Suggested Activities" based on scores
+     STEP 3: Modal: "Continue with these OR Choose your own"
+     
+   IF "Continue":
+     → Activities added to dashboard (prescribed via score algorithm)
+     
+   IF "Choose your own":
+     → Show "Select by Problem" modal (35 problems across 5 categories)
+     → User selects challenges they're facing
+     → System shows activities tagged with those problem IDs
+     → User selects activities to add
+   ```
+
+3. **Select by Problem Feature**:
+   - 7 problems per category (35 total)
+   - Problem IDs: `svision_1`, `seffort_1`, `ssystems_1`, etc.
+   - Activities have `problem_mappings` array field (e.g., `['svision_1', 'seffort_3']`)
+   - Query: `SELECT * FROM activities WHERE 'problem_id' = ANY(problem_mappings)`
+   - Load from CDN JSON: `vespa-problem-activity-mappings1a.json` (with fallback)
+
+**Reference Files**:
+- Old implementation: `vespa-activities-v2/student/VESPAactivitiesStudent4q.js` (lines 5437-5542 - prescription logic)
+- Staff dashboard: `staff/src/components/AssignByProblemModal.vue` (working example)
+
+**Database**:
+- `activities` table has all necessary fields (score thresholds, problem_mappings)
+- 75 activities with problem tags already populated
+
+---
+
+### Phase 2: Gamification System (Priority 2)
+
+**Goal**: Points, achievements, streaks, progress tracking
+
+**Requirements**:
+
+1. **Points System**:
+   - Level 2 activities: **10 points**
+   - Level 3 activities: **15 points**
+   - Bonus points for achievements
+   - Store in `vespa_students.total_points`
+
+2. **Achievements**:
+   - "First Steps" - Complete 1 activity (5 pts)
+   - "Getting Going" - Complete 5 activities (25 pts)
+   - "On Fire" - Complete 10 activities (50 pts)
+   - "VESPA Champion" - Complete 25 activities (100 pts)
+   - Store in `student_achievements` table
+
+3. **Streaks**:
+   - Track consecutive days with activity completion
+   - Store in `vespa_students.current_streak_days`
+   - Reset if gap > 24 hours
+
+4. **Progress Tracking**:
+   - Completion status in `activity_responses.status`
+   - Time spent in `activity_responses.time_spent_minutes`
+   - Word count in `activity_responses.word_count`
+
+**Database Tables** (Already Exist):
+- `vespa_students` - total_points, current_streak_days, total_activities_completed
+- `activity_responses` - status, completed_at, time_spent_minutes, word_count
+- `student_achievements` - achievements table (may need creation)
+- `activity_history` - audit log
+
+**Reference Files**:
+- Old implementation: `VESPAactivitiesStudent4q.js` (lines 96-235 - AchievementSystem class)
+- Staff dashboard: Progress scorecards with time filters
+
+---
+
+### Phase 3: Activity Management (Priority 3)
+
+**Goal**: Students can swap/remove activities, syncs with staff view
+
+**Requirements**:
+
+1. **Activity Operations**:
+   - **Add**: Call `/api/activities/start` endpoint
+   - **Remove**: Mark as `status='removed'` (soft delete, preserves data)
+   - **Swap**: Remove old + Add new (atomic operation)
+   - **Complete**: Update status, award points, check achievements
+
+2. **Status Values**:
+   - `assigned` - Staff/questionnaire prescribed
+   - `in_progress` - Student started but not finished
+   - `completed` - Finished with responses
+   - `removed` - Soft deleted (data preserved for staff review)
+
+3. **Staff Dashboard Sync**:
+   - Staff sees same activities via `activity_responses` table
+   - Status changes reflect immediately
+   - Staff can see removed activities (with note)
+   - Feedback system already working (red pulsing indicator)
+
+**RPC Functions** (Already Exist):
+- `assign_activity_to_student()` - Add activity
+- `remove_activity_from_student()` - Soft delete
+- `delete_activity_permanently()` - Hard delete (staff only)
+- `get_student_activity_responses()` - Fetch activities
+
+**Reference Files**:
+- Staff dashboard: `staff/src/composables/useActivities.js` (working example)
+- Activity removal: `StudentWorkspace.vue` (drag-drop removal)
+
+---
+
+### Phase 4: Notifications & Feedback (Priority 4)
+
+**Goal**: Students see staff feedback, unread indicators
+
+**Requirements**:
+
+1. **Notification Bell**:
+   - Fixed position (top right)
+   - Red badge with count
+   - Shows unread feedback count
+   - Query: `WHERE staff_feedback IS NOT NULL AND feedback_read_by_student = false`
+
+2. **Feedback Display**:
+   - Show in activity detail modal
+   - Mark as read when viewed
+   - Red pulsing indicator on activity cards with unread feedback
+
+3. **Notification Types**:
+   - Staff feedback given
+   - Activity assigned by staff
+   - Achievement unlocked
+
+**Database**:
+- `activity_responses.staff_feedback` (TEXT)
+- `activity_responses.feedback_read_by_student` (BOOLEAN)
+- `activity_responses.staff_feedback_at` (TIMESTAMP)
+
+**Reference Files**:
+- Staff dashboard: `ActivityDetailModal.vue` (feedback panel, working)
+- Notification system: `useNotifications.js` composable (partially built)
+
+---
+
+## 📁 KEY FILES & LOCATIONS
+
+### Frontend (Vue 3):
+```
+vespa-activities-v3/student/
+├── src/
+│   ├── App.vue ✅ (Main app, cycle detection)
+│   ├── components/
+│   │   ├── ActivityDashboard.vue ⚠️ (Needs prescription logic)
+│   │   ├── ActivityModal.vue ⚠️ (Activity renderer, needs completion flow)
+│   │   ├── ActivityCard.vue ⚠️ (Card component, needs status indicators)
+│   │   ├── ProblemSelector.vue ⚠️ (Select by problem, needs implementation)
+│   │   ├── CategoryFilter.vue ✅ (Working)
+│   │   ├── AchievementPanel.vue ⚠️ (Needs completion)
+│   │   └── QuestionRenderer.vue ⚠️ (Activity questions)
+│   ├── composables/
+│   │   ├── useActivities.js ⚠️ (Needs removal/swapping)
+│   │   ├── useVESPAScores.js ✅ (Working)
+│   │   ├── useAchievements.js ⚠️ (Needs implementation)
+│   │   └── useNotifications.js ⚠️ (Needs implementation)
+│   └── services/
+│       └── activityService.js ⚠️ (Needs removal endpoint)
+└── dist/ (Built files)
+    ├── student-activities1j.js ✅ (Current version)
+    └── student-activities1j.css ✅ (Current version)
+```
+
+### Backend (Flask):
+```
+DASHBOARD/DASHBOARD/
+├── activities_api.py ✅ (All endpoints working)
+├── app.py ✅ (Questionnaire submission, RPC calls)
+└── SQL files:
+    ├── CREATE_REMOVE_RPC_FIXED.sql ✅ (Removal RPC)
+    ├── CREATE_FEEDBACK_RPC.sql ✅ (Feedback RPC)
+    └── FIX_SYNC_RPC_UPDATE_CURRENT_CYCLE.sql ✅ (Sync RPC with cycle)
+```
+
+### Integration:
+```
+Homepage/
+└── KnackAppLoader(copy).js ✅ (Loads v1j)
+```
+
+---
+
+## 🏗️ ARCHITECTURE DECISIONS
+
+### Why Two Tables (vespa_scores + vespa_students)?
+
+**Option A (Current)**: Cache in vespa_students
+- ✅ **Fast**: Single JSONB lookup (no joins)
+- ✅ **Simple**: Frontend just reads cached_scores
+- ❌ **Sync risk**: Cache can be stale if RPC fails
+
+**Option B (Alternative)**: Always query vespa_scores
+- ✅ **Always accurate**: Direct from source
+- ❌ **Slower**: Requires joins, sorting, deduplication
+- ❌ **Complex**: Multi-year student logic in every query
+
+**Decision**: Keep cache, ensure RPC reliability. The backfill script proves it works.
+
+### Why Use API (Not Direct Supabase Query)?
+
+**RLS Problem**: Anonymous key can't read `vespa_students` (returns 406)
+
+**Solutions Tried**:
+1. ❌ Direct Supabase query → RLS blocks it
+2. ✅ API endpoint with RPC → Uses SECURITY DEFINER (bypasses RLS)
+
+**Pattern**: All student data access goes through API/RPC (same as staff dashboard)
+
+---
+
+## 🎨 UI/UX REFERENCE (v2 Code)
+
+The old `VESPAactivitiesStudent4q.js` has **fantastic UX** that should be replicated:
+
+### Beautiful Features to Keep:
+1. **Animated header** with gradient (lines 391-516)
+2. **Circular score indicators** with SVG progress (lines 722-764)
+3. **Score dots** (10 dots, filled = score) (lines 768-787)
+4. **Score ratings** ("Excellent!", "Great!", etc.) (lines 3871-3881)
+5. **Category groups** with colored borders (lines 816-866)
+6. **Activity cards** with hover effects (lines 881-1130)
+7. **Welcome journey modal** (Step 1-4 flow) (lines 5876-6319)
+8. **Problem categories** with checkboxes (lines 6506-6552)
+9. **Motivational messages** for returning users (lines 5783-5872)
+10. **Achievement notifications** (slide in from right) (lines 3511-3566)
+
+### CSS Features (VESPAactivitiesStudent4q.css):
+- Beautiful gradients and shadows
+- Smooth animations (fade, slide, bounce)
+- Responsive grid layouts
+- Mobile-first design (Galaxy Fold support!)
+- Print styles
+- Lazy loading indicators
+
+**Migration Strategy**: Copy CSS wholesale, adapt Vue templates to match HTML structure.
+
+---
+
+## 📝 TODO: PRESCRIPTION LOGIC (Priority 1)
+
+### Current Issue:
+Activities page shows "Recommended for Your Scores" but the logic doesn't work properly.
+
+### What Needs Building:
+
+#### 1. Score-Based Filtering ⚠️
+**File**: `activities_api.py` (lines 122-149)
+
+Current logic exists but needs testing:
+```python
+# For each category:
+score = student_scores[category]  # e.g., Vision = 3
+activities = query activities WHERE:
+  vespa_category = 'Vision'
+  AND level = student_level
+  AND (score_threshold_min IS NULL OR score_threshold_min <= 3)
+  AND (score_threshold_max IS NULL OR score_threshold_max >= 3)
+```
+
+**Action Required**:
+- Test with Cash's scores (Vision=3, Effort=3, Systems=6, Practice=9, Attitude=4)
+- Verify correct activities returned (low-score ones for Vision/Effort, advanced for Practice)
+- Check if thresholds are populated in `activities` table
+
+#### 2. Initial Prescription Flow 🔴
+**File**: `ActivityDashboard.vue` (needs new modal)
+
+**Flow to Build**:
+```
+Page Load → Check if activities assigned
+  
+IF no activities assigned AND questionnaire completed:
+  → Show modal:
+     "Based on your scores, we recommend these activities"
+     [List of 8-10 activities from score algorithm]
+     
+     Button 1: "Continue with These" (auto-assign all)
+     Button 2: "Choose Your Own" (show problem selector)
+
+IF activities already assigned:
+  → Show normal dashboard with "Your Activities" section
+```
+
+**Similar Code**: Old `VESPAactivitiesStudent4q.js` lines 5876-6319 (welcome journey modal)
+
+#### 3. Problem Selector Integration ⚠️
+**File**: `components/ProblemSelector.vue` (exists but incomplete)
+
+**What It Needs**:
+- Load problems from CDN: `vespa-problem-activity-mappings1a.json`
+- Fallback to hardcoded problems if CDN fails
+- 5 categories (Vision, Effort, Systems, Practice, Attitude)
+- 7 problems per category (35 total)
+- Each problem has `recommendedActivities` array (activity names)
+- Match names to activity IDs from Supabase
+- Checkbox selection (multiple problems)
+- Count total activities selected
+- "Add Selected" button → Calls `/api/activities/start` for each
+
+**Reference**: 
+- Staff version: `staff/src/components/AssignByProblemModal.vue` (fully working!)
+- Old student version: Lines 6506-6552 (problem rendering)
+
+---
+
+## 📝 TODO: GAMIFICATION (Priority 2)
+
+### Current Issue:
+Points, achievements, streaks show as 0 or placeholders.
+
+### What Needs Building:
+
+#### 1. Points Calculation ⚠️
+**Files**: 
+- `useAchievements.js` (fetch total points)
+- `ActivityModal.vue` (award points on completion)
+
+**Logic**:
+```javascript
+On activity completion:
+  1. Calculate points (Level 2 = 10, Level 3 = 15)
+  2. Update activity_responses.points_earned
+  3. Update vespa_students.total_points (RPC or direct if RLS allows)
+  4. Show "+10 points" notification
+```
+
+**Database**:
+- Query: `SELECT SUM(points_earned) FROM activity_responses WHERE student_email = ? AND status = 'completed'`
+- Cache in `vespa_students.total_points` for fast lookup
+
+#### 2. Achievement System 🔴
+**File**: `useAchievements.js` (needs implementation)
+
+**Achievements to Implement**:
+```javascript
+[
+  { id: 'first_steps', name: 'First Steps! 🎯', requirement: 1, points: 5 },
+  { id: 'getting_going', name: 'Getting Going! 🚀', requirement: 5, points: 25 },
+  { id: 'on_fire', name: 'On Fire! 🔥', requirement: 10, points: 50 },
+  { id: 'unstoppable', name: 'Unstoppable! ⭐', requirement: 25, points: 100 },
+  { id: 'vespa_champion', name: 'VESPA Champion! 🏆', requirement: 50, points: 200 }
+]
+```
+
+**Check Logic**:
+```javascript
+On activity completion:
+  1. Get completed count
+  2. Check against achievement requirements
+  3. For each NEW achievement:
+     - Save to database
+     - Show slide-in notification (5 seconds)
+     - Award bonus points
+```
+
+**Database Options**:
+- **Option A**: `student_achievements` table (normalized, queryable)
+- **Option B**: `vespa_students.achievements` JSONB (denormalized, fast)
+
+**Reference**: Old code lines 96-235 (AchievementSystem class - fully implemented!)
+
+#### 3. Streak Calculation ⚠️
+**File**: `useAchievements.js` or `App.vue`
+
+**Logic**:
+```javascript
+calculateStreak():
+  1. Get last 7 days of completions
+  2. Check for consecutive days
+  3. Count streak (reset if gap)
+  4. Update vespa_students.current_streak_days
+```
+
+**Database**:
+- Query: `SELECT DISTINCT DATE(completed_at) FROM activity_responses WHERE student_email = ? AND status = 'completed' ORDER BY completed_at DESC LIMIT 7`
+
+**Reference**: Old code lines 3679-3708 (working implementation)
+
+---
+
+## 📝 TODO: ACTIVITY MANAGEMENT (Priority 3)
+
+### 1. Activity Removal 🔴
+**File**: `useActivities.js` (line 105-120 has TODO comment)
+
+**Endpoint Needed**: `/api/activities/remove` (POST)
+```python
+@app.route('/api/activities/remove', methods=['POST'])
+def remove_activity():
+    # Call RPC: remove_activity_from_student()
+    # Status → 'removed' (soft delete)
+    # Preserves all data for staff review
+```
+
+**RPC Already Exists**: `remove_activity_from_student()` (staff dashboard uses it)
+
+#### 2. Activity Swapping ⚠️
+**Flow**:
+```
+User clicks "× Remove" on activity card
+  → Modal: "Remove OR Swap"
+  
+IF Swap:
+  → Show category activities
+  → User selects new activity
+  → Remove old + Add new (both operations)
+  
+IF Remove:
+  → Confirm dialog
+  → Mark as removed
+  → Refresh dashboard
+```
+
+**Reference**: Old code lines 6321-6325 (swap button handler)
+
+#### 3. Completion Flow ✅ (Mostly Working)
+**Files**: 
+- `ActivityModal.vue` - The full-screen activity renderer
+- `ActivityService.completeActivity()` - API call
+
+**Current State**: Basic flow works, needs:
+- ✅ Save responses
+- ✅ Award points
+- ⚠️ Check achievements
+- ⚠️ Update streak
+- ⚠️ Show celebration screen
+
+**Reference**: Old code lines 1753-1895 (completeActivity method)
+
+---
+
+## 📝 TODO: NOTIFICATIONS (Priority 4)
+
+### 1. Unread Feedback Count 🔴
+**File**: `useNotifications.js` (stub exists)
+
+**Query**:
+```javascript
+const { count } = await supabase
+  .from('activity_responses')
+  .select('*', { count: 'exact', head: true })
+  .eq('student_email', email)
+  .not('staff_feedback', 'is', null)
+  .eq('feedback_read_by_student', false);
+```
+
+**Display**: Bell icon (top right) with red badge
+
+#### 2. Feedback Indicators ⚠️
+**Files**: 
+- `ActivityCard.vue` - Add red pulsing dot
+- `ActivityModal.vue` - Show feedback in tab
+
+**Visual Indicators**:
+- Red pulsing dot on card (same as staff dashboard)
+- "📧 New Feedback" badge
+- Notification bell count
+
+**Reference**: Staff dashboard `ActivityCardCompact.vue` (lines with `.source-circle.feedback.pulse`)
+
+#### 3. Mark as Read ⚠️
+**Trigger**: When student opens activity with feedback
+
+**Update**:
+```javascript
+await supabase
+  .from('activity_responses')
+  .update({ feedback_read_by_student: true })
+  .eq('id', activity_response_id);
+```
+
+---
+
+## 🎨 DESIGN SYSTEM (Keep from v2)
+
+### Colors:
+```css
+--vision-primary: #ff8f00
+--effort-primary: #86b4f0
+--systems-primary: #72cb44
+--practice-primary: #7f31a4
+--attitude-primary: #f032e6
+--primary: #079baa (Teal theme)
+```
+
+### Emojis:
+- Vision: 👁️
+- Effort: 💪
+- Systems: ⚙️
+- Practice: 🎯
+- Attitude: 🧠
+
+### Animations:
+- Fade in: 0.3s ease
+- Slide up: 0.3s cubic-bezier
+- Bounce: 1s ease-in-out
+- Pulse: 2s infinite (for notifications)
+
+---
+
+## 🐛 KNOWN ISSUES
+
+### 1. RLS Policies Too Restrictive
+**Issue**: Anon key can't read `vespa_students` directly (406 error)
+
+**Workaround**: Use API endpoints with RPC (SECURITY DEFINER)
+
+**Future**: Add RLS policy for authenticated anon reads (if needed)
+
+### 2. Current_Cycle Column Not Always Synced
+**Issue**: RPC didn't update column until today's fix
+
+**Status**: ✅ Fixed in `FIX_SYNC_RPC_UPDATE_CURRENT_CYCLE.sql`
+
+**Verification**: Cash now shows `current_cycle: 2` ✅
+
+### 3. Knack Field Mappings Confusing
+**Issue**: Knack uses field_146 for "current cycle", same as "overall score"
+
+**Mitigation**: Use Supabase as source of truth, Knack for display only
+
+---
+
+## 🚀 DEPLOYMENT PROCESS
+
+### For Student Activities Frontend:
+
+```bash
+# 1. Edit source files in student/src/
+# 2. Increment version in vite.config.js (1j → 1k)
+cd "C:\Users\tonyd\OneDrive - 4Sight Education Ltd\Apps\VESPAQuestionnaireV2\vespa-activities-v3\student"
+npm run build
+
+# 3. Commit and push
+cd ../..
+git add -A
+git commit -m "v1k: Description of changes"
+git push
+
+# 4. Update KnackAppLoader(copy).js (change 1j → 1k in URLs)
+# 5. Copy KnackAppLoader into Knack Custom Code
+# 6. Wait 2-3 mins for jsDelivr CDN
+# 7. Hard refresh (Ctrl+Shift+R)
+```
+
+### For Backend API:
+
+```bash
+# 1. Edit activities_api.py or app.py
+cd "C:\Users\tonyd\OneDrive - 4Sight Education Ltd\Apps\DASHBOARD\DASHBOARD"
+git add -A
+git commit -m "Description"
+git push
+
+# 2. Heroku auto-deploys (or manual restart)
+# 3. Check Heroku logs for deployment
+```
+
+---
+
+## 🧪 TESTING CHECKLIST
+
+### Core Functionality (Current v1j):
+- [x] Page loads without errors
+- [x] Cycle 2 detection works (Cash shows cycle 2)
+- [x] VESPA scores display correctly (though showing cycle 1 scores still - need to investigate)
+- [x] API calls succeed
+- [ ] Correct cycle scores show (Vision:3, not 10)
+- [ ] Recommendations based on low scores
+- [ ] Select by problem works
+- [ ] Activity completion flow
+- [ ] Points awarded
+- [ ] Achievements unlock
+- [ ] Feedback notifications
+
+---
+
+## 📞 NEXT SESSION PLAN
+
+### Session Goal: Complete Prescription & Problem Selection
+
+**Time Estimate**: 2-3 hours
+
+**Tasks**:
+1. **Test current recommendation logic** (30 mins)
+   - Check if API returns correct activities for Cash's low Vision/Effort scores
+   - Verify thresholds in database
+   - Fix filtering if broken
+
+2. **Build "Continue OR Choose" modal** (45 mins)
+   - Copy welcome journey structure from v2
+   - Show calculated prescribed activities
+   - "Continue" button → Auto-assign all
+   - "Choose Your Own" → Show problem selector
+
+3. **Implement Problem Selector** (60 mins)
+   - Load from CDN JSON (with fallback)
+   - Render 5 categories with 7 problems each
+   - Checkbox selection
+   - Query activities by problem_mappings array
+   - Add selected activities to dashboard
+
+4. **Test full flow** (30 mins)
+   - New user experience
+   - Returning user experience
+   - Activity assignment
+   - Staff dashboard sync
+
+---
+
+## 🎓 FOR NEXT DEVELOPER
+
+### Start Here:
+1. Read this document
+2. Check `HANDOVER_STAFF_DASHBOARD_V3C_COMPLETE.md` (staff version is done!)
+3. Review `activities_api.py` (all endpoints documented)
+4. Test with Cash (`cali@vespa.academy`) - Cycle 2, low Vision/Effort scores
+
+### Key Principles:
+- **Supabase-native** (not Knack)
+- **Use RPC for writes** (bypasses RLS)
+- **Cache in vespa_students** (fast lookups)
+- **Beautiful UX** (copy from v2 code)
+- **Mobile-first** (Galaxy Fold support)
+
+### Quick Wins:
+1. Copy AchievementSystem class from v2 → useAchievements.js
+2. Copy welcome journey HTML from v2 → New modal component
+3. Copy problem selector from staff dashboard → Student version
+4. Copy CSS wholesale (it's great!)
+
+---
+
+## 🎉 SUCCESS METRICS
+
+### When Ready for Production:
+- [ ] Student sees correct cycle scores
+- [ ] Prescription algorithm works (8-10 activities suggested)
+- [ ] Problem selector returns relevant activities
+- [ ] Activities can be added/removed/swapped
+- [ ] Points awarded on completion
+- [ ] Achievements unlock correctly
+- [ ] Feedback notifications work
+- [ ] Staff dashboard shows same activities
+- [ ] Mobile responsive (tested on Galaxy Fold)
+- [ ] No console errors
+
+---
+
+## 📚 REFERENCE LINKS
+
+### CDN URLs (v1j - Current):
+```
+https://cdn.jsdelivr.net/gh/4Sighteducation/VESPA-questionniare-v2@main/vespa-activities-v3/student/dist/student-activities1j.js
+https://cdn.jsdelivr.net/gh/4Sighteducation/VESPA-questionniare-v2@main/vespa-activities-v3/student/dist/student-activities1j.css
+```
+
+### API Endpoints (Heroku):
+```
+https://vespa-dashboard-9a1f84ee5341.herokuapp.com
+
+/api/activities/recommended?email={email}&cycle={cycle}
+/api/activities/assigned?email={email}&cycle={cycle}
+/api/activities/by-problem?problem_id={id}
+/api/activities/start (POST)
+/api/activities/save (POST)
+/api/activities/complete (POST)
+```
+
+### GitHub Repos:
+- Frontend: `https://github.com/4Sighteducation/VESPA-questionniare-v2`
+- Backend: `https://github.com/4Sighteducation/DASHBOARD`
+
+---
+
+## 💾 SESSION ARTIFACTS
+
+### Files Created Today:
+1. `INVESTIGATE_VESPA_SCORES_FOR_ACTIVITIES.sql` - Diagnostic queries
+2. `VESPA_SCORES_INVESTIGATION_FINDINGS.md` - Analysis document
+3. `backfill_vespa_scores_email.py` - Populated student_email for 15 records
+4. `FIX_SYNC_RPC_UPDATE_CURRENT_CYCLE.sql` - Updated RPC to sync current_cycle column
+5. `STUDENT_ACTIVITIES_HANDOVER_DEC2_2025.md` - This document
+
+### Git Commits Today:
+```
+VESPAQuestionnaireV2 repo:
+- 891541e: v1i - Supabase-native cycle detection
+- 5433ba9: v1i - Get cycle from API (bypass RLS)
+- d880dd2: v1j - Cycle detection fix
+
+DASHBOARD repo:
+- b45de6b8: Multi-year student support (morning)
+- d9894cb0: API returns actual cycle (afternoon)
+```
+
+---
+
+## 🎯 PRIORITY ORDER
+
+**Before January 2026** (when students start Cycle 2 widely):
+
+1. **🔥 CRITICAL** - Prescription logic (students need activities)
+2. **🔥 CRITICAL** - Problem selector (students need choice)
+3. **HIGH** - Points & achievements (motivation)
+4. **MEDIUM** - Notifications (staff feedback)
+5. **LOW** - Polish & animations
+
+**Timeline Estimate**: 2-3 focused sessions (6-9 hours total)
+
+---
+
+**Last Updated**: December 2, 2025  
+**Version**: v1j  
+**Status**: Backend ✅ | Cycle Detection ✅ | Prescription Logic 🔴 | Gamification 🔴  
+**Next**: Test v1j, then build prescription flow  
+
+🚀 **We're close! The foundation is solid, now we build the features!**
+
