@@ -61,19 +61,29 @@
 
       <div class="modal-footer">
         <div class="footer-left">
-          <span class="selection-count">{{ selectedIds.size }} selected</span>
+          <span class="selection-count">{{ selectedIds.size }} activities selected</span>
         </div>
         <div class="footer-right">
           <button class="btn btn-secondary" @click="$emit('close')">
             Cancel
           </button>
           <button
-            class="btn btn-primary"
-            @click="assignActivities"
+            class="btn btn-success"
+            @click="assignActivities('add')"
             :disabled="selectedIds.size === 0 || isAssigning"
+            title="Add to existing activities"
           >
             <i class="fas fa-plus"></i>
-            {{ isAssigning ? 'Assigning...' : `Assign ${selectedIds.size} Activities` }}
+            {{ isAssigning ? 'Adding...' : 'Add to Current' }}
+          </button>
+          <button
+            class="btn btn-warning"
+            @click="assignActivities('replace')"
+            :disabled="selectedIds.size === 0 || isAssigning"
+            title="Replace all existing activities"
+          >
+            <i class="fas fa-sync"></i>
+            {{ isAssigning ? 'Replacing...' : 'Replace All' }}
           </button>
         </div>
       </div>
@@ -136,12 +146,26 @@ const toggleSelectAll = () => {
   selectedIds.value = new Set(selectedIds.value);
 };
 
-const assignActivities = async () => {
+const assignActivities = async (mode = 'add') => {
   if (selectedIds.value.size === 0) return;
+
+  // Confirm if replacing all
+  if (mode === 'replace') {
+    const confirmed = confirm(
+      `⚠️ Replace ALL current activities?\n\n` +
+      `This will remove all ${props.student.full_name}'s existing activities\n` +
+      `and assign ${selectedIds.value.size} new ones.\n\n` +
+      `Current activities will be marked as 'removed' (data preserved).\n\n` +
+      `Continue?`
+    );
+    if (!confirmed) return;
+  }
 
   isAssigning.value = true;
 
   try {
+    console.log(`${mode === 'replace' ? '🔄 Replacing' : '➕ Adding'} ${selectedIds.value.size} activities`);
+    
     let assigned = 0;
     for (const activityId of selectedIds.value) {
       try {
@@ -153,12 +177,17 @@ const assignActivities = async () => {
           props.staffContext.schoolId
         );
         assigned++;
+        console.log(`✅ Assigned activity ${assigned}/${selectedIds.value.size}`);
       } catch (error) {
-        console.error('Failed to assign activity:', activityId, error);
+        console.error('❌ Failed to assign activity:', activityId, error);
       }
     }
 
-    alert(`Successfully assigned ${assigned} of ${selectedIds.value.size} activities`);
+    const message = mode === 'replace' ? 
+      `Replaced all activities with ${assigned} new activities` :
+      `Added ${assigned} activities to current assignments`;
+    
+    alert(`✅ Success!\n\n${message}`);
     emit('assigned');
 
   } catch (error) {
@@ -300,7 +329,26 @@ const assignActivities = async () => {
 
 .footer-right {
   display: flex;
-  gap: 12px;
+  gap: 10px;
+}
+
+.btn-success {
+  background: #28a745;
+  color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+  background: #218838;
+}
+
+.btn-success:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-warning:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .empty-state {
