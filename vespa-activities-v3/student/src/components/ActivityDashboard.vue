@@ -10,14 +10,14 @@
           <p class="subtitle">Ready to boost your VESPA scores today?</p>
         </div>
         <div class="header-stats">
-          <div class="stat-card clickable" @click="$emit('show-achievements')">
+          <div class="stat-card clickable" @click="handleShowAchievements">
             <span class="stat-emoji">⭐</span>
             <div class="stat-content">
               <div class="stat-value">{{ totalPoints }}</div>
               <div class="stat-label">Points</div>
             </div>
           </div>
-          <div class="stat-card clickable" @click="$emit('show-achievements')">
+          <div class="stat-card clickable" @click="handleShowAchievements">
             <span class="stat-emoji">🔥</span>
             <div class="stat-content">
               <div class="stat-value">{{ currentStreak }}</div>
@@ -42,7 +42,7 @@
       </div>
       
       <!-- Achievement Button (Top Right) -->
-      <button @click="$emit('show-achievements')" class="achievements-button">
+      <button @click="handleShowAchievements" class="achievements-button">
         <span class="trophy-icon">🏆</span>
         <span class="achievement-text">{{ achievementCount }} Achievements</span>
       </button>
@@ -228,6 +228,12 @@ const emit = defineEmits([
   'show-problem-selector',
   'improve-category'
 ]);
+
+const handleShowAchievements = () => {
+  console.log('[ActivityDashboard] 🏆 Achievements button clicked!');
+  emit('show-achievements');
+  console.log('[ActivityDashboard] ✅ Emitted show-achievements event');
+};
 
 const filterCategory = ref(null);
 const categories = VESPA_CATEGORIES;

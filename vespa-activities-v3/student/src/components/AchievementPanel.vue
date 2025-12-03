@@ -19,25 +19,75 @@
           </div>
         </div>
         
-        <!-- Achievements List -->
-        <div v-if="achievements.length === 0" class="empty-state">
-          <p>No achievements yet. Complete activities to earn achievements!</p>
+        <!-- Achievement Guide (Always Show) -->
+        <div class="achievement-guide">
+          <h3 class="guide-title">🎯 How to Earn Achievements</h3>
+          <div class="guide-list">
+            <div class="guide-item" :class="{ 'earned': hasAchievement('first_activity') }">
+              <span class="guide-emoji">🎯</span>
+              <div class="guide-info">
+                <div class="guide-name">First Steps!</div>
+                <div class="guide-requirement">Complete 1 activity</div>
+              </div>
+              <div class="guide-points">+5 pts</div>
+            </div>
+            <div class="guide-item" :class="{ 'earned': hasAchievement('five_complete') }">
+              <span class="guide-emoji">🚀</span>
+              <div class="guide-info">
+                <div class="guide-name">Getting Going!</div>
+                <div class="guide-requirement">Complete 5 activities</div>
+              </div>
+              <div class="guide-points">+25 pts</div>
+            </div>
+            <div class="guide-item" :class="{ 'earned': hasAchievement('ten_complete') }">
+              <span class="guide-emoji">🔥</span>
+              <div class="guide-info">
+                <div class="guide-name">On Fire!</div>
+                <div class="guide-requirement">Complete 10 activities</div>
+              </div>
+              <div class="guide-points">+50 pts</div>
+            </div>
+            <div class="guide-item" :class="{ 'earned': hasAchievement('fifteen_complete') }">
+              <span class="guide-emoji">⚡</span>
+              <div class="guide-info">
+                <div class="guide-name">Unstoppable!</div>
+                <div class="guide-requirement">Complete 15 activities</div>
+              </div>
+              <div class="guide-points">+75 pts</div>
+            </div>
+            <div class="guide-item" :class="{ 'earned': hasAchievement('twenty_complete') }">
+              <span class="guide-emoji">🏆</span>
+              <div class="guide-info">
+                <div class="guide-name">VESPA Champion!</div>
+                <div class="guide-requirement">Complete 20 activities</div>
+              </div>
+              <div class="guide-points">+100 pts</div>
+            </div>
+          </div>
         </div>
         
-        <div v-else class="achievements-grid">
-          <div
-            v-for="achievement in achievements"
-            :key="achievement.id"
-            class="achievement-card"
-            :class="{ 'pinned': achievement.is_pinned }"
-          >
-            <div class="achievement-icon">{{ achievement.icon_emoji || '🏆' }}</div>
-            <div class="achievement-content">
-              <h4 class="achievement-name">{{ achievement.achievement_name }}</h4>
-              <p class="achievement-description">{{ achievement.achievement_description }}</p>
-              <div class="achievement-meta">
-                <span class="points-badge">+{{ achievement.points_value }} pts</span>
-                <span class="date-earned">{{ formatDate(achievement.date_earned) }}</span>
+        <!-- Achievements List -->
+        <div v-if="achievements.length === 0" class="empty-state">
+          <p>No achievements yet. Complete activities to unlock them!</p>
+        </div>
+        
+        <div v-else class="achievements-section">
+          <h3 class="section-title">🏅 Your Unlocked Achievements</h3>
+          <div class="achievements-grid">
+            <div
+              v-for="achievement in achievements"
+              :key="achievement.id"
+              class="achievement-card"
+              :class="{ 'pinned': achievement.is_pinned }"
+            >
+              <div class="achievement-icon">{{ achievement.icon_emoji || '🏆' }}</div>
+              <div class="achievement-content">
+                <h4 class="achievement-name">{{ achievement.achievement_name }}</h4>
+                <p class="achievement-description">{{ achievement.achievement_description }}</p>
+                <div class="achievement-meta">
+                  <span class="points-badge">+{{ achievement.points_value }} pts</span>
+                  <span class="date-earned">{{ formatDate(achievement.date_earned) }}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -65,6 +115,10 @@ const formatDate = (dateString) => {
   if (!dateString) return '';
   const date = new Date(dateString);
   return date.toLocaleDateString();
+};
+
+const hasAchievement = (achievementType) => {
+  return props.achievements.some(a => a.achievement_type === achievementType);
 };
 </script>
 
@@ -238,6 +292,90 @@ const formatDate = (dateString) => {
   color: var(--dark-gray);
 }
 
+/* Achievement Guide */
+.achievement-guide {
+  margin-bottom: 2rem;
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 2px solid #f59e0b;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.guide-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #92400e;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.guide-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.guide-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 2px solid #fde68a;
+  transition: all 0.3s;
+}
+
+.guide-item.earned {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border-color: #10b981;
+}
+
+.guide-emoji {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.guide-info {
+  flex: 1;
+}
+
+.guide-name {
+  font-weight: 700;
+  color: #1f2937;
+  font-size: 1rem;
+}
+
+.guide-requirement {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.125rem;
+}
+
+.guide-points {
+  font-weight: 700;
+  color: #f59e0b;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.guide-item.earned .guide-points {
+  color: #10b981;
+}
+
+.section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--dark-blue);
+  margin-bottom: 1rem;
+}
+
+.achievements-section {
+  margin-top: 1.5rem;
+}
+
 @media (max-width: 768px) {
   .achievements-grid {
     grid-template-columns: 1fr;
@@ -245,6 +383,11 @@ const formatDate = (dateString) => {
   
   .points-summary {
     grid-template-columns: 1fr;
+  }
+  
+  .guide-item {
+    flex-direction: column;
+    text-align: center;
   }
 }
 </style>

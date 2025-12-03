@@ -40,7 +40,7 @@
       @add-activity="addActivityToDashboard"
       @remove-activity="removeActivityFromDashboard"
       @show-problem-selector="handleShowProblemSelector"
-      @show-achievements="showAchievements = true"
+      @show-achievements="handleShowAchievements"
       @improve-category="handleImproveCategory"
     />
     
@@ -673,6 +673,14 @@ const handleMotivationalAddMoreClick = () => {
   console.log('[App] 🎯 Motivational Add More clicked');
   handleMotivationalAddMore();
   console.log('[App] showProblemSelector should be:', showProblemSelector.value);
+};
+
+const handleShowAchievements = () => {
+  console.log('[App] 🏆 Show achievements event received');
+  console.log('[App] Current showAchievements:', showAchievements.value);
+  showAchievements.value = true;
+  console.log('[App] New showAchievements:', showAchievements.value);
+  console.log('[App] achievements data:', achievements.value);
 };
 
 const handleAddSelectedActivities = async (selectedActivities) => {
