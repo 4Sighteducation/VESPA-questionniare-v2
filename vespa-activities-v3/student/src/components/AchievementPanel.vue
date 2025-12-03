@@ -98,7 +98,7 @@
 </template>
 
 <script setup>
-defineProps({
+const props = defineProps({
   achievements: {
     type: Array,
     default: () => []
@@ -118,7 +118,7 @@ const formatDate = (dateString) => {
 };
 
 const hasAchievement = (achievementType) => {
-  return props.achievements.some(a => a.achievement_type === achievementType);
+  return props.achievements?.some(a => a.achievement_type === achievementType) || false;
 };
 </script>
 
