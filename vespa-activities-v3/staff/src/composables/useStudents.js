@@ -37,11 +37,23 @@ export function useStudents() {
       // For super users or staff admins: get all students in school
       if (staffContext.value.isSuperUser || hasRole('staff_admin')) {
         console.log('🔐 Admin access - loading ALL students via RPC');
+        console.log('🔐 Using RPC: get_students_for_staff');
+        console.log('🔐 Params:', {
+          staff_email: currentUser.value.email,
+          school_id: staffContext.value.schoolId
+        });
         
-        // Use RPC function to bypass RLS
+        // Use RPC function to bypass RLS (must have SECURITY DEFINER)
         const rpcResult = await supabase.rpc('get_students_for_staff', {
           staff_email_param: currentUser.value.email,
           school_id_param: staffContext.value.schoolId
+        });
+        
+        console.log('🔐 RPC Response:', {
+          hasData: !!rpcResult.data,
+          recordCount: rpcResult.data?.length || 0,
+          hasError: !!rpcResult.error,
+          error: rpcResult.error
         });
         
         data = rpcResult.data;
