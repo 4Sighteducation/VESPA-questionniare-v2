@@ -526,7 +526,13 @@ const updateResponse = (questionId, value) => {
 };
 
 const navigateToStage = (stageId) => {
-  if (!canAccessStage(stageId)) return;
+  // Block navigation if stage is locked
+  if (!canAccessStage(stageId)) {
+    console.log('[ActivityModal] 🔒 Stage locked:', stageId);
+    return;
+  }
+  
+  console.log('[ActivityModal] ✅ Navigating to stage:', stageId);
   currentStage.value = stageId;
   currentQuestionPage.value = 0; // Reset pagination
 };
@@ -558,8 +564,14 @@ const handleSave = async (isAutoSave = false) => {
   try {
     autoSaveStatus.value = isAutoSave ? '💾 Saving...' : '';
     
+    // CRITICAL: Merge existing + new responses for saves too
+    const mergedResponses = {
+      ...(props.existingResponses?.responses || {}),
+      ...responses.value
+    };
+    
     const saveData = {
-      responses: responses.value,
+      responses: mergedResponses,  // Send all responses
       timeMinutes: Math.floor(timeSpent.value / 60)
     };
     
@@ -580,7 +592,7 @@ const handleSave = async (isAutoSave = false) => {
 const handleComplete = async () => {
   console.log('[ActivityModal] 🎉 handleComplete called');
   console.log('[ActivityModal] canComplete:', canComplete.value);
-  console.log('[ActivityModal] responses:', Object.keys(responses.value).length, 'answers');
+  console.log('[ActivityModal] responses.value:', Object.keys(responses.value).length, 'answers');
   
   if (!canComplete.value) {
     console.log('[ActivityModal] ❌ Cannot complete - required questions not answered');
@@ -588,16 +600,25 @@ const handleComplete = async () => {
     return;
   }
   
-  // Calculate word count from all text responses
+  // CRITICAL: Merge existing responses with new responses
+  // This ensures we send ALL responses (old + new), not just new ones
+  const mergedResponses = {
+    ...(props.existingResponses?.responses || {}),  // Start with old responses
+    ...responses.value  // Override with new responses
+  };
+  
+  console.log('[ActivityModal] 📦 Merged responses:', Object.keys(mergedResponses).length, 'total answers');
+  
+  // Calculate word count from ALL text responses (old + new)
   let totalWords = 0;
-  Object.values(responses.value).forEach(response => {
+  Object.values(mergedResponses).forEach(response => {
     if (typeof response === 'string') {
       totalWords += response.trim().split(/\s+/).filter(w => w.length > 0).length;
     }
   });
   
   const completeData = {
-    responses: responses.value,
+    responses: mergedResponses,  // Send merged responses!
     timeMinutes: Math.floor(timeSpent.value / 60),
     wordCount: totalWords
   };
@@ -605,7 +626,11 @@ const handleComplete = async () => {
   // Show completion stage first
   currentStage.value = 'complete';
   
-  console.log('[ActivityModal] ✅ Emitting complete event with data:', completeData);
+  console.log('[ActivityModal] ✅ Emitting complete event with data:', {
+    responseCount: Object.keys(completeData.responses).length,
+    wordCount: completeData.wordCount,
+    timeMinutes: completeData.timeMinutes
+  });
   
   // Emit complete after showing celebration
   setTimeout(() => {

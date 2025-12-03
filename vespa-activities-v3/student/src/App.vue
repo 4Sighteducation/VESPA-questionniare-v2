@@ -335,11 +335,18 @@ const openActivityModal = async (activity) => {
       console.log('[VESPA Activities] ✅ Start API response:', startData.existed ? 'Record exists' : 'New record created');
       
       // Use the response from start API as existing responses
-      if (startData.response && startData.response.responses) {
+      if (startData.response) {
         existingResponses.value = startData.response;
-        console.log('[VESPA Activities] 📥 Loaded existing responses:', Object.keys(startData.response.responses).length, 'answers');
+        const responseCount = startData.response.responses ? Object.keys(startData.response.responses).length : 0;
+        const status = startData.response.status || 'unknown';
+        console.log('[VESPA Activities] 📥 Loaded existing responses:', responseCount, 'answers | Status:', status);
+        
+        // If completed, log it prominently
+        if (status === 'completed') {
+          console.log('[VESPA Activities] 🟢 This activity is COMPLETED - opening in review mode');
+        }
       } else {
-        existingResponses.value = startData.response || {};
+        existingResponses.value = {};
       }
     } else {
       console.error('[VESPA Activities] ❌ Start API failed:', startResponse.status);

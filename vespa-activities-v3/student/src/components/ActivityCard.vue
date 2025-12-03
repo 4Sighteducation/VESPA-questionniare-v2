@@ -84,7 +84,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { CATEGORY_COLORS } from '../../shared/constants';
 
 const props = defineProps({
@@ -135,6 +135,13 @@ const getCategoryEmoji = (category) => {
 
 const isCompleted = computed(() => {
   return props.progress?.status === 'completed';
+});
+
+// Debug log on mount
+onMounted(() => {
+  const activityName = props.activity?.name || 'Unknown';
+  const status = props.progress?.status || 'no status';
+  console.log(`[ActivityCard "${activityName}"] Mounted with status: ${status}, isCompleted: ${isCompleted.value}`);
 });
 
 const isInProgress = computed(() => {

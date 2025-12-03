@@ -59,6 +59,13 @@ export function useActivities(studentEmail) {
       myActivities.value = assignments || [];
       
       console.log('[useActivities] Fetched my activities:', myActivities.value.length);
+      
+      // Debug: Log status of each activity
+      myActivities.value.forEach(activity => {
+        const activityName = activity.activities?.name || activity.name || 'Unknown';
+        const status = activity.progress?.status || activity.status || 'unknown';
+        console.log(`  📊 ${activityName}: status=${status}`);
+      });
     } catch (err) {
       console.error('[useActivities] Error fetching my activities:', err);
       error.value = err.message;
