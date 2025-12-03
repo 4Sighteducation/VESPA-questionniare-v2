@@ -178,10 +178,15 @@
             </div>
             
             <!-- Pagination for questions -->
-            <div v-if="doQuestions.length > questionsPerPage" class="question-pagination">
-              <span class="progress-text">Question {{ currentQuestionPage * questionsPerPage + 1}}-{{ Math.min((currentQuestionPage + 1) * questionsPerPage, doQuestions.length) }} of {{ doQuestions.length }}</span>
-              <div class="progress-bar-wrapper">
-                <div class="progress-bar-fill" :style="{ width: `${((currentQuestionPage + 1) / totalQuestionPages) * 100}%` }"></div>
+            <div v-if="doQuestions.length > questionsPerPage" class="question-pagination-new">
+              <div class="pagination-info">
+                <span class="pagination-text">Question {{ currentQuestionPage * questionsPerPage + 1}}-{{ Math.min((currentQuestionPage + 1) * questionsPerPage, doQuestions.length) }} of {{ doQuestions.length }}</span>
+              </div>
+              <div class="progress-bar-mini">
+                <div 
+                  class="progress-fill-mini" 
+                  :style="{ width: `${((currentQuestionPage + 1) / totalQuestionPages) * 100}%` }"
+                ></div>
               </div>
             </div>
             
@@ -462,16 +467,16 @@ const answeredDoQuestionsCount = computed(() => {
   }).length;
 });
 
-// Minimum required responses to proceed from Do to Reflect (6 or all if fewer questions)
+// Require ALL Do questions to be answered (force full completion)
 const minRequiredResponses = computed(() => {
-  return Math.min(6, doQuestions.value.length);
+  return doQuestions.value.length; // ALL questions required!
 });
 
 const canProceedFromDo = computed(() => {
   // In review mode, always allow navigation
   if (isReviewMode.value) return true;
   
-  // Must have answered at least 6 questions (or all if fewer than 6)
+  // Must answer ALL Do questions before proceeding to Reflect
   return answeredDoQuestionsCount.value >= minRequiredResponses.value;
 });
 
@@ -669,6 +674,21 @@ onMounted(() => {
   
   // Prevent body scroll
   document.body.style.overflow = 'hidden';
+  
+  // Hide broken images after mount
+  setTimeout(() => {
+    const images = document.querySelectorAll('.activity-modal-fullpage img');
+    images.forEach(img => {
+      img.addEventListener('error', function() {
+        console.log('[ActivityModal] 🚫 Hiding broken image:', this.src);
+        this.style.display = 'none';
+        // Also hide parent if it's an empty container
+        if (this.parentElement && this.parentElement.children.length === 1) {
+          this.parentElement.style.display = 'none';
+        }
+      });
+    });
+  }, 500);
 });
 
 onUnmounted(() => {
@@ -1281,6 +1301,26 @@ onUnmounted(() => {
   height: 100%;
   background: var(--primary);
   transition: width 0.3s;
+}
+
+/* New styled pagination */
+.question-pagination-new {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+  border-radius: 10px;
+  border: 2px solid #0284c7;
+  text-align: center;
+}
+
+.pagination-info {
+  margin-bottom: 8px;
+}
+
+.pagination-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #0c4a6e;
 }
 
 /* ===== Complete Stage ===== */

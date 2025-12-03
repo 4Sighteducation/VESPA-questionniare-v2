@@ -51,6 +51,36 @@
   padding: 0;
 }
 
+/* Hide broken images (region-restricted, 404, etc.) */
+img {
+  image-rendering: auto;
+}
+
+img:not([src]), 
+img[src=""],
+img[src*="data:image/svg"]:not([src*="base64"]) {
+  display: none !important;
+}
+
+/* Detect and hide images that fail to load */
+img[alt*="not available"],
+img[alt*="region"],
+img[alt*="blocked"] {
+  display: none !important;
+}
+
+/* Style for broken image containers */
+img::after {
+  content: '';
+  display: none;
+}
+
+/* Hide iframes that fail to load (YouTube region blocks) */
+iframe[src*="youtube"][src*="error"],
+iframe:not([src]) {
+  display: none !important;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   color: var(--text);
